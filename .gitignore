@@ -1,0 +1,8 @@
+.vscode/
+__pycache__/
+*.py[cod]
+*$py.class
+#data/*
+package-lock.json
+node_modules
+dist

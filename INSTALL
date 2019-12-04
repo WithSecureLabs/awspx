@@ -1,0 +1,119 @@
+#!/bin/bash
+
+NAME="awspx"
+DIR="/opt/awspx"
+
+function install(){
+
+    MOUNT="/opt/awspx"
+    BASE="neo4j"
+    DEPS=("docker" "rsync")
+
+    SOURCE="$(dirname $(realpath $0))"
+
+    APT_DEPS=("nodejs" "npm" "python3-pip" "procps")
+    PY_DEPS=("argparse" "awscli-local" 
+        "boto3" "configparser" 
+        "pip" "neo4j" "inflect")
+
+    # Ensure script is run as root
+    if [[ "$(whoami)" != "root" ]]; then 
+        echo "[-] awspx must be run with root privileges."
+    fi
+
+    # Ensure dependencies are met 
+    for dep in ${DEPS[*]}; do
+        if [ -z "$(which ${dep} 2>/dev/null)" ]; then
+            echo "[-] awspx requires \"$(basename ${dep})\" to function."
+            echo "    Ensure it has been installed before running this script."
+            exit 2 
+        fi
+    done
+
+    # Delete all containers named $NAME (prompt for confirmation)
+    uid=($(docker ps -a -f name=${NAME} -q))
+    if [ -n "${uid}" ]; then 
+        echo "[!] An existing container named \"$NAME\" was detected"
+        echo "    In order to continue, it must be deleted. All data will be lost." 
+        read -p "    Continue [y/n]? " response
+        [[ "${response^^}" == "Y" ]] || exit
+        docker stop ${NAME} >/dev/null 2>&1
+        docker rm ${NAME} >/dev/null 2>&1
+    fi 
+
+    # Update 
+    mkdir -p $MOUNT/data
+    rsync -avrt $SOURCE/* ${MOUNT}/. >/dev/null
+    rsync -avrt $0 /bin/awspx >/dev/null
+    # I'm sorry for not putting it in /usr/local/bin
+    # please don't kick me out of the sysadmin club
+
+    echo "" 
+    set -e 
+
+    # Create awspx container 
+    docker pull $BASE
+    docker run -itd \
+        --name $NAME \
+        --hostname=$NAME \
+        -p 127.0.0.1:80:80 \
+        -p 127.0.0.1:7687:7687 \
+        -p 127.0.0.1:7373:7373 \
+        -p 127.0.0.1:7474:7474 \
+        -v ${MOUNT}:${DIR} \
+        --restart=always $BASE
+
+    # Modify entrypoint
+    HEADER=(
+        '#NEO4J_dbms_memory_heap_initial__size="2048m"'
+        '#NEO4J_dbms_memory_heap_max__size="2048m"'
+        '#NEO4J_dbms_memory_pagecache__size="2048m"'
+        'if [[ "${1}" == "neo4j" ]] && [[ -z "${2:-}" ]] &&  [[ -z "$(pgrep java)" ]]; then'
+        '[[ -z "$(pgrep npm)" ]] && cd /opt/awspx/www && nohup npm run serve>/dev/null 2>&1 &'
+        '/docker-entrypoint.sh neo4j init &'
+        'bash'
+        'exit'
+        'fi'
+        )
+    
+    for i in `seq $((${#HEADER[@]} -1)) -1 0`; do
+        docker exec -it $NAME sed -i "4i${HEADER[$i]}" /docker-entrypoint.sh
+    done
+
+    # Install dependencies
+    docker exec -it $NAME \
+        apt -y update 
+    docker exec -it $NAME \
+        apt install -y ${APT_DEPS[@]}
+    docker exec -it $NAME \
+        pip3 install --upgrade ${PY_DEPS[@]}
+
+    # Set neo4j user:pass to neo4j:neo4j
+    docker exec -it $NAME \
+        rm /var/lib/neo4j/data/dbms/auth
+    docker exec -it $NAME \
+        neo4j-admin set-initial-password neo4j 
+
+    # Install npm packages
+    docker exec -it $NAME \
+        sh -c "cd ${DIR}/www && npm install"
+
+    docker restart $NAME
+
+    echo -e "\n[+] Done! Server should soon be available at http://localhost"
+    echo -e "\tThe client can be run by executing \`awspx\`"
+    }
+
+function awspx(){
+    docker exec -it $NAME $DIR/cli.py $@
+    }
+
+if [ "$(systemctl is-active docker)" != "active" ]; then 
+    echo "[-] \"docker\" must first be started." 
+    exit 2 
+fi 
+
+case "$(basename $0)" in
+    awspx) awspx $@;;
+    *) install;;
+esac
