@@ -2,6 +2,7 @@
 
 NAME="awspx"
 DIR="/opt/awspx"
+WEBPORT="80"
 
 function install(){
 
@@ -12,13 +13,13 @@ function install(){
     SOURCE="$(dirname $(realpath $0))"
 
     APT_DEPS=("nodejs" "npm" "python3-pip" "procps")
-    PY_DEPS=("argparse" "awscli-local" 
-        "boto3" "configparser" 
-        "pip" "neo4j" "inflect")
+    PY_DEPS=("argparse" "awscli-local" "boto3" "neo4j"
+             "configparser" "inflect") 
 
     # Ensure script is run as root
     if [[ "$(whoami)" != "root" ]]; then 
         echo "[-] awspx must be run with root privileges."
+        exit 2
     fi
 
     # Ensure dependencies are met 
@@ -45,9 +46,6 @@ function install(){
     mkdir -p $MOUNT/data
     rsync -avrt $SOURCE/* ${MOUNT}/. >/dev/null
     rsync -avrt $0 /bin/awspx >/dev/null
-    # I'm sorry for not putting it in /usr/local/bin
-    # please don't kick me out of the sysadmin club
-
     echo "" 
     set -e 
 
@@ -56,7 +54,7 @@ function install(){
     docker run -itd \
         --name $NAME \
         --hostname=$NAME \
-        -p 127.0.0.1:80:80 \
+        -p 127.0.0.1:${WEBPORT}:80 \
         -p 127.0.0.1:7687:7687 \
         -p 127.0.0.1:7373:7373 \
         -p 127.0.0.1:7474:7474 \
@@ -94,14 +92,16 @@ function install(){
     docker exec -it $NAME \
         neo4j-admin set-initial-password neo4j 
 
-    # Install npm packages
-    docker exec -it $NAME \
-        sh -c "cd ${DIR}/www && npm install"
-
+    # Install npm packages (sometimes it fails the first time)
+    while :; do
+        docker exec -it $NAME \
+            sh -c "cd ${DIR}/www && npm install"
+        [[ $? -eq 0 ]] && break
+    done 
     docker restart $NAME
 
-    echo -e "\n[+] Done! Server should soon be available at http://localhost"
-    echo -e "\tThe client can be run by executing \`awspx\`"
+    echo -e "\n[+] Done! Server should soon be available at http://localhost:${WEBPORT}"
+    echo -e "\tThe client can be run by executing \`awspx ingest\`"
     }
 
 function awspx(){
