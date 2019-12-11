@@ -1,23 +1,20 @@
 import copy
-import re
 import json
+import re
+import sys
 import zlib
-import inflect
 from base64 import b64decode
 from functools import reduce
 
 import boto3
 from botocore.exceptions import ClientError
-
 from lib.aws.actions import ACTIONS
+from lib.aws.policy import BucketACL, IdentityBasedPolicy, ResourceBasedPolicy
 from lib.aws.resources import RESOURCES
-
 from lib.graph.base import Elements
+from lib.graph.db import Neo4j
 from lib.graph.edges import Action, Associative, Transitive, Trusts
 from lib.graph.nodes import Generic, Resource
-from lib.graph.db import Neo4j
-
-from lib.aws.policy import BucketACL, IdentityBasedPolicy, ResourceBasedPolicy
 
 
 class Ingestor(Elements):
@@ -25,62 +22,41 @@ class Ingestor(Elements):
     run = []
     associates = []
 
-    def __init__(self, session, account="0000000000000", default=True, only_types=[], except_types=[], only_arns=[], except_arns=[]):
+    def __init__(self, session, account="000000000000", default=True,
+                 only_types=[], except_types=[], only_arns=[], except_arns=[]):
 
         self.session = session
         self.account_id = account
+        self.run_all = len(self.run) == 0
+        self._load_generics()
 
-        if not (self._resolve_type_selection(only_types, except_types)
-                and self._resolve_arn_selection(only_arns, except_arns)):
-            return
+        if default and len(self.run) > 0:
 
-        if default:
+            self.run = [t for t in self.run
+                        if (len(except_types) == 0 or t not in except_types)
+                        and (len(only_types) == 0 or t in only_types)]
 
-            resources = [
-                f"AWS::{self.__class__.__name__}::" + ''.join(list(map(
-                    lambda x: x[0].capitalize() + x[1:],
-                    str(x).split('_'))))[:-1] + "s" for x in self.run
-            ]
+            self.only_arns = only_arns
+            self.except_arns = except_arns
 
-            print("Ingesting {resources} from {ingestor}".format(
+            print("[*] Commencing {resources} ingestion\n".format(
                 ingestor=self.__class__.__name__,
-                resources=', '.join(resources)
+                resources=', '.join([
+                    r if (i == 0 or i % 3 > 0)
+                    else f'\n{" " * 15}{r}'
+                    for i, r in enumerate(self.run)])
             ))
-
             self._load_resources()
             self._load_associations()
 
-        self._load_generics()
+    def _print(self, *messages):
+        sys.stdout.write("\033[F\033[K")
+        print(''.join(messages))
 
-    def _resolve_type_selection(self, only_types=[], except_types=[]):
-        """
-        Change run list to reflect only/except selection made by user.
-        """
-
-        if only_types and except_types:
-            print("Can't specify both --only-resource-types and --except-resource-types.")
-            return False
-
-        if only_types:
-            only_types = self._type_to_run(only_types)
-            self.run = list(set(self.run) & set(only_types))
-        elif except_types:
-            except_types = self._type_to_run(except_types)
-            self.run = list(set(self.run) - set(except_types))
-
-        return True
-
-    def _type_to_run(self, types):
-        """
-        Convert list of formal types to run list, filtering out types for other ingestors.
-
-        e.g. S3 ingestor ["AWS::EC2:Instance","AWS::S3::Bucket"]
-             -> ["buckets"]
-        """
-
-        inf = inflect.engine()
-        return [inf.plural(i.split('::')[-1]).lower() for i in types
-                if i.split('::')[1].lower() == self.__class__.__name__.lower()]
+    def _print_stats(self):
+        self._print(f"[+] {self.__class__.__name__} ingested ",
+                    f"{len(self.get('Resource'))} resources, ",
+                    f"{len(self.get('Generic'))} generic resources were added\n")
 
     def _resolve_arn_selection(self, only_arns=[], except_arns=[]):
         """
@@ -107,10 +83,13 @@ class Ingestor(Elements):
                 self.__class__.__name__.lower())
 
         for rt in self._get_collections(boto_base_resource):
-            if rt in self.run or not self.run:  # ingest everything if list is empty
-                self._load_resource_collection(
-                    rt, boto_base_resource, awspx_base_resource)
+            self._load_resource_collection(
+                rt,
+                boto_base_resource,
+                awspx_base_resource
+            )
 
+    # Needs to be recursive
     def _load_resource_collection(self,
                                   collection,
                                   boto_base_resource=None,
@@ -118,15 +97,35 @@ class Ingestor(Elements):
 
         resources = []
 
-        try:
+        label = "AWS::{service}::{type}".format(
+            service=self.__class__.__name__.capitalize(),
+            type=getattr(
+                boto_base_resource,
+                collection
+            )._model.resource.type
+        )
 
+        # Known cases of misaligned naming conventions (boto and lib.aws.RESOURCES)
+        if label.endswith("Version"):
+            label = label[:-7]
+        elif label == "AWS::Ec2::KeyPairInfo":
+            label = "AWS::Ec2::KeyPair"
+
+        # Skip excluded types or types unknown to us
+        if label not in RESOURCES.types \
+                or (not self.run_all and label not in self.run):
+            return
+
+        try:
             # Note: Depending on the stage at which the exception is thrown, we
             # may miss certain resources.
 
             resources = [r for r in getattr(
-                boto_base_resource, collection).all()]
+                boto_base_resource,
+                collection).all()]
 
         except Exception as e:
+            sys.stdout.write("\033[F\033[K")
             print(f"Couldn't load {collection} of {boto_base_resource} "
                   "- probably due to a resource based policy or something.")
 
@@ -134,12 +133,9 @@ class Ingestor(Elements):
 
             # Get properties
             properties = resource.meta.data
+
             if properties is None:
                 continue
-
-            # Get label
-            resource_type = resource.__class__.__name__.split(".")[-1]
-            label = self._get_resource_type_label(resource_type)
 
             # Get Arn and Name
             arn = self._get_resource_arn(resource, boto_base_resource)
@@ -162,7 +158,8 @@ class Ingestor(Elements):
             # Create resource
             r = Resource(labels=[label], properties=properties)
             if r not in self:
-                print(f" \-> Adding {r}")
+                sys.stdout.write("\033[F\033[K")
+                print(f"[*] Adding: {r}")
                 self.append(r)
 
             # Add associative relationship with parent
@@ -207,8 +204,9 @@ class Ingestor(Elements):
                 Account=self.account_id,
                 **combined)
 
-        if isinstance(arn, str) and re.compile(
-                "arn:aws:([a-zA-Z0-9]+):([a-z0-9-]*):(\d{12})?:(.*)").match(arn) is not None:
+        if isinstance(arn, str) \
+                and re.compile("arn:aws:([a-zA-Z0-9]+):([a-z0-9-]*):(\d{12}|aws)?:(.*)"
+                               ).match(arn) is not None:
             return arn
 
         return None
@@ -419,26 +417,40 @@ class Ingestor(Elements):
 
 class IAM(Ingestor):
 
-    def __init__(self, session, resources=None, db="default.db"):
+    run = ["AWS::Iam::User", "AWS::Iam::Role", "AWS::Iam::Group",
+           "AWS::Iam::Policy", "AWS::Iam::InstanceProfile"]
+
+    def __init__(self, session, resources=None, db="default.db",
+                 only_types=[], except_types=[], only_arns=[], except_arns=[]):
+
+        self._db = db
+        self.account_id = "000000000000"
+        
+        if resources is not None:
+            self += resources
+            return
 
         super().__init__(session=session, default=False)
 
-        self._db = db
+        self.client = self.session.client("iam")
 
-        if resources is None:
+        self.run = [r for r in self.run
+                    if (len(only_types) == 0 or r in only_types)
+                    and r not in except_types]
 
-            self.client = self.session.client("iam")
+        print("[*] Commencing {resources} ingestion\n".format(
+            resources=', '.join([r if (i == 0 or i % 3 > 0) else f'\n{" " * 15}{r}'
+                                 for i, r in enumerate(self.run)])))
 
-            print("[+] Ingesting AWS::Iam::Users, AWS::Iam::Roles, ",
-                  "AWS::Iam::Groups, AWS::Iam::Policies, "
-                  "AWS::Iam::InstanceProfiles from IAM")
+        self._print("[*] Awaiting response to iam:GetAccountAuthorizationDetails "
+                    "(this can take a while)")
+        self += self.get_account_authorization_details(
+            [], [])
 
-            self += self.get_account_authorization_details()
+        if "AWS::Iam::User" in self.run:
+
             self.get_login_profile()
             self.list_access_keys()
-
-        elif len(resources) > 0:
-            self += resources
 
         # Set IAM entities
         self.entities = Elements(
@@ -447,12 +459,12 @@ class IAM(Ingestor):
 
         # Set Account
         for a in set([e.account() for e in self.entities.get("Resource")]):
-            self.root = Resource(
-                properties={"Name": a, "Arn": "arn:aws:iam::%s:root" % a},
-                labels=["Resource", "AWS::Iam::Root"])
+            self.account_id = a
             break
 
-    def get_account_authorization_details(self):
+        self._print_stats()
+
+    def get_account_authorization_details(self, only_arns, except_arns):
 
         elements = Elements()
         edges = {
@@ -464,7 +476,6 @@ class IAM(Ingestor):
         def get_aad_element(label, entry):
 
             properties = dict()
-
             for pk, pv in sorted(entry.items()):
 
                 if pk.endswith("PolicyList"):
@@ -492,26 +503,30 @@ class IAM(Ingestor):
 
             element = Resource(
                 properties=properties,
-                labels=["Resource", "AWS::Iam::%s" % label])
+                labels=["Resource", f"AWS::Iam::{label}"])
 
-            if "GroupList" in entry.keys():
+            if f"AWS::Iam::Group" in self.run and "GroupList" in entry.keys():
 
-                edges["Groups"].extend(
-                    [(element, g) for g in entry["GroupList"]])
+                edges["Groups"].extend([(element, g)
+                                        for g in entry["GroupList"]])
 
-            if "InstanceProfileList" in entry.keys():
+            if f"AWS::Iam::InstanceProfile" in self.run \
+                    and "InstanceProfileList" in entry.keys():
 
-                edges["InstanceProfiles"].extend([
-                    (get_aad_element("InstanceProfile", ip), element)
-                    for ip in entry["InstanceProfileList"]])
+                edges["InstanceProfiles"].extend([(get_aad_element("InstanceProfile", ip), element)
+                                                  for ip in entry["InstanceProfileList"]])
 
-            if "AttachedManagedPolicies" in entry.keys():
-                edges["Policies"].extend([
-                    (element, p["PolicyArn"])
-                    for p in entry["AttachedManagedPolicies"]])
+            if f"AWS::Iam::Policy" in self.run \
+                    and "AttachedManagedPolicies" in entry.keys():
+                edges["Policies"].extend([(element, p["PolicyArn"])
+                                          for p in entry["AttachedManagedPolicies"]])
 
-            if element not in elements:
-                print(f" \-> Adding {element}")
+            if (str(f"AWS::Iam::{label}") in self.run
+                and (len(except_arns) == 0 or properties["Arn"] not in except_arns)
+                and (len(only_arns) == 0 or properties["Arn"] in only_arns)
+                    and element not in elements):
+                sys.stdout.write("\033[F\033[K")
+                print(f"[*] Adding: {element}")
                 elements.append(element)
 
             return element
@@ -529,31 +544,46 @@ class IAM(Ingestor):
         for label, entry in account_authorization_details:
             get_aad_element(label, entry)
 
-        # User|Group|Role - Attached -> Policy
+        # Ensure edge nodes exist
+        for k, v in edges.items():
+            edges[k] = list(filter(
+                lambda e: e[0] is not None and e[1] is not None,
+                [e if type(e[1]) == Resource
+                 else (e[0], next((t for t in elements
+                                   if (k == "Groups" and str(t).endswith(str(e[1])))
+                                   or str(t) == str(e[1])
+                                   ), None))
+                 for e in v]))
 
+        # (:User|Group|Role)-[:TRANSITIVE{Attached}]->(:Policy)
         for (s, t) in edges["Policies"]:
-            t = next(entry for entry in elements if entry.id() == t)
             elements.append(Transitive(
-                properties={"Name": "Attached"}, source=s, target=t))
+                properties={"Name": "Attached"},
+                source=s,
+                target=t
+            ))
 
-        # User - [MemberOf] -> Group
-
+        # # (:User)-[:TRANSITIVE{MemberOf}]->(:Group)
         for (s, t) in edges["Groups"]:
-            t = next(entry for entry in elements.get(
-                "AWS::Iam::Group") if str(entry).endswith(t))
             elements.append(Transitive(
-                properties={"Name": "MemberOf"}, source=s, target=t))
+                properties={"Name": "MemberOf"},
+                source=s,
+                target=t
+            ))
 
-        # InstanceProfile - [Attached] -> Role
-
+        # (:InstanceProfile)-[:TRANSITIVE{Attached}]->(:Role)
         for (s, t) in edges["InstanceProfiles"]:
             del s.properties()["Roles"]
             elements.append(Transitive(
-                properties={"Name": "Attached"}, source=s, target=t))
+                properties={"Name": "Attached"},
+                source=s,
+                target=t))
 
         return elements
 
     def get_login_profile(self):
+
+        self._print("[*] Updating login profile information")
 
         for user in self.get("AWS::Iam::User").get("Resource"):
 
@@ -568,6 +598,7 @@ class IAM(Ingestor):
 
     def list_access_keys(self):
 
+        self._print("[*] Updating access key information")
         for user in self.get("AWS::Iam::User").get("Resource"):
 
             try:
@@ -660,10 +691,12 @@ class IAM(Ingestor):
         (principals, actions, trusts) = (Elements(), Elements(), Elements())
         resources = self.get("Resource") + self.get("Generic")
 
-        print("Resolving actions and resources")
+        print("[*] Resolving actions and resources\n")
 
         # Resolve actions
         for resource in self.get("Resource"):
+
+            self._print(f"[*] Processing {resource}")
 
             # Identity Based Policies (Inline and Managed)
 
@@ -675,8 +708,9 @@ class IAM(Ingestor):
 
                 diff = len(actions) - count
                 if diff > 0:
-                    print(f"[+] Identity based Policy for `{resource}` "
-                          f"resolved to {diff} action(s)")
+                    sys.stdout.write("\033[F\033[K")
+                    print(
+                        f"[+] Identity based Policy ({resource}) resolved to {diff} action(s)")
 
             if resource.labels()[0] in RBP.keys():
 
@@ -694,8 +728,9 @@ class IAM(Ingestor):
 
                     diff = len(actions) - count
                     if diff > 0:
-                        print(f"[+] Bucket ACL for `{resource}` "
-                              f"resolved to {diff} action(s)")
+                        sys.stdout.write("\033[F\033[K")
+                        print(
+                            f"[+] Bucket ACL ({resource}) resolved to {diff} action(s)")
 
                 # Resource Based Policies
 
@@ -711,7 +746,7 @@ class IAM(Ingestor):
 
                     principals.extend([p for p in rbp.principals()
                                        if p not in principals and
-                                       str(p) != RESOURCES.types["AWS::Account"].format(Account=self.root.account())])
+                                       str(p) != RESOURCES.types["AWS::Account"].format(Account=self.account_id)])
 
                     # TODO: This code should be moved to 'ResourceBasedPolicy' and override resolve().
 
@@ -723,7 +758,7 @@ class IAM(Ingestor):
                                    str(a).startswith("sts:AssumeRole")]:
 
                         if action.source().type("AWS::Account") \
-                                and action.source().properties()["Arn"].split(':')[4] == self.root.account():
+                                and action.source().properties()["Arn"].split(':')[4] == self.account_id:
 
                             if "AWS::Iam::Role" in resource.labels():
 
@@ -744,34 +779,39 @@ class IAM(Ingestor):
                     diff = len(actions) - count
 
                     if diff > 0:
-                        print(f"[+] Resource based policy for `{resource}` "
-                              f"resolved to {diff} action(s)")
+                        sys.stdout.write("\033[F\033[K")
+                        print(
+                            f"[+] Resource based policy ({resource}) resolved to {diff} action(s)")
 
-        self.extend([p for p in principals if p not in self])
-        self.extend([a for a in actions if a not in self])
+        principals = [p for p in principals if p not in self]
+
+        self.extend(principals)
+        self.extend(actions)
         self.extend(trusts)
+
+        sys.stdout.write("\033[F\033[K")
+        print(
+            f"[+] Produced {len(principals)} new principals and {len(actions)} actions\n")
 
 
 class EC2(Ingestor):
 
     run = [
-        'classic_addresses',  # What is this?
-        'dhcp_options_sets',
-        # 'images',
-        'instances',
-        'internet_gateways',
-        'key_pairs',
-        'network_acls',
-        'network_interfaces',
-        'placement_groups',
-        'route_tables',
-        'security_groups',
-        # 'snapshots',
-        'subnets',
-        'volumes',
-        # 'vpc_addresses',
-        'vpc_peering_connections',
-        'vpcs',
+        'AWS::Ec2::DhcpOptions',
+        # 'AWS::Ec2::Image',
+        'AWS::Ec2::Instance',
+        'AWS::Ec2::InternetGateway',
+        'AWS::Ec2::KeyPair',
+        'AWS::Ec2::NetworkAcl',
+        'AWS::Ec2::NetworkInterface',
+        'AWS::Ec2::PlacementGroup',
+        'AWS::Ec2::RouteTable',
+        'AWS::Ec2::SecurityGroup',
+        # 'AWS::Ec2::Snapshot',
+        'AWS::Ec2::Subnet',
+        'AWS::Ec2::Volume',
+        'AWS::Ec2::Vpc',
+        'AWS::Ec2::VpcPeeringConnection',
     ]
 
     associates = [
@@ -788,15 +828,19 @@ class EC2(Ingestor):
         ("AWS::Ec2::Vpc", "AWS::Ec2::Subnet"),
     ]
 
-    def __init__(self, session, account="0000000000000", only_types=[], except_types=[], only_arns=[], except_arns=[]):
+    def __init__(self, session, account="000000000000",
+                 only_types=[], except_types=[], only_arns=[], except_arns=[]):
 
         super().__init__(session=session, account=account, default=True, only_types=only_types,
                          except_types=except_types, only_arns=only_arns, except_arns=except_arns)
 
         self.get_instance_user_data()
 
+        super()._print_stats()
+
     def get_instance_user_data(self):
 
+        self._print("[*] Updating instance user data")
         client = self.session.client(self.__class__.__name__.lower())
 
         for instance in self.get("AWS::Ec2::Instance").get("Resource"):
@@ -815,7 +859,7 @@ class EC2(Ingestor):
                                                           InstanceId=name)
             if 'UserData' in response.keys() and 'Value' in response['UserData'].keys():
                 userdata = b64decode(response['UserData']['Value'])
-                if userdata[0:2] == b'\x1f\x8b':  # it's gzip data
+                if userdata[0: 2] == b'\x1f\x8b':  # it's gzip data
                     userdata = zlib.decompress(
                         userdata, zlib.MAX_WBITS | 32).decode('utf-8')
                 else:  # normal b64
@@ -827,22 +871,25 @@ class EC2(Ingestor):
 class S3(Ingestor):
 
     run = [
-        'buckets',
-        'objects',
-        # 'object_versions',
-        # 'multipart_uploads'
+        'AWS::S3::Bucket',
+        'AWS::S3::Object',
     ]
 
-    def __init__(self, session, account="0000000000000", only_types=[], except_types=[], only_arns=[], except_arns=[]):
+    def __init__(self, session, account="000000000000",
+                 only_types=[], except_types=[], only_arns=[], except_arns=[]):
 
-        super().__init__(session=session, account=account, default=True, only_types=only_types,
-                         except_types=except_types, only_arns=only_arns, except_arns=except_arns)
+        super().__init__(session=session, account=account, default=True,
+                         only_types=only_types, except_types=except_types,
+                         only_arns=only_arns, except_arns=except_arns)
 
         self.get_bucket_policies()
         self.get_bucket_acls()
 
+        self._print_stats()
+
     def get_bucket_policies(self):
 
+        self._print("[*] Updating bucket policies")
         sr = self.session.resource(self.__class__.__name__.lower())
 
         for bucket in self.get("AWS::S3::Bucket").get("Resource"):
@@ -855,6 +902,7 @@ class S3(Ingestor):
 
     def get_bucket_acls(self):
 
+        self._print("[*] Updating bucket acls")
         sr = self.session.resource(self.__class__.__name__.lower())
 
         for bucket in self.get("AWS::S3::Bucket").get("Resource"):
@@ -868,61 +916,54 @@ class S3(Ingestor):
 
 class Lambda(Ingestor):
     run = [
-        'functions',
-        # 'layers'
+        'AWS::Lambda::Function',
     ]
 
-    def __init__(self, session, account="0000000000000", only_types=[], except_types=[], only_arns=[], except_arns=[]):
+    def __init__(self, session, account="000000000000",
+                 only_types=[], except_types=[], only_arns=[], except_arns=[]):
 
         super().__init__(session=session, default=False)
-        if not (super()._resolve_type_selection(only_types, except_types)
-                and super()._resolve_arn_selection(only_arns, except_arns)):
+
+        self.run = [t for t in self.run
+                    if (len(except_types) == 0 or t not in except_types)
+                    and (len(only_types) == 0 or t in only_types)]
+
+        if len(self.run) == 0:
             return
 
         self.client = self.session.client('lambda')
 
-        for rt in self.run:
+        print("[*] Commencing {resources} ingestion".format(
+            ingestor=self.__class__.__name__,
+            resources=', '.join([
+                r if (i == 0 or i % 3 > 0)
+                else f'\n{" " * 15}{r}'
+                for i, r in enumerate(self.run)])
+        ))
 
-            print(f"{self.__class__.__name__}: Loading {rt}")
+        self += self.list_functions()
 
-            resources = self._get_paginated(rt)
+        super()._print_stats()
 
-            for resource in resources:
+    def list_functions(self):
+        functions = []
+        self._print("[*] Listing functions (this can take a while)")
+        for function in [f
+                         for r in self.client.get_paginator("list_functions").paginate()
+                         for f in r["Functions"]]:
 
-                resource_type = rt.capitalize()[0:-1]
-                properties = resource
+            function["Name"] = function["FunctionName"]
+            function["Arn"] = function["FunctionArn"]
+            del function["FunctionName"]
+            del function["FunctionArn"]
 
-                label = "AWS::%s::%s" % (
-                    self.__class__.__name__.capitalize(),
-                    resource_type.replace("Info", "").replace("Version", "").replace("Summary", ""))
+            f = Resource(
+                properties=function,
+                labels=["AWS::Lambda::Function"])
 
-                keys = [re.sub("^" + resource_type, "", k)
-                        for k in properties.keys()]
+            if f not in functions:
+                sys.stdout.write("\033[F\033[K")
+                print(f"[*] Adding: {f}")
+                functions.append(f)
 
-                key = "%sArn" % resource_type
-                properties["Arn"] = properties[key]
-                del properties[key]
-
-                key = "%sName" % resource_type
-                properties["Name"] = properties[key]
-                del properties[key]
-
-                print(
-                    f"{self.__class__.__name__}: Loading {properties['Arn']}")
-
-                r = Resource(labels=[label], properties=properties)
-                if r not in self:
-                    self.append(r)
-
-    def _get_paginated(self, resource_type):
-
-        rs = [r for r in self.client.get_paginator(
-            f"list_{resource_type}"
-        ).paginate()]
-
-        full = []
-
-        for i in rs:
-            full.extend(i[resource_type.capitalize()])
-
-        return full
+        return functions

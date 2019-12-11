@@ -14,9 +14,6 @@ class Neo4j(object):
     username = "neo4j"
     password = "neo4j"
 
-    # Disable Debug
-    # print=str
-
     @staticmethod
     def run(cypher):
         driver = GraphDatabase.driver(
@@ -59,13 +56,10 @@ class Neo4j(object):
             for _ in range(10):
                 time.sleep(1)
                 if Neo4j.isavailable():
-                    print("[+] Neo4j has successfully been started.")
-                    return True
-            print("[-] Neo4j failed to start.")
-            return False
+                    return (True, "[+] Neo4j has successfully been started.")
+            return(True, "[-] Neo4j failed to start.")
 
-        print("[!] Neo4j has already been started.")
-        return True
+        return(True, "[!] Neo4j has already been started.")
 
     @staticmethod
     def stop():
@@ -74,12 +68,9 @@ class Neo4j(object):
             for _ in range(10):
                 time.sleep(1)
                 if not Neo4j.isavailable():
-                    # print("[+] Neo4j has successfully been stopped.")
-                    return True
-            print("[-] Neo4j failed to stop.")
-            return False
-        print("[!] Neo4j has already been stopped.")
-        return False
+                    return (True, "[+] Neo4j has successfully been stopped.")
+            return(False, "[-] Neo4j failed to stop.")
+        return(True, "[!] Neo4j has already been stopped.")
 
     @staticmethod
     def restart():
@@ -134,22 +125,21 @@ class Neo4j(object):
                 )
 
         if stats is None:
-            print(str(stdout).replace("\\n", "\n").replace("\\t", "\t"))
-            return False
-
-        (time, nodes, edges, props, ram) = stats.groups()
-
-        print("[+] Loaded {nodes} nodes, {edges} edges, and {props} properties into '{db}'.".format(
-            nodes=nodes,
-            edges=edges,
-            props=props,
-            db=db
-        ))
+            Neo4j().start
+            return (False, str(stdout).replace("\\n", "\n").replace("\\t", "\t"))
 
         subprocess.Popen(["rm", "-rf", f"{directory}/"])
 
         Neo4j.switch_database(db)
         Neo4j.start()
+
+        (time, nodes, edges, props, ram) = stats.groups()
+
+        return (True, "[+] Loaded {nodes} nodes, {edges} edges, and {props} properties into '{db}'.".format(
+            nodes=nodes,
+            edges=edges,
+            props=props,
+            db=db))
 
     @staticmethod
     def delete(db):
@@ -157,5 +147,5 @@ class Neo4j(object):
 
     @staticmethod
     def _run(tx, cypher):
-        results = tx.run(cypher)
+        results=tx.run(cypher)
         return results

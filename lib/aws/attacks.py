@@ -3,6 +3,7 @@
 import copy
 import json
 import re
+import sys
 
 from lib.graph.db import Neo4j
 
@@ -1225,13 +1226,17 @@ class Attacks:
 
         exception = None
 
-        print("[!] Removing all existing attack patterns")
+        print("[*] Searching database for attack patterns\n")
+
+        sys.stdout.write("\033[F\033[K")
+        print("[*] Removing all existing attack patterns")
 
         Neo4j().run("MATCH (pattern:Pattern) "
                     "OPTIONAL MATCH ()-[admin]->(:Admin) "
                     "DETACH DELETE pattern, admin")
 
-        print("[!] Creating pseudo admin")
+        sys.stdout.write("\033[F\033[K")
+        print("[*] Creating pseudo admin")
         Neo4j().run(Attacks._admin_cypher())
 
         # Temporarily set generic policy to admin. This is
@@ -1261,7 +1266,8 @@ class Attacks:
                     exception = name
                     attack += 1
 
-                    print("[!] Searching for attack "
+                    sys.stdout.write("\033[F\033[K")
+                    print("[*] Searching for attack "
                           f"{attack}/{len(attack_definitions)}: "
                           f"{name} (iteration: {_} of max: {max_iterations})")
 
@@ -1274,25 +1280,14 @@ class Attacks:
 
                     summary = Neo4j().run(cypher).summary()
 
-                    execution_time = (summary.result_available_after +
-                                      summary.result_consumed_after) / 1000
+                    if str(summary.counters) == "{}":
+                        continue
+
+                    created += 1
                     discovered += summary.counters.nodes_created
-
-                    if ((summary.counters.nodes_created + summary.counters.relationships_created) > 0):
-
-                        print(f" \-> Discovered {summary.counters.nodes_created} new attack(s)",
-                              f"(took: {execution_time} s).")
-                        created += summary.counters.nodes_created + \
-                            summary.counters.relationships_created
-
-                # If edges are created but not nodes this loop will not break
 
                 if created == 0:
                     break
-
-            print("[+] Converged after" if _ <= max_iterations
-                  else "[!] Failed to converge within max:",
-                  f"{_} iterations. {discovered} patterns were discovered.")
 
             exception = None
 
@@ -1300,7 +1295,8 @@ class Attacks:
             print(f"[-] Neo4j returned:\n\n{e}")
             print("[!] Don't worry, we'll use what we already have")
 
-        print("[+] Unifying attack pattern representations")
+        sys.stdout.write("\033[F\033[K")
+        print("[+] Consolidating attack patterns")
 
         # Remove :Admin (restore generic policy definition)
         Neo4j().run(
@@ -1338,6 +1334,12 @@ class Attacks:
             "SET attack.Descriptions = descriptions " +
             "REMOVE attack.Description"
         )
+
+        sys.stdout.write("\033[F\033[K")
+        print(f"[+] {discovered} patterns were discovered " + str(
+              f"(successfully converged after {_} iterations)" if _ < max_iterations else
+              f"(failed to converge of {max_iterations})")
+              )
 
         if exception is not None:
             raise Exception(exception)

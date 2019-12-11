@@ -1,8 +1,12 @@
 #!/bin/bash
 
+# By default awspx is only accessible at http://localhost 
+
+WEBPORT=${WEBPORT:-80}
+HOST=${HOST:-127.0.0.1}
+
 NAME="awspx"
 DIR="/opt/awspx"
-WEBPORT="80"
 
 function install(){
 
@@ -14,7 +18,7 @@ function install(){
 
     APT_DEPS=("nodejs" "npm" "python3-pip" "procps")
     PY_DEPS=("argparse" "awscli-local" "boto3" "neo4j"
-             "configparser" "inflect") 
+             "configparser") 
 
     # Ensure script is run as root
     if [[ "$(whoami)" != "root" ]]; then 
@@ -54,10 +58,10 @@ function install(){
     docker run -itd \
         --name $NAME \
         --hostname=$NAME \
-        -p 127.0.0.1:${WEBPORT}:80 \
-        -p 127.0.0.1:7687:7687 \
-        -p 127.0.0.1:7373:7373 \
-        -p 127.0.0.1:7474:7474 \
+        -p ${HOST}:${WEBPORT}:80 \
+        -p ${HOST}:7687:7687 \
+        -p ${HOST}:7373:7373 \
+        -p ${HOST}:7474:7474 \
         -v ${MOUNT}:${DIR} \
         --restart=always $BASE
 
@@ -100,8 +104,9 @@ function install(){
     done 
     docker restart $NAME
 
-    echo -e "\n[+] Done! Server should soon be available at http://localhost:${WEBPORT}"
+    echo -e "\n[+] Done! Server should soon be available at http://${HOST}:${WEBPORT}"
     echo -e "\tThe client can be run by executing \`awspx ingest\`"
+    echo -e "\tOr you can load the sample db by running \`awspx db --load-zip sample.zip; awspx attacks\`"
     }
 
 function awspx(){
