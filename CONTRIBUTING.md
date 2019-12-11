@@ -34,14 +34,14 @@ class CloudFormation:
 To test your ingestor, run `awspx ingest` with the following arguments:
 
 ```
-awspice ingest --profile your-profile --services CloudFormation
+awspx ingest --profile your-profile --services CloudFormation
 ```
 
 It is likely that the first run will crash with an error. These errors usually result from the ingestor failing to determine a `Name` or `Arn` property for one or more resources in the service. With verbose output, you will be able to see the structure of the data the ingestor fails on. Using this output, you will need to amend the methods `_get_resource_arn` and `_get_resource_name` in the `Ingestor` base class. Continue until all ingested resources have both a `Name` and an `Arn`.
 
 Once you've fixed these bugs, you can start considering which resources you want to ingest and which relationships are worth showing. These two aspects of ingestion are represented by `run` and `associates` respectively.
 
-An ingestor's `run` attribute is a list of resources it will ingest by default. These are formatted as plurals of the final part of each resource name in `lib/aws/resources.py`. Thus `AWS::S3::Bucket` becomes `buckets` and `AWS::Ec2::Vpc` becomes `vpcs`.
+An ingestor's `run` attribute is a list of resources it will ingest. An empty run attribute, however, indicates that everything should be ingested. These values are represented identically to resource names in `lib/aws/resources.py`. They will be converted to the correct boto method automatically. 
 
 An ingestor's `associates` attribute is a list of tuples, representing relationships between types to map. The ingestor will infer relationships between resources based on boto3's Resource model, e.g. if an `instance` object has an attribute called `snapshots`, there is a relationship between instances and snapshots. If `associates` is not defined, all inferred relationships will be mapped. Thus, `associates` is a good way to prune excessive edges. See the EC2 ingestor for a good example.
 
@@ -49,28 +49,6 @@ An ingestor's `associates` attribute is a list of tuples, representing relations
 
 When adding services not supported by boto3 Resources, you will have to fall back to using boto3 service clients, which are thin wrappers over AWS cli commands. You will need to manually discover the different resource types and their associations. The Lambda service ingestor is an example of such an ingestor.
 
-You can start with code like the following, which inherits from the base Ingestor but tells the initializer not to run the default ingestion while still accounting for type and ARN selection.
-
-```python
-class MyService(Ingestor):
-    run = [ '...' ]
-
-    def __init__(self, session, account="0000000000000",
-                 only_types=[], except_types=[], only_arns=[], except_arns=[]):
-
-        super().__init__(session=session, default=False)
-        if not (super()._resolve_type_selection(only_types, except_types)
-                and super()._resolve_arn_selection(only_arns, except_arns)):
-            return
-
-        self.client = self.session.client(self.__class__.__name__.lower())
-
-        for rt in self.run:
-
-            print(f"{self.__class__.__name__}: Loading {rt}")
-
-
-```
 
 ### Enriching services
 
