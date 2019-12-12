@@ -5,12 +5,12 @@
 WEBPORT=${WEBPORT:-80}
 HOST=${HOST:-127.0.0.1}
 
-NAME="awspx"
-DIR="/opt/awspx"
+realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
 
 function install(){
 
-    MOUNT="/opt/awspx"
     BASE="neo4j"
     DEPS=("docker" "rsync")
 
@@ -19,12 +19,6 @@ function install(){
     APT_DEPS=("nodejs" "npm" "python3-pip" "procps")
     PY_DEPS=("argparse" "awscli-local" "boto3" "neo4j"
              "configparser") 
-
-    # Ensure script is run as root
-    if [[ "$(whoami)" != "root" ]]; then 
-        echo "[-] awspx must be run with root privileges."
-        exit 2
-    fi
 
     # Ensure dependencies are met 
     for dep in ${DEPS[*]}; do
@@ -35,34 +29,34 @@ function install(){
         fi
     done
 
-    # Delete all containers named $NAME (prompt for confirmation)
-    uid=($(docker ps -a -f name=${NAME} -q))
+    # Delete all containers named awspx (prompt for confirmation)
+    uid=($(docker ps -a -f name=awspx -q))
     if [ -n "${uid}" ]; then 
-        echo "[!] An existing container named \"$NAME\" was detected"
+        echo "[!] An existing container named \"awspx\" was detected"
         echo "    In order to continue, it must be deleted. All data will be lost." 
         read -p "    Continue [y/n]? " response
-        [[ "${response^^}" == "Y" ]] || exit
-        docker stop ${NAME} >/dev/null 2>&1
-        docker rm ${NAME} >/dev/null 2>&1
+        [[ "${response}" == "Y" || "${response}" == "y" ]] || exit
+        docker stop awspx >/dev/null 2>&1
+        docker rm awspx >/dev/null 2>&1
     fi 
 
     # Update 
     mkdir -p $MOUNT/data
     rsync -avrt $SOURCE/* ${MOUNT}/. >/dev/null
-    rsync -avrt $0 /bin/awspx >/dev/null
+    rsync -avrt $0 /usr/local/bin/awspx >/dev/null
     echo "" 
     set -e 
 
     # Create awspx container 
     docker pull $BASE
     docker run -itd \
-        --name $NAME \
-        --hostname=$NAME \
+        --name awspx \
+        --hostname=awspx \
         -p ${HOST}:${WEBPORT}:80 \
         -p ${HOST}:7687:7687 \
         -p ${HOST}:7373:7373 \
         -p ${HOST}:7474:7474 \
-        -v ${MOUNT}:${DIR} \
+        -v ${MOUNT}:/opt/awspx \
         --restart=always $BASE
 
     # Modify entrypoint
@@ -70,6 +64,7 @@ function install(){
         '#NEO4J_dbms_memory_heap_initial__size="2048m"'
         '#NEO4J_dbms_memory_heap_max__size="2048m"'
         '#NEO4J_dbms_memory_pagecache__size="2048m"'
+        "export HOST_MOUNT_DIR='${MOUNT}'"
         'if [[ "${1}" == "neo4j" ]] && [[ -z "${2:-}" ]] &&  [[ -z "$(pgrep java)" ]]; then'
         '[[ -z "$(pgrep npm)" ]] && cd /opt/awspx/www && nohup npm run serve>/dev/null 2>&1 &'
         '/docker-entrypoint.sh neo4j init &'
@@ -79,30 +74,31 @@ function install(){
         )
     
     for i in `seq $((${#HEADER[@]} -1)) -1 0`; do
-        docker exec -it $NAME sed -i "4i${HEADER[$i]}" /docker-entrypoint.sh
+        docker exec -it awspx sed -i "4i${HEADER[$i]}" /docker-entrypoint.sh
     done
 
     # Install dependencies
-    docker exec -it $NAME \
+    docker exec -it awspx \
         apt -y update 
-    docker exec -it $NAME \
+    docker exec -it awspx \
         apt install -y ${APT_DEPS[@]}
-    docker exec -it $NAME \
+    docker exec -it awspx \
         pip3 install --upgrade ${PY_DEPS[@]}
 
     # Set neo4j user:pass to neo4j:neo4j
-    docker exec -it $NAME \
+    docker exec -it awspx \
         rm /var/lib/neo4j/data/dbms/auth
-    docker exec -it $NAME \
+    docker exec -it awspx \
         neo4j-admin set-initial-password neo4j 
 
     # Install npm packages (sometimes it fails the first time)
     while :; do
-        docker exec -it $NAME \
-            sh -c "cd ${DIR}/www && npm install"
+        docker exec -it awspx \
+            sh -c "cd /opt/awspx/www && npm install"
         [[ $? -eq 0 ]] && break
     done 
-    docker restart $NAME
+
+    docker restart awspx >/dev/null 
 
     echo -e "\n[+] Done! Server should soon be available at http://${HOST}:${WEBPORT}"
     echo -e "\tThe client can be run by executing \`awspx ingest\`"
@@ -110,13 +106,31 @@ function install(){
     }
 
 function awspx(){
-    docker exec -it $NAME $DIR/cli.py $@
+    docker exec -it awspx /opt/awspx/cli.py $@
     }
 
-if [ "$(systemctl is-active docker)" != "active" ]; then 
+DOCKER_RUNNING="$(docker info >/dev/null 2>&1)"
+
+if [ "${?}" -ne 0 ]; then 
     echo "[-] \"docker\" must first be started." 
     exit 2 
 fi 
+
+if [ "$(uname)" == "Darwin" ]; then
+    MOUNT="${HOME}/bin/awspx"
+
+# Linux
+elif [[ "$(uname)" =~ "Linux" ]]; then 
+    MOUNT="/opt/awspx"
+	# Ensure script is run as root
+	if [[ "$(whoami)" != "root" ]]; then 
+	    echo "[-] awspx must be run with root privileges."
+	    exit 2
+	fi
+else 
+    echo "[-] Platform: '$(uname)' is not supported"
+    exit 1
+fi
 
 case "$(basename $0)" in
     awspx) awspx $@;;
