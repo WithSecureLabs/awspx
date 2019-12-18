@@ -166,7 +166,7 @@ def handle_attacks(args):
         )
     except Exception as attack:
         print(f"[!] Attack: `{attack}` failed, to exclude this "
-              "attack in future append --except-attacks='{attack}'")
+              f"attack in future append --except-attacks='{attack}'")
 
 
 def handle_db(args):
@@ -373,8 +373,8 @@ def main():
                           help="List databases.")
     db_group.add_argument('--load-zip', dest='load_zip', choices=sorted([z for z in os.listdir("/opt/awspx/data/")
                                                                          if z.endswith(".zip")]),
-                          help=("Create a new database from a zip file located in /opt/awspx/data/ "
-                                "(to include attack information `awspx attacks` must be run seperately)."))
+                          help=("Create a new database from a zip file located in /opt/awspx/data/ (~/bin/awspx/data on Mac)."
+                                "To include attack information `awspx attacks` must be run seperately)."))
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
