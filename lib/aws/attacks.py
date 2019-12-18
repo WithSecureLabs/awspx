@@ -62,7 +62,7 @@ class Attacks:
 
         "AssociateInstanceProfile": {
 
-            "Description": "Associate the specified instance with "
+            "Description": "Associate the specified EC2 instance with "
             "the target instance profile: ",
 
             "Commands": [
@@ -84,8 +84,8 @@ class Attacks:
                 "Grants": "AWS::Iam::InstanceProfile",
 
                 "Cypher": [
-                    "(${AWS::Iam::InstanceProfile})-[{Name:'Attached'}]->(${AWS::Iam::Role})",
-                    "(${})-[:TRANSITIVE*..]->()-[{Name:'iam:PassRole'}]->(${AWS::Iam::Role})"
+                    "(${AWS::Ec2::Instance}) WHERE NOT EXISTS((${AWS::Iam::InstanceProfile})-[:TRANSITIVE]->(:`AWS::Iam::Role`)) "
+                    "OR EXISTS((${AWS::Iam::InstanceProfile})-[:TRANSITIVE]->(:`AWS::Iam::Role`)<-[:ACTION{Name:'iam:PassRole', Effect:'Allow'}]-(${}))"
                 ],
 
             },
@@ -96,7 +96,7 @@ class Attacks:
         "AssumeRole": {
 
             "Description": "Retrieve a set of temporary security credentials "
-            "by assuming the target role:",
+            "from assuming the target role:",
 
             "Commands": [
                 "aws sts assume-role "
@@ -121,33 +121,38 @@ class Attacks:
             "Grants": "AssumeRole",
         },
 
-        #  TODO: Producing false positives, requires further testing.
-        # "AddRoleToInstanceProfile": {
+        "AddRoleToInstanceProfile": {
 
-        #     "Description": "Add the target role to "
-        #     "the specified instance profile:",
+            "Description": "Add the target role to "
+            "the specified instance profile:",
 
-        #     "Commands": [
-        #         "aws iam add-role-to-instance-profile"
-        #         "--instance-profile-name ${AWS::Iam::InstanceProfile} "
-        #         "--role-name ${AWS::Iam::Role}"],
+            "Commands": [
+                "aws iam add-role-to-instance-profile"
+                "--instance-profile-name ${AWS::Iam::InstanceProfile} "
+                "--role-name ${AWS::Iam::Role}"],
 
-        #     "Attack": {
+            "Attack": {
 
-        #         "Depends": "AWS::Iam::InstanceProfile",
+                "Depends": "AWS::Iam::InstanceProfile",
 
-        #         "Requires": [
-        #             "iam:AddRoleToInstanceProfile"
-        #         ],
+                "Requires": [
+                    "iam:AddRoleToInstanceProfile"
+                ],
 
-        #         "Affects": "AWS::Iam::InstanceProfile",
+                "Affects": "AWS::Iam::InstanceProfile",
 
-        #         "Grants": "AWS::Iam::Role",
+                "Grants": "AWS::Iam::Role",
 
-        #     },
+                "Cypher": [
+                    "(${AWS::Iam::Role})-[:TRUSTS]->({Name:'ec2.amazonaws.com'}) "
+                    "WHERE (${})-[:TRANSITIVE|ATTACK*0..]->()-[:ACTION{Effect:'Allow', Name:'iam:RemoveRoleFromInstanceProfile'}]->(${AWS::Iam::InstanceProfile}) "
+                    "OR (${})-[:TRANSITIVE|ATTACK*0..]->()-[:ACTION{Effect:'Allow', Name:'iam:DeleteInstanceProfile'}]->(${AWS::Iam::InstanceProfile}) "
+                    "OR NOT EXISTS((${AWS::Iam::InstanceProfile})-[:TRANSITIVE]->(${AWS::Iam::Role})) "
+                ]
+            },
 
-        #     "Grants": "Attached",
-        # },
+            "Grants": "Attached",
+        },
 
         "AddUserToGroup": {
 
@@ -287,7 +292,7 @@ class Attacks:
 
         "CreateInstance": {
 
-            "Description": "Launch a new Ec2 instance:",
+            "Description": "Launch a new EC2 instance:",
 
             "Options": ["CreateAction"],
 
@@ -295,7 +300,7 @@ class Attacks:
                 "aws ec2 run-instances "
                 "--count 1 "
                 "--instance-type t2.micro"
-                "--image-id $ami-id",
+                "--image-id $AmiId",
             ],
 
             "Attack": {
@@ -340,7 +345,7 @@ class Attacks:
 
             "Commands": [
                 "aws iam create-policy "
-                "--policy-name $policy-name "
+                "--policy-name ${AWS::Iam::Policy} "
                 "--policy-document file://<(cat <<EOF\n"
                 "{\n"
                 "    \"Version\": \"2012-10-17\",\n"
@@ -369,15 +374,33 @@ class Attacks:
 
         "CreateRole": {
 
-            "Description": "Create a new role:",
+            "Description": "Create a new role to assume:",
 
             "Options": ["CreateAction"],
 
             "Commands": [
                 "aws iam create-role --role-name ${AWS::Iam::Role} "
-                "--assume-role-policy-document *",
+                "--assume-role-policy-document file://<(cat <<EOF\n"
+                "{\n"
+                "  \"Version\": \"2012-10-17\",\n"
+                "  \"Statement\": [\n"
+                "    {\n"
+                "      \"Effect\": \"Allow\",\n"
+                "      \"Action\": \"sts:AssumeRole\",\n"
+                "      \"Principal\": {\n"
+                "        \"AWS\": [\n"
+                "          \"${}.Arn\"\n"
+                "        ]\n"
+                "      }\n"
+                "    }\n"
+                "  ]\n"
+                "}\n"
+                "EOF\n"
+                ")"
             ],
 
+            # TODO: If this attack incorporates an instance profile then the Principal entry
+            # in Commands should be Service: ec2.amazonaws.com.
             "Attack": {
 
                 "Requires": [
@@ -425,7 +448,7 @@ class Attacks:
             "Commands": [
                 "aws iam create-user --user-name ${AWS::Iam::User}",
                 "aws iam create-login-profile --user-name ${AWS::Iam::User} "
-                "--password $new-password"
+                "--password $Password"
             ],
 
             "Attack": {
@@ -557,9 +580,24 @@ class Attacks:
             "the target role and assume it thereafter:",
 
             "Commands": [
-                "aws iam update-assume-role-policy "
-                "--role-name ${AWS::Iam::Role} "
-                "--policy-document *",
+                "aws iam create-role --role-name ${AWS::Iam::Role} "
+                "--assume-role-policy-document file://<(cat <<EOF\n"
+                "{\n"
+                "  \"Version\": \"2012-10-17\",\n"
+                "  \"Statement\": [\n"
+                "    {\n"
+                "      \"Effect\": \"Allow\",\n"
+                "      \"Action\": \"sts:AssumeRole\",\n"
+                "      \"Principal\": {\n"
+                "        \"AWS\": [\n"
+                "          \"${}.Arn\"\n"
+                "        ]\n"
+                "      }\n"
+                "    }\n"
+                "  ]\n"
+                "}\n"
+                "EOF\n"
+                ")",
 
                 "aws sts assume-role "
                 "--role-arn ${AWS::Iam::Role}.Arn "
@@ -776,25 +814,28 @@ class Attacks:
             _CYPHER_ = "_"
 
             for (placeholder, attr) in sorted(
-                re.findall(r"(\$\{AWS\:\:[A-Za-z0-9]+\:\:[A-Za-z0-9]+\})(\.[A-Za-z]+)?",
+                re.findall(r"\$\{(AWS\:\:[A-Za-z0-9]+\:\:[A-Za-z0-9]+)?\}(\.[A-Za-z]+)?",
                            ';'.join(VARs["commands"])),
                 key=lambda x: len(x[0]+x[1]),
                     reverse=True):
 
-                if re.search(r'"%s", [a-z]+%s' % (placeholder, attr),
-                             _CYPHER_) is not None:
-                    continue
+                substitute = None
 
-                if "${%s}" % attack["Affects"] == placeholder:
+                if placeholder == attack["Affects"]:
                     substitute = "grant" if "Grants" not in attack else "option"
                 elif "Depends" in attack \
-                        and "${%s}" % attack["Depends"] == placeholder:
+                        and placeholder == attack["Depends"]:
                     substitute = "option"
                 elif "Grants" in attack \
-                        and "${%s}" % attack["Grants"] == placeholder:
+                        and placeholder == attack["Grants"]:
                     substitute = "grant"
-                # else:
-                #     error("%s: %s not found" % (name, placeholder))
+                elif placeholder == '':
+                    substitute = "source"
+                else:
+                    # print(f"[-] Unknown placeholder: \'{placeholder}\'")
+                    continue
+
+                placeholder = f"${{{placeholder}}}"
 
                 if len(attr) == 0:
                     substitute += ".Name"
@@ -981,7 +1022,7 @@ class Attacks:
                 "COLLECT([grant, commands]) AS grants "
             )
 
-        # Assert: WITH options, admin
+        # Assert: WITH options, grants, admin
 
         if VARs["size"] == 1 and "Depends" not in attack and "Cypher" not in attack:
 
@@ -998,6 +1039,9 @@ class Attacks:
                 "WHERE NOT source:Pattern ",
                 "AND ALL(_ IN REVERSE(TAIL(REVERSE(NODES(path)))) WHERE NOT _ IN admin) ",
                 "AND edge.Condition = '[]' " if ignore_actions_with_conditions else "",
+                # TODO: This is is just a quick for target types that are dependant on being reachable transitively.
+                # As is, it will still produce false positives - just less than before.
+                'AND target IN [_ IN options|_[0]] ' if "Depends" in attack and attack["Depends"] == attack["Affects"] else "",
 
                 "%s" % process_cypher() if "Cypher" in attack else "",
 
@@ -1018,6 +1062,7 @@ class Attacks:
                 "AND ALL(_ IN REVERSE(TAIL(REVERSE(NODES(path)))) WHERE NOT _ IN admin)",
                 "AND edge.Name IN {requires} AND edge.Effect = 'Allow' ",
                 "AND edge.Condition = '[]' " if ignore_actions_with_conditions else "",
+                'AND target IN [_ IN options|_[0]] ' if "Depends" in attack and attack["Depends"] == attack["Affects"] else "",
 
                 "%s" % process_cypher() if "Cypher" in attack else "",
 
@@ -1172,25 +1217,25 @@ class Attacks:
             "pattern.Requires = {requires_list},",
             "pattern.Depends = \"{dependency}\"",
 
-            "WITH DISTINCT pattern, options, grants",
+            "WITH DISTINCT source, pattern, options, grants",
             "UNWIND grants AS grant",
 
-            "WITH pattern, options,",
+            "WITH source, pattern, options,",
             "grant[0] AS grant, options[0][0] AS option,",
             "REDUCE(commands=[], _ IN options[0][1] + grant[1]|",
             "CASE WHEN _ IN commands THEN commands",
             "ELSE commands + _ END",
             ") AS history",
 
-            "WITH pattern, options, grant, option, ",
+            "WITH source, pattern, options, grant, option, ",
             "%s" % cypher_resolve_commands(True),
 
-            "MERGE (pattern)-[edge:%s{{Name:'{grants}'}}]->(grant)" \
+            "WITH DISTINCT pattern, options, grant, option, commands ",
+            "MATCH (grant) "
+            "MERGE (pattern)-[edge:%s{{Name:'{name}'}}]->(grant)" \
             % ("CREATE" if OPTs["CreateAction"] \
-               #   else "ADMIN" if OPTs["Admin"] \
                else "ATTACK"),
             "ON CREATE SET ",
-            # "edge.Name = \"{name}\","
             "edge.Description = \"{description}\",",
             "edge.Commands = commands,",
             "edge.Weight = SIZE(commands),",
@@ -1315,7 +1360,7 @@ class Attacks:
             "MATCH (admin:Admin), " +
             "path=(source:Resource)-[:ATTACK]->(pattern:Pattern)-[edge:ATTACK{Admin:True}]->(target) " +
             "MERGE (pattern)-[_:ATTACK]->(admin) " +
-            "ON CREATE SET _ = edge, _.TargetId = ID(edge)"
+            "ON CREATE SET _ = edge, _.Target = ID(edge)"
         )
 
         # Replace all attack 'Description' entries with a 'Descriptions' set, that maps
