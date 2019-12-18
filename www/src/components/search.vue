@@ -196,7 +196,7 @@ export default {
         });
 
       this.$parent
-        .query("MATCH (r) WHERE NOT r:Pattern RETURN r")
+        .query("MATCH (r) WHERE NOT (r:Pattern OR r:`AWS::Domain`) RETURN r")
         .then(elements => {
           this.resources = elements
             .map(r => {
