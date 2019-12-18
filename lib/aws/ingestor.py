@@ -425,7 +425,7 @@ class IAM(Ingestor):
 
         self._db = db
         self.account_id = "000000000000"
-        
+
         if resources is not None:
             self += resources
             return
@@ -750,7 +750,7 @@ class IAM(Ingestor):
 
                     # TODO: This code should be moved to 'ResourceBasedPolicy' and override resolve().
 
-                    # For Roles, actions imply a TRUSTS relationship. For both (ACTION and TRUSTS, only actions beginning
+                    # For Roles, actions imply a TRUSTS relationship. Only those beginning
                     # with sts:Assume are considered valid.
 
                     for action in [a for a in resolved
@@ -770,7 +770,9 @@ class IAM(Ingestor):
                             # This case appears redundant for Buckets
 
                         else:
-                            actions.append(action)
+                            if not action.source().type("AWS::Domain"):
+                                actions.append(action)
+                                
                             if "AWS::Iam::Role" in resource.labels():
                                 trusts.append(Trusts(properties=action.properties(),
                                                      source=action.target(),

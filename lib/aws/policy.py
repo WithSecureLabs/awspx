@@ -159,22 +159,21 @@ class Statement:
 
         elif "Service" in statement:
 
-            pass
-            # services = statement["Service"] if isinstance(
-            #     statement["Service"], list) else [statement["Service"]]
+            services = statement["Service"] if isinstance(
+                statement["Service"], list) else [statement["Service"]]
 
-            # for service in services:
+            for service in services:
 
-            #     if service.endswith("amazonaws.com"):
-            #         labels = ["AWS::Domain"]
-            #     else:
-            #         labels = ["Internet::Domain"]
+                if service.endswith("amazonaws.com"):
+                    labels = ["AWS::Domain"]
+                else:
+                    labels = ["Internet::Domain"]
 
-            #     principals.append(External(
-            #         labels=labels,
-            #         properties={
-            #             "Name": service
-            #         }))
+                principals.append(External(
+                    labels=labels,
+                    properties={
+                        "Name": service
+                    }))
 
         elif "Federated" in statement:
 
