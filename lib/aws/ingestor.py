@@ -126,8 +126,8 @@ class Ingestor(Elements):
 
         except Exception as e:
             sys.stdout.write("\033[F\033[K")
-            print(f"Couldn't load {collection} of {boto_base_resource} "
-                  "- probably due to a resource based policy or something.")
+            print(f"[!] Couldn't load {collection} of {boto_base_resource} "
+                  "-- probably due to a resource based policy or something.")
 
         for resource in resources:
 
@@ -861,7 +861,8 @@ class EC2(Ingestor):
                                                           DryRun=False,
                                                           InstanceId=name)
             except ClientError as e:
-                    print(e)
+                    sys.stdout.write("\033[F\033[K")
+                    print(f"[!] Couldn't get user data for {name} -- it may no longer exist.")
                     
             if 'UserData' in response.keys() and 'Value' in response['UserData'].keys():
                 userdata = b64decode(response['UserData']['Value'])
@@ -917,7 +918,7 @@ class S3(Ingestor):
             except ClientError as e:
                 if "AccessDenied" in str(e):
                     print(
-                        f"Access denied when getting ACL for {bucket.get('Name')}")
+                        f"[!] Access denied when getting ACL for {bucket.get('Name')}")
 
 
 class Lambda(Ingestor):
