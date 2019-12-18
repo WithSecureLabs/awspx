@@ -854,9 +854,13 @@ class EC2(Ingestor):
                 if 'DryRunOperation' not in str(e):
                     print("EC2: Not authorised to get instance user data.")
 
-            response = client.describe_instance_attribute(Attribute="userData",
+            try:
+                response = client.describe_instance_attribute(Attribute="userData",
                                                           DryRun=False,
                                                           InstanceId=name)
+            except ClientError as e:
+                    print(e)
+                    
             if 'UserData' in response.keys() and 'Value' in response['UserData'].keys():
                 userdata = b64decode(response['UserData']['Value'])
                 if userdata[0: 2] == b'\x1f\x8b':  # it's gzip data
