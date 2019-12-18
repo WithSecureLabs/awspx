@@ -11,7 +11,7 @@ realpath() {
 
 function install(){
 
-    BASE="neo4j"
+    BASE="neo4j:3.5.13"
     DEPS=("docker" "rsync")
 
     SOURCE="$(dirname $(realpath $0))"
@@ -87,7 +87,7 @@ function install(){
 
     # Set neo4j user:pass to neo4j:neo4j
     docker exec -it awspx \
-        rm /var/lib/neo4j/data/dbms/auth
+        rm -f -- /var/lib/neo4j/data/dbms/auth
     docker exec -it awspx \
         neo4j-admin set-initial-password neo4j 
 
@@ -109,28 +109,27 @@ function awspx(){
     docker exec -it awspx /opt/awspx/cli.py $@
     }
 
-DOCKER_RUNNING="$(docker info >/dev/null 2>&1)"
-
-if [ "${?}" -ne 0 ]; then 
-    echo "[-] \"docker\" must first be started." 
-    exit 2 
-fi 
-
 if [ "$(uname)" == "Darwin" ]; then
     MOUNT="${HOME}/bin/awspx"
 
 # Linux
 elif [[ "$(uname)" =~ "Linux" ]]; then 
     MOUNT="/opt/awspx"
-	# Ensure script is run as root
-	if [[ "$(whoami)" != "root" ]]; then 
-	    echo "[-] awspx must be run with root privileges."
-	    exit 2
-	fi
+    if [[ "$(whoami)" != "root" ]]; then 
+        echo "[-] awspx must be run with root privileges."
+        exit 2
+    fi
 else 
     echo "[-] Platform: '$(uname)' is not supported"
     exit 1
 fi
+
+DOCKER_RUNNING="$(docker info >/dev/null 2>&1)"
+
+if [ "${?}" -ne 0 ]; then 
+    echo "[-] \"docker\" must first be started." 
+    exit 2 
+fi 
 
 case "$(basename $0)" in
     awspx) awspx $@;;
