@@ -68,7 +68,6 @@ def handle_ingest(args):
     """
     awspx ingest
     """
-
     resources = Elements()
     account = "000000000000"
     session = None
@@ -124,27 +123,27 @@ def handle_ingest(args):
 
     # Run IAM first to try acquire an account number
     if IAM in args.services:
-        graph = IAM(session, db=args.database,
+        graph = IAM(session, db=args.database, verbose=args.verbose,
                     only_types=args.only_types, except_types=args.except_types,
                     only_arns=args.only_arns, except_arns=args.except_arns)
         account = graph.account_id
 
     for service in [s for s in args.services if s != IAM]:
-        resources += service(session, account=account,
+        resources += service(session, account=account, verbose=args.verbose,
                              only_types=args.only_types, except_types=args.except_types,
                              only_arns=args.only_arns, except_arns=args.except_arns)
 
     if graph is None:
-        graph = IAM(session,
+        graph = IAM(session, verbose=args.verbose,
                     db=args.database,
                     resources=resources)
     else:
         graph += resources
 
-    args.load_zip = graph.post()
+    args.load_zip = graph.post(skip_actions=args.skip_actions)
     handle_db(args)
 
-    if not args.skip_attacks:
+    if not (args.skip_attacks or args.skip_actions):
         handle_attacks(args)
 
 
@@ -165,8 +164,11 @@ def handle_attacks(args):
                 not args.include_conditional_attacks)
         )
     except Exception as attack:
-        print(f"[!] Attack: `{attack}` failed, to exclude this "
-              f"attack in future append --except-attacks='{attack}'")
+        if attack in Attacks.definitions:
+            print(f"[!] Attack: `{attack}` failed, to exclude this "
+                  f"attack in future append --except-attacks='{attack}'")
+        else:
+            print("[-]", attack)
 
 
 def handle_db(args):
@@ -331,6 +333,15 @@ def main():
     arn_args.add_argument('--except-arns', dest='except_arns', default=[], nargs="+", type=ARN,
                           help="Resources to exclude by ARN.")
 
+    verbosity = ingest_parser.add_argument_group("Verbosity")
+    verbosity.add_argument('--verbose', dest='verbose', action='store_true', default=False,
+                   help="Enables verbose output messages.")
+
+    actions = ingest_parser.add_argument_group("Actions")
+    actions.add_argument('--skip-actions', dest='skip_actions', action='store_true', default=False,
+                    help="Skip policy resolution (actions will not be processed).")
+
+
     #
     # awspx attacks
     #
@@ -355,7 +366,7 @@ def main():
                         help="Include conditional actions when computing attacks.")
 
         if p is ingest_parser:
-            ag.add_argument('--skip-attacks', dest='skip_attacks', action='store_true', default=None,
+            ag.add_argument('--skip-attacks', dest='skip_attacks', action='store_true', default=False,
                             help="Skip attack path computation (it can be run later with `awspx attacks`).")
 
     #

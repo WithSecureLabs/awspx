@@ -22,12 +22,13 @@ class Ingestor(Elements):
     run = []
     associates = []
 
-    def __init__(self, session, account="000000000000", default=True,
+    def __init__(self, session, account="000000000000", default=True, verbose=True,
                  only_types=[], except_types=[], only_arns=[], except_arns=[]):
 
         self.session = session
         self.account_id = account
         self.run_all = len(self.run) == 0
+        self._verbose = verbose
         self._load_generics()
 
         if default and len(self.run) > 0:
@@ -50,7 +51,8 @@ class Ingestor(Elements):
             self._load_associations()
 
     def _print(self, *messages):
-        sys.stdout.write("\033[F\033[K")
+        if not self._verbose:
+            sys.stdout.write("\033[F\033[K")
         print(''.join(messages))
 
     def _print_stats(self):
@@ -125,7 +127,6 @@ class Ingestor(Elements):
                 collection).all()]
 
         except Exception as e:
-            sys.stdout.write("\033[F\033[K")
             print(f"[!] Couldn't load {collection} of {boto_base_resource} "
                   "-- probably due to a resource based policy or something.")
 
@@ -158,8 +159,7 @@ class Ingestor(Elements):
             # Create resource
             r = Resource(labels=[label], properties=properties)
             if r not in self:
-                sys.stdout.write("\033[F\033[K")
-                print(f"[*] Adding: {r}")
+                self._print(f"[*] Adding {r}")
                 self.append(r)
 
             # Add associative relationship with parent
@@ -259,6 +259,9 @@ class Ingestor(Elements):
 
         if len(self.associates) == 0:
             return
+
+        self._print(
+            f"[*] Adding {self.__class__.__name__} associative relationships")
 
         edges = Elements()
 
@@ -420,17 +423,18 @@ class IAM(Ingestor):
     run = ["AWS::Iam::User", "AWS::Iam::Role", "AWS::Iam::Group",
            "AWS::Iam::Policy", "AWS::Iam::InstanceProfile"]
 
-    def __init__(self, session, resources=None, db="default.db",
+    def __init__(self, session, resources=None, db="default.db", verbose=False,
                  only_types=[], except_types=[], only_arns=[], except_arns=[]):
 
         self._db = db
+        self._verbose = verbose
         self.account_id = "000000000000"
 
         if resources is not None:
             self += resources
             return
 
-        super().__init__(session=session, default=False)
+        super().__init__(session=session, default=False, verbose=verbose)
 
         self.client = self.session.client("iam")
 
@@ -525,8 +529,7 @@ class IAM(Ingestor):
                 and (len(except_arns) == 0 or properties["Arn"] not in except_arns)
                 and (len(only_arns) == 0 or properties["Arn"] in only_arns)
                     and element not in elements):
-                sys.stdout.write("\033[F\033[K")
-                print(f"[*] Adding: {element}")
+                self._print(f"[*] Adding {element}")
                 elements.append(element)
 
             return element
@@ -583,8 +586,6 @@ class IAM(Ingestor):
 
     def get_login_profile(self):
 
-        self._print("[*] Updating login profile information")
-
         for user in self.get("AWS::Iam::User").get("Resource"):
 
             try:
@@ -592,13 +593,14 @@ class IAM(Ingestor):
                     UserName=user.get("Name"))["LoginProfile"]
                 del login_profile["UserName"]
                 user.set("LoginProfile", login_profile)
+                self._print(
+                    f"[+] Updated login profile information for {user}")
 
             except self.client.exceptions.NoSuchEntityException:
                 pass
 
     def list_access_keys(self):
 
-        self._print("[*] Updating access key information")
         for user in self.get("AWS::Iam::User").get("Resource"):
 
             try:
@@ -615,12 +617,14 @@ class IAM(Ingestor):
                     }
 
                 user.set("AccessKeys", access_keys)
+                self._print(f"[+] Updated access key information for {user}")
 
             except self.client.exceptions.NoSuchEntityException:
                 pass
 
-    def post(self):
-        self.resolve()
+    def post(self, skip_actions=False):
+        if not skip_actions:
+            self.resolve()
         self.transitive()
         return self.save(self._db)
 
@@ -708,9 +712,8 @@ class IAM(Ingestor):
 
                 diff = len(actions) - count
                 if diff > 0:
-                    sys.stdout.write("\033[F\033[K")
-                    print(
-                        f"[+] Identity based Policy ({resource}) resolved to {diff} action(s)")
+                    self._print(f"[+] Identity based Policy ({resource}) "
+                                "resolved to {diff} action(s)")
 
             if resource.labels()[0] in RBP.keys():
 
@@ -728,9 +731,8 @@ class IAM(Ingestor):
 
                     diff = len(actions) - count
                     if diff > 0:
-                        sys.stdout.write("\033[F\033[K")
-                        print(
-                            f"[+] Bucket ACL ({resource}) resolved to {diff} action(s)")
+                        print(f"[+] Bucket ACL ({resource}) "
+                              "resolved to {diff} action(s)")
 
                 # Resource Based Policies
 
@@ -772,7 +774,7 @@ class IAM(Ingestor):
                         else:
                             if not action.source().type("AWS::Domain"):
                                 actions.append(action)
-                                
+
                             if "AWS::Iam::Role" in resource.labels():
                                 trusts.append(Trusts(properties=action.properties(),
                                                      source=action.target(),
@@ -781,9 +783,8 @@ class IAM(Ingestor):
                     diff = len(actions) - count
 
                     if diff > 0:
-                        sys.stdout.write("\033[F\033[K")
-                        print(
-                            f"[+] Resource based policy ({resource}) resolved to {diff} action(s)")
+                        print(f"[+] Resource based policy ({resource}) "
+                              "resolved to {diff} action(s)")
 
         principals = [p for p in principals if p not in self]
 
@@ -830,11 +831,12 @@ class EC2(Ingestor):
         ("AWS::Ec2::Vpc", "AWS::Ec2::Subnet"),
     ]
 
-    def __init__(self, session, account="000000000000",
+    def __init__(self, session, account="000000000000", verbose=False,
                  only_types=[], except_types=[], only_arns=[], except_arns=[]):
 
-        super().__init__(session=session, account=account, default=True, only_types=only_types,
-                         except_types=except_types, only_arns=only_arns, except_arns=except_arns)
+        super().__init__(session=session, account=account, verbose=verbose,
+                         only_types=only_types, except_types=except_types,
+                         only_arns=only_arns, except_arns=except_arns)
 
         self.get_instance_user_data()
 
@@ -842,7 +844,6 @@ class EC2(Ingestor):
 
     def get_instance_user_data(self):
 
-        self._print("[*] Updating instance user data")
         client = self.session.client(self.__class__.__name__.lower())
 
         for instance in self.get("AWS::Ec2::Instance").get("Resource"):
@@ -858,12 +859,12 @@ class EC2(Ingestor):
 
             try:
                 response = client.describe_instance_attribute(Attribute="userData",
-                                                          DryRun=False,
-                                                          InstanceId=name)
+                                                              DryRun=False,
+                                                              InstanceId=name)
             except ClientError as e:
-                    sys.stdout.write("\033[F\033[K")
-                    print(f"[!] Couldn't get user data for {name} -- it may no longer exist.")
-                    
+                self._print(f"[!] Couldn't get user data for "
+                            "{name} -- it may no longer exist.")
+
             if 'UserData' in response.keys() and 'Value' in response['UserData'].keys():
                 userdata = b64decode(response['UserData']['Value'])
                 if userdata[0: 2] == b'\x1f\x8b':  # it's gzip data
@@ -873,6 +874,7 @@ class EC2(Ingestor):
                     userdata = userdata.decode('utf-8')
 
                 instance.set("UserData", {"UserData": userdata})
+                self._print(f"[+] Updated instance user data for {instance}")
 
 
 class S3(Ingestor):
@@ -882,10 +884,10 @@ class S3(Ingestor):
         'AWS::S3::Object',
     ]
 
-    def __init__(self, session, account="000000000000",
+    def __init__(self, session, account="000000000000", verbose=False,
                  only_types=[], except_types=[], only_arns=[], except_arns=[]):
 
-        super().__init__(session=session, account=account, default=True,
+        super().__init__(session=session, account=account, verbose=verbose,
                          only_types=only_types, except_types=except_types,
                          only_arns=only_arns, except_arns=except_arns)
 
@@ -896,29 +898,30 @@ class S3(Ingestor):
 
     def get_bucket_policies(self):
 
-        self._print("[*] Updating bucket policies")
         sr = self.session.resource(self.__class__.__name__.lower())
 
         for bucket in self.get("AWS::S3::Bucket").get("Resource"):
             try:
-
                 bucket.set("Policy", json.loads(sr.BucketPolicy(
                     bucket.get('Name')).policy))
-            except:  # no policy for this bucket
+                self._print(f"[+] Updated bucket policy for {bucket}")
+            # No policy for this bucket
+            except:
                 pass
 
     def get_bucket_acls(self):
 
-        self._print("[*] Updating bucket acls")
         sr = self.session.resource(self.__class__.__name__.lower())
 
         for bucket in self.get("AWS::S3::Bucket").get("Resource"):
             try:
                 bucket.set("ACL", sr.BucketAcl(bucket.get('Name')).grants)
+                self._print(f"[+] Updated bucket policy for {bucket}")
             except ClientError as e:
                 if "AccessDenied" in str(e):
-                    print(
-                        f"[!] Access denied when getting ACL for {bucket.get('Name')}")
+                    print(f"[!] Access denied when getting ACL for {bucket}")
+                else:
+                    print("[!]", e)
 
 
 class Lambda(Ingestor):
@@ -926,10 +929,10 @@ class Lambda(Ingestor):
         'AWS::Lambda::Function',
     ]
 
-    def __init__(self, session, account="000000000000",
+    def __init__(self, session, account="000000000000", verbose=False,
                  only_types=[], except_types=[], only_arns=[], except_arns=[]):
 
-        super().__init__(session=session, default=False)
+        super().__init__(session=session, default=False, verbose=verbose)
 
         self.run = [t for t in self.run
                     if (len(except_types) == 0 or t not in except_types)
@@ -969,8 +972,7 @@ class Lambda(Ingestor):
                 labels=["AWS::Lambda::Function"])
 
             if f not in functions:
-                sys.stdout.write("\033[F\033[K")
-                print(f"[*] Adding: {f}")
+                self._print(f"[*] Adding {f}")
                 functions.append(f)
 
         return functions
