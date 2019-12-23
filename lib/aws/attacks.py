@@ -4,6 +4,7 @@ import copy
 import json
 import re
 import sys
+import time
 
 from lib.graph.db import Neo4j
 
@@ -16,8 +17,6 @@ class Attacks:
 
             "Description": "Overwrite the default version of the "
             "target managed policy:",
-
-            "Options": ["Admin"],
 
             "Commands": [
                 "aws create-policy-version "
@@ -49,15 +48,11 @@ class Attacks:
 
                 "Affects": "AWS::Iam::Policy",
 
-                # "Cypher": [
-                #     "(SIZE(SPLIT("
-                #     "${AWS::Iam::Policy}.PolicyVersionList,"
-                #     "'IsDefaultVersion')) - 1) < 5"
-                # ],
+                "Grants": "Admin"
 
             },
 
-            "Grants": "Admin"
+            "Grants": "CreatePolicyVersion"
         },
 
         "AssociateInstanceProfile": {
@@ -467,8 +462,6 @@ class Attacks:
 
             "Description": "Add a new administrative inline policy document to the target group:",
 
-            "Options": ["Admin"],
-
             "Commands": [
                 "aws iam put-group-policy --group-name ${AWS::Iam::Group} "
                 "--policy-name Admin "
@@ -495,7 +488,9 @@ class Attacks:
                     "iam:PutGroupPolicy"
                 ],
 
-                "Affects": "AWS::Iam::Group"
+                "Affects": "AWS::Iam::Group",
+
+                "Grants": "Admin"
 
             },
         },
@@ -503,8 +498,6 @@ class Attacks:
         "PutRolePolicy": {
 
             "Description": "Add a new administrative inline policy document to the target role:",
-
-            "Options": ["Admin"],
 
             "Commands": [
                 "aws iam put-role-policy --role-name ${AWS::Iam::Role} "
@@ -532,7 +525,9 @@ class Attacks:
                     "iam:PutRolePolicy"
                 ],
 
-                "Affects": "AWS::Iam::Role"
+                "Affects": "AWS::Iam::Role",
+
+                "Grants": "Admin"
 
             },
         },
@@ -540,8 +535,6 @@ class Attacks:
         "PutUserPolicy": {
 
             "Description": "Add a new administrative inline policy document to the target user:",
-
-            "Options": ["Admin"],
 
             "Commands": [
                 "aws iam put-user-policy --user-name ${AWS::Iam::User} "
@@ -569,7 +562,9 @@ class Attacks:
                     "iam:PutUserPolicy"
                 ],
 
-                "Affects": "AWS::Iam::User"
+                "Affects": "AWS::Iam::User",
+
+                "Grants": "Admin"
 
             },
         },
@@ -741,7 +736,7 @@ class Attacks:
             '}) '
         )
 
-        # Replace the above with following create ACTIONs from :Admin
+        # Replace the above with the following to create ACTIONs from :Admin
         # return (
         #     "MERGE (admin:Admin:`AWS::Iam::Policy) "
         #     "WITH admin "
@@ -774,34 +769,24 @@ class Attacks:
 
         CYPHER = ""
         VARs = {
-            "target_type": attack["Affects"],
-            "grants_type": attack["Grants"]
-            if "Grants" in attack
-            else "",
             "name": name,
-            "description": definition["Description"],
+            "attack": name,
             "requires_list": attack["Requires"],
+            "target_type": attack["Affects"],
+            "grants_type": attack["Grants"] if "Grants" in attack else "",
+            "dependency": attack["Depends"] if "Depends" in attack else "",
+            "description": definition["Description"],
             "requires": attack["Requires"],
             "commands": definition["Commands"],
-            "attack": name,
-            "dependency": attack["Depends"]
-            if "Depends" in attack
-            else "",
-            "grants": definition["Grants"]
-            if "Grants" in definition
-            else "Create",
+            "grants": definition["Grants"] if "Grants" in definition else "Create",
             "depth": max_search_depth,
             "steps": len(definition["Commands"]),
             "size": len(attack["Requires"]),
         }
 
         OPTs = {
-            "CreateAction": True if "Options" in definition
-            and "CreateAction" in definition["Options"]
-            else False,
-            "Admin":        True if "Options" in definition
-            and "Admin" in definition["Options"]
-            else False,
+            "CreateAction": True if "Options" in definition and "CreateAction" in definition["Options"] else False,
+            "Admin": True if "Grants" in attack and attack["Grants"] == "Admin" else False
         }
 
         def cypher_resolve_commands(history=False):
@@ -922,13 +907,13 @@ class Attacks:
                                      if i[:-1] in UNWIND]),
                     "WITH %s" % ", ".join(
                         [i if i[:-1] not in UNWIND
-                         else "{i}[0] AS {i}, {i}[1] AS {i}_commands".format(i=i[:-1])
-                         for i in WITH]),
+                            else "{i}[0] AS {i}, {i}[1] AS {i}_commands".format(i=i[:-1])
+                            for i in WITH]),
                     "MATCH %s" % ', '.join(CONSTRAINTS),
                     "WITH %s" % ", ".join(
                         [i if i[:-1] not in UNWIND
-                         else "COLLECT([{i},{i}_commands]) AS {j}".format(i=i[:-1], j=i)
-                         for i in WITH])
+                            else "COLLECT([{i},{i}_commands]) AS {j}".format(i=i[:-1], j=i)
+                            for i in WITH])
                 ))
 
             else:
@@ -941,14 +926,11 @@ class Attacks:
         # - searching further would be redundant.
 
         CYPHER += (
-            "OPTIONAL MATCH (ADMIN:Resource) "
-            "WHERE (ADMIN)-[:ATTACK*0..2]->(:Admin) "
-            "OR (ADMIN)-[:ATTACK]->(:Pattern)-[:ATTACK{{Admin:True}}]->() "
-            "OPTIONAL MATCH (admin:Resource)-[:ATTACK|TRANSITIVE*0..]->(ADMIN) "
-            "WITH  REDUCE(admins=[], _ IN COLLECT(admin)|"
-            "CASE WHEN _ IN admins THEN admins "
-            "ELSE admins + _ END) AS admin "
-            "WITH COALESCE(admin, []) AS admin, [[NULL, []]] AS options, [NULL, []] AS grants "
+            "OPTIONAL MATCH (admin)-[:ATTACK*0..2]->(:Admin) "
+            "OPTIONAL MATCH admins=()-[:TRANSITIVE|ATTACK*0..{depth}]->(admin) "
+            "WITH COALESCE([_ IN NODES(admins) WHERE NOT (_:Pattern OR _:Admin)], []) AS admins "
+            "WITH REDUCE(collection=[], _ IN COLLECT(admins)|collection + _) AS admin, "
+            "[[NULL, []]] AS options, [NULL, []] AS grants "
         )
 
         # Patterns including a "Depends" value require an additional argument, which must
@@ -995,32 +977,34 @@ class Attacks:
 
             # VARs["grants_type"] = ""
 
-            CYPHER += (
+            CYPHER += ''.join((
 
-                "OPTIONAL MATCH (grant:`{grants_type}`:Resource) "
-                "OPTIONAL MATCH creation=(c)-[:TRANSITIVE|ATTACK|CREATE*..{depth}]"
-                "->(generic:Generic:`{grants_type}`) "
-                "WHERE c = source "
+                "OPTIONAL MATCH (grant:`{grants_type}`) WHERE NOT grant:Generic ",
+                str("AND grant:Resource " if attack["Grants"]
+                    != "Admin" else ""),
+                "OPTIONAL MATCH creation=(c)-[:TRANSITIVE|ATTACK|CREATE*..{depth}]",
+                "->(generic:Generic:`{grants_type}`) ",
+                "WHERE c = source ",
 
-                "WITH DISTINCT source, options, admin, "
-                "grant, generic, REDUCE(commands=[], _ IN EXTRACT("
-                "_ IN FILTER(_ IN RELS(creation) "
-                "WHERE STARTNODE(_):Pattern)|_.Commands)|"
-                "CASE WHEN _ IN commands THEN commands "
-                "ELSE commands + _ END"
-                ") AS commands "
+                "WITH DISTINCT source, options, admin, ",
+                "grant, generic, REDUCE(commands=[], _ IN EXTRACT(",
+                "_ IN FILTER(_ IN RELS(creation) ",
+                "WHERE STARTNODE(_):Pattern)|_.Commands)|",
+                "CASE WHEN _ IN commands THEN commands ",
+                "ELSE commands + _ END",
+                ") AS commands ",
 
-                "WITH source, options, admin, "
-                "COLLECT([grant, []]) + COLLECT([generic, commands]) AS grants "
-                "UNWIND grants AS grant "
+                "WITH source, options, admin, ",
+                "COLLECT([grant, []]) + COLLECT([generic, commands]) AS grants ",
+                "UNWIND grants AS grant ",
 
-                "WITH DISTINCT source, options, admin, "
-                "grant[0] AS grant, grant[1] AS commands "
-                "WHERE grant[0] IS NOT NULL "
+                "WITH DISTINCT source, options, admin, ",
+                "grant[0] AS grant, grant[1] AS commands ",
+                "WHERE grant[0] IS NOT NULL ",
 
-                "WITH source, options, admin, "
-                "COLLECT([grant, commands]) AS grants "
-            )
+                "WITH source, options, admin, ",
+                "COLLECT([grant, commands]) AS grants ",
+            ))
 
         # Assert: WITH options, grants, admin
 
@@ -1234,13 +1218,13 @@ class Attacks:
             "MATCH (grant) "
             "MERGE (pattern)-[edge:%s{{Name:'{name}'}}]->(grant)" \
             % ("CREATE" if OPTs["CreateAction"] \
-               else "ATTACK"),
+                else "ATTACK"),
             "ON CREATE SET ",
             "edge.Description = \"{description}\",",
             "edge.Commands = commands,",
             "edge.Weight = SIZE(commands),",
             "edge.Option = ID(option)",
-            ", edge.Admin = True " if OPTs["Admin"] else "",
+            ", edge.Admin = True " if OPTs["Admin"] else ""
 
             # Create pattern options
 
@@ -1269,6 +1253,8 @@ class Attacks:
         ignore_actions_with_conditions=True
     ):
 
+        stats = []
+        iteration = 0
         exception = None
 
         print("[*] Searching database for attack patterns\n")
@@ -1276,9 +1262,7 @@ class Attacks:
         sys.stdout.write("\033[F\033[K")
         print("[*] Removing all existing attack patterns")
 
-        Neo4j().run("MATCH (pattern:Pattern) "
-                    "OPTIONAL MATCH ()-[admin]->(:Admin) "
-                    "DETACH DELETE pattern, admin")
+        Neo4j().run("MATCH (p:Pattern) DETACH DELETE p")
 
         sys.stdout.write("\033[F\033[K")
         print("[*] Creating pseudo admin")
@@ -1286,12 +1270,12 @@ class Attacks:
 
         # Temporarily set generic policy to admin. This is
         # because all attack paths that allow for reaching
-        # this node implicitly grant admin.
+        # this node (eg: AttachUserPolicy) would grant admin.
 
-        Neo4j().run("MATCH (policy:Generic:Policy) SET policy:Admin")
+        Neo4j().run("MATCH (gp:`AWS::Iam::Policy`:Generic) SET gp:Admin")
 
         # Identify any new attack paths, we stop when we've
-        # converged or when we've exceeded the maximum number
+        # converged or exceeded the maximum number
         # of iterations.
 
         attack_definitions = {k: v for k, v in Attacks.definitions.items()
@@ -1299,39 +1283,45 @@ class Attacks:
                               and (only_attacks == [] or k in only_attacks)}
 
         try:
-            discovered = 0
-            _ = 0
-            for _ in range(1, max_iterations + 1):
 
-                attack = 0
-                created = 0
+            for iteration in range(1, max_iterations + 1):
 
-                for name, definition in attack_definitions.items():
+                index = 0
+                converged = True
 
-                    exception = name
-                    attack += 1
+                for pattern, definition in attack_definitions.items():
+
+                    exception = pattern
+                    index += 1
 
                     sys.stdout.write("\033[F\033[K")
                     print("[*] Searching for attack "
-                          f"{attack}/{len(attack_definitions)}: "
-                          f"{name} (iteration: {_} of max: {max_iterations})")
+                          f"{index}/{len(attack_definitions)}: "
+                          f"{pattern} (iteration: {iteration} of max: {max_iterations})")
 
                     cypher = Attacks._pattern_cypher(
-                        name,
+                        pattern,
                         definition,
                         max_search_depth=max_search_depth,
                         ignore_actions_with_conditions=ignore_actions_with_conditions
                     )
 
+                    start = time.time()
                     summary = Neo4j().run(cypher).summary()
+
+                    stats.append({
+                        "pattern": pattern,
+                        "iteration": iteration,
+                        "seconds_elapsed": time.time() - start,
+                        **summary.counters.__dict__
+                    })
 
                     if str(summary.counters) == "{}":
                         continue
 
-                    created += 1
-                    discovered += summary.counters.nodes_created
+                    converged = False
 
-                if created == 0:
+                if converged:
                     break
 
             exception = None
@@ -1343,30 +1333,15 @@ class Attacks:
         sys.stdout.write("\033[F\033[K")
         print("[+] Consolidating attack patterns")
 
-        # Remove :Admin (restore generic policy definition)
-        Neo4j().run(
-            "MATCH (source:Pattern)-[edge]->(policy:`AWS::Iam::Policy`:Generic:Admin) " +
-            "MERGE (source)-[admin:ADMIN]->(policy) " +
-            "ON CREATE SET admin = edge " +
-            "DELETE edge " +
-            "REMOVE policy:Admin"
-        )
+        # Restore generic policy (unset :Admin)
 
-        # Patch generalised CYPHER queries to reflect a unified admin definition
-        # Note to self: I'm not sure why we've chosen to flatten
-        # (source)-->(pattern)-->(admin)
+        Neo4j().run("MATCH (gp:`AWS::Iam::Policy`:Generic) REMOVE gp:Admin")
 
-        Neo4j().run(
-            "MATCH (admin:Admin), " +
-            "path=(source:Resource)-[:ATTACK]->(pattern:Pattern)-[edge:ATTACK{Admin:True}]->(target) " +
-            "MERGE (pattern)-[_:ATTACK]->(admin) " +
-            "ON CREATE SET _ = edge, _.Target = ID(edge)"
-        )
+        # Replace all attack 'Description' entries with a 'Descriptions' set that maps
+        # to 'Commands'. We do this to support presenting each command with an associated
+        # description in the front end (rather than only the last description and all comamnds).
+        # It is easier to do it like this than to incorporate logic into _pattern_cypher().
 
-        # Replace all attack 'Description' entries with a 'Descriptions' set, that maps
-        # to all 'Commands' present in the attack.
-
-        # TODO: Need to work out whether a description is referencing the same edge for collection
         Neo4j().run(
             "MATCH ()-[attack:ATTACK]->() " +
             "WITH attack UNWIND attack.Commands AS command " +
@@ -1380,11 +1355,16 @@ class Attacks:
             "REMOVE attack.Description"
         )
 
+        discovered = sum([s["nodes_created"] if "nodes_created" in s
+                          else 0 for s in stats])
+
         sys.stdout.write("\033[F\033[K")
         print(f"[+] {discovered} patterns were discovered " + str(
-              f"(successfully converged after {_} iterations)" if _ < max_iterations else
+              f"(successfully converged after {iteration} iterations)" if iteration < max_iterations else
               f"(failed to converge of {max_iterations})")
               )
+
+        # print(json.dumps(stats, indent=2))
 
         if exception is not None:
             raise Exception(exception)
