@@ -891,8 +891,11 @@ class S3(Ingestor):
                          only_types=only_types, except_types=except_types,
                          only_arns=only_arns, except_arns=except_arns)
 
+        self.client = self.session.client('s3')
+
         self.get_bucket_policies()
         self.get_bucket_acls()
+        self.get_public_access_blocks()
 
         self._print_stats()
 
@@ -922,6 +925,23 @@ class S3(Ingestor):
                     print(f"[!] Access denied when getting ACL for {bucket}")
                 else:
                     print("[!]", e)
+
+    def get_public_access_blocks(self):
+
+        for bucket in self.get("AWS::S3::Bucket").get("Resource"):
+
+            try:
+                # https://docs.aws.amazon.com/AmazonS3/latest/dev/access-control-block-public-access.html
+                # Implicitly affects Bucket ACLs and Policies (values returned by associated get requests 
+                # specify what is being enforced rather than actual values)
+
+                bucket.set("PublicAccessBlock",
+                           self.client.get_public_access_block(
+                               Bucket=bucket.get("Name")
+                           )["PublicAccessBlockConfiguration"])
+
+            except Exception:
+                pass
 
 
 class Lambda(Ingestor):
