@@ -91,6 +91,10 @@ function install(){
     docker exec -it awspx \
         neo4j-admin set-initial-password neo4j 
 
+    # Update neo4j HOST 
+    docker exec -it awspx \
+        sed -i "s|\"bolt://.*\"|\"bolt://${HOST}\"|g" /opt/awspx/www/src/neo4j.js
+
     # Install npm packages (sometimes it fails the first time)
     while :; do
         docker exec -it awspx \
