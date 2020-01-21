@@ -155,7 +155,7 @@ class Statement:
                             "Arn":  principal
                         })
 
-                principals.append(node)
+                principals.add(node)
 
         elif "Service" in statement:
 
@@ -169,7 +169,7 @@ class Statement:
                 else:
                     labels = ["Internet::Domain"]
 
-                principals.append(External(
+                principals.add(External(
                     labels=labels,
                     properties={
                         "Name": service
@@ -211,12 +211,12 @@ class Statement:
                         "Name": statement["Federated"],
                     })
 
-            principals.append(node)
+            principals.add(node)
 
         # TODO:
         elif "CanonicalUser" in statement:
 
-            principals.append(External(
+            principals.add(External(
                 labels=["AWS::Account"],
                 properties={
                     "Name": statement["CanonicalUser"],
@@ -290,9 +290,7 @@ class Statement:
             if len(variables) == 0:
                 for r in results:
                     conditions[r.id()] = [{}]
-                    if r not in resources:
-                        resources.append(r)
-                continue
+                    resources.add(r)
 
             offset = len([x for x in resource if x == '(']) + 1
 
@@ -316,7 +314,7 @@ class Statement:
                     conditions[result.id()].append(condition)
 
                 if result not in resources:
-                    resources.append(result)
+                    resources.add(result)
 
         if '*' in statement:
 
@@ -333,7 +331,7 @@ class Statement:
             for r in resources
         }
 
-        self._explicit_resources = Elements(sorted(resources))
+        self._explicit_resources = Elements(resources)
 
     def __str__(self):
         return str(self._statement)
@@ -377,10 +375,7 @@ class Statement:
             # Rewrite
             resources = Elements()
             for affected in ACTIONS[action]["Affects"]:
-
-                resources.extend(Elements(
-                    [r for r in self._explicit_resources.get(affected)
-                     if r not in resources]))
+                resources.update(Elements(self._explicit_resources.get(affected)))
 
             for resource in resources:
 
@@ -397,7 +392,7 @@ class Statement:
                     if len(condition[0]) > 0 else "[]"
 
                 for principal in self._explicit_principals:
-                    actions.append(Action(
+                    actions.add(Action(
                         properties={
                             "Name":         action,
                             "Description":  ACTIONS[action]["Description"],
@@ -460,16 +455,13 @@ class Document:
     def principals(self):
         principals = Elements()
         for i in range(len(self.statements)):
-            principals.extend([p for p in self.statements[i].principals()
-                               if p not in principals])
+            principals.update(self.statements[i].principals())
         return principals
 
     def resolve(self):
         actions = Elements()
         for i in range(len(self.statements)):
-            results = self.statements[i].resolve()
-            # [r.set("Statement", i) for r in results]
-            actions.extend(r for r in results if r not in actions)
+            actions.update(self.statements[i].resolve())
         return actions
 
 
@@ -498,9 +490,7 @@ class Policy:
 
         actions = Elements()
         for _, policy in self.documents.items():
-            results = policy.resolve()
-            # [r.set("Policy", name) for r in results]
-            actions.extend([r for r in results if r not in actions])
+            actions.update(policy.resolve())
         return actions
 
 
@@ -548,7 +538,7 @@ class ResourceBasedPolicy(Policy):
         principals = Elements()
         for _, policy in self.documents.items():
             results = policy.principals()
-            principals.extend(results)
+            principals.update(results)
         return principals
 
 

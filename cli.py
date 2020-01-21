@@ -133,12 +133,12 @@ def handle_ingest(args):
                              only_types=args.only_types, except_types=args.except_types,
                              only_arns=args.only_arns, except_arns=args.except_arns)
 
-    if graph is None:
+    if graph is None:  
         graph = IAM(session, verbose=args.verbose,
                     db=args.database,
                     resources=resources)
     else:
-        graph += resources
+        graph.update(resources)
 
     args.load_zip = graph.post(skip_actions=args.skip_actions)
     handle_db(args)

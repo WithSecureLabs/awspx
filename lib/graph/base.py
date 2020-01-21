@@ -74,16 +74,19 @@ class Element:
     def set(self, k, v):
         self._properties[k] = v
 
+    def __hash__(self):
+        return hash(self.id())
+
     def __eq__(self, other):
         if isinstance(other, str):
             return other in self.labels()
-        return self.id() == other.id()
+        return self.__hash__() == other.__hash__()
 
     def __lt__(self, other):
-        return self.id() < other.id()
+        return self.__hash__() < other.__hash__()
 
     def __gt__(self, other):
-        return self.id() > other.id()
+        return self.__hash__() > other.__hash__()
 
     def __repr__(self):
         return self.id()
@@ -112,12 +115,12 @@ class Edge(Element):
 
     def _set_id(self):
 
-        self._id = hashlib.md5(("({source})-[:{label}{{{properties}}}]->({target})".format(
+        self._id = hash("({source})-[:{label}{{{properties}}}]->({target})".format(
             source=self.source(),
             label=self.labels()[0],
             properties=json.dumps(self.properties(), sort_keys=True),
             target=self.target())
-        ).encode('utf-8')).hexdigest()
+        )
 
     def source(self):
         return self._source
@@ -128,7 +131,7 @@ class Edge(Element):
     def id(self):
         return self._id
 
-    def set(self, k, v):
+    def modify(self, k, v):
         super().set(k, v)
         self._set_id()
 
@@ -136,14 +139,18 @@ class Edge(Element):
         return str(self.get("Name"))
 
 
-class Elements(list):
+class Elements(set):
 
     def __init__(self, _=[], load=False, generics=False):
 
         super().__init__(_)
 
     def __add__(self, other):
-        return Elements(list(self) + list(other))
+        return Elements(self.union(other))
+
+    def __iadd__(self, other):
+        self.update(other)
+        return Elements(self)
 
     def get(self, label):
         return Elements(filter(lambda r: r.type(label), self))
@@ -186,7 +193,8 @@ class Elements(list):
                 (f, 'str' if [k for k, _ in header].count(f) > 1 else t)
                 for (f, t) in header]))
 
-            if type(elements[0]) is Node or Node in type(elements[0]).__bases__:
+
+            if type(next(iter(elements))) is Node or Node in type(next(iter(elements))).__bases__:
 
                 prefix = [":ID"]
                 suffix = [":LABEL"]

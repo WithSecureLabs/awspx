@@ -47,6 +47,7 @@ class Ingestor(Elements):
                     else f'\n{" " * 15}{r}'
                     for i, r in enumerate(self.run)])
             ))
+
             self._load_resources()
             self._load_associations()
 
@@ -66,7 +67,7 @@ class Ingestor(Elements):
         """
 
         if only_arns and except_arns:
-            print("Can't specify both --only-resource-arns and --except-resource-arns.")
+            print("[!] Can't specify both --only-resource-arns and --except-resource-arns.")
             return False
 
         self.only_arns = self._filter_arns(only_arns)
@@ -127,7 +128,7 @@ class Ingestor(Elements):
                 collection).all()]
 
         except Exception as e:
-            print(f"[!] Couldn't load {collection} of {boto_base_resource} "
+            self._print(f"[!] Couldn't load {collection} of {boto_base_resource} "
                   "-- probably due to a resource based policy or something.")
 
         for resource in resources:
@@ -160,7 +161,7 @@ class Ingestor(Elements):
             r = Resource(labels=[label], properties=properties)
             if r not in self:
                 self._print(f"[*] Adding {r}")
-                self.append(r)
+                self.add(r)
 
             # Add associative relationship with parent
             if awspx_base_resource:
@@ -172,14 +173,16 @@ class Ingestor(Elements):
                     oe = Associative(properties={"Name": "Attached"},
                                      source=awspx_base_resource, target=r)
                     if not (e in self or oe in self):
-                        self.append(e)
+                        self.add(e)
 
             # Load resources from this one's collections
             if self._get_collections(resource):
                 self._load_resources(resource, r)
 
             # Return when we've seen all explicit resources
-            if self.only_arns and all([r in map(lambda x: x.id(), self) for r in self.only_arns]):
+            if self.only_arns and all([
+                    r in map(lambda x: x.id(), self)
+                    for r in self.only_arns]):
                 return
 
     def _get_resource_arn(self, resource, base_resource):
@@ -250,7 +253,7 @@ class Ingestor(Elements):
 
         for k in labels:
 
-            self.append(Generic(properties={
+            self.add(Generic(properties={
                 "Name": "$%s" % k.split(':')[-1],
                 "Arn":  RESOURCES.definition(k)
             }, labels=[k]))
@@ -260,10 +263,9 @@ class Ingestor(Elements):
         if len(self.associates) == 0:
             return
 
-        self._print(
-            f"[*] Adding {self.__class__.__name__} associative relationships")
-
         edges = Elements()
+        self._print(f"[*] Adding {self.__class__.__name__} "
+                    "associative relationships")
 
         for resource in self.get("Resource"):
 
@@ -310,7 +312,7 @@ class Ingestor(Elements):
                                 **{x: list(y)[0] for x, y in references.items() if len(y) == 1},
                                 **{fk: v}
                             })
-                    ).match(r.id()) is not None), None)
+                    ).match(str(r.id())) is not None), None)
 
                     if r is None:
                         # print("Failed to match (%s: %s) against any resources" % (k, v))
@@ -334,9 +336,9 @@ class Ingestor(Elements):
                         properties={"Name": "Attached"}, source=target, target=source)
 
                     if (edge not in self and opposite_edge not in self) and edge not in edges:
-                        edges.append(edge)
+                        edges.add(edge)
 
-        self.extend(edges)
+        self.update(edges)
 
     def _extract_property_value(self, properties, key, depth=None):
 
@@ -446,19 +448,16 @@ class IAM(Ingestor):
             resources=', '.join([r if (i == 0 or i % 3 > 0) else f'\n{" " * 15}{r}'
                                  for i, r in enumerate(self.run)])))
 
-        self._print("[*] Awaiting response to iam:GetAccountAuthorizationDetails "
-                    "(this can take a while)")
-        self += self.get_account_authorization_details(
-            [], [])
+        self.get_account_authorization_details(only_arns, except_arns)
 
         if "AWS::Iam::User" in self.run:
-
             self.get_login_profile()
             self.list_access_keys()
 
         # Set IAM entities
-        self.entities = Elements(
-            self.get('AWS::Iam::User') + self.get('AWS::Iam::Role')
+        self.entities = (
+            self.get('AWS::Iam::User')
+            + self.get('AWS::Iam::Role')
         ).get("Resource")
 
         # Set Account
@@ -476,6 +475,9 @@ class IAM(Ingestor):
             "Policies": [],
             "InstanceProfiles": []
         }
+
+        self._print("[*] Awaiting response to iam:GetAccountAuthorizationDetails "
+                    "(this can take a while)")
 
         def get_aad_element(label, entry):
 
@@ -530,7 +532,7 @@ class IAM(Ingestor):
                 and (len(only_arns) == 0 or properties["Arn"] in only_arns)
                     and element not in elements):
                 self._print(f"[*] Adding {element}")
-                elements.append(element)
+                elements.add(element)
 
             return element
 
@@ -560,7 +562,7 @@ class IAM(Ingestor):
 
         # (:User|Group|Role)-[:TRANSITIVE{Attached}]->(:Policy)
         for (s, t) in edges["Policies"]:
-            elements.append(Transitive(
+            elements.add(Transitive(
                 properties={"Name": "Attached"},
                 source=s,
                 target=t
@@ -568,7 +570,7 @@ class IAM(Ingestor):
 
         # # (:User)-[:TRANSITIVE{MemberOf}]->(:Group)
         for (s, t) in edges["Groups"]:
-            elements.append(Transitive(
+            elements.add(Transitive(
                 properties={"Name": "MemberOf"},
                 source=s,
                 target=t
@@ -577,12 +579,12 @@ class IAM(Ingestor):
         # (:InstanceProfile)-[:TRANSITIVE{Attached}]->(:Role)
         for (s, t) in edges["InstanceProfiles"]:
             del s.properties()["Roles"]
-            elements.append(Transitive(
+            elements.add(Transitive(
                 properties={"Name": "Attached"},
                 source=s,
                 target=t))
 
-        return elements
+        self.update(elements)
 
     def get_login_profile(self):
 
@@ -593,8 +595,8 @@ class IAM(Ingestor):
                     UserName=user.get("Name"))["LoginProfile"]
                 del login_profile["UserName"]
                 user.set("LoginProfile", login_profile)
-                self._print(
-                    f"[+] Updated login profile information for {user}")
+                self._print("[+] Updated login profile "
+                            f"information for {user}")
 
             except self.client.exceptions.NoSuchEntityException:
                 pass
@@ -659,7 +661,7 @@ class IAM(Ingestor):
 
             del instance.properties()["IamInstanceProfile"]
 
-            self.append(Transitive(
+            self.add(Transitive(
                 {"Name": "Attached"}, source=instance, target=target))
 
         # Lambda - [TRANSITIVE] -> Role
@@ -675,7 +677,7 @@ class IAM(Ingestor):
 
             del function.properties()["Role"]
 
-            self.append(Transitive(
+            self.add(Transitive(
                 {"Name": "Attached"}, source=function, target=role))
 
     def resolve(self):
@@ -707,13 +709,13 @@ class IAM(Ingestor):
             if resource.labels()[0] in IDP:
 
                 count = len(actions)
-                actions.extend(IdentityBasedPolicy(
+                actions.update(IdentityBasedPolicy(
                     resource, resources).resolve())
 
                 diff = len(actions) - count
                 if diff > 0:
                     self._print(f"[+] Identity based Policy ({resource}) "
-                                "resolved to {diff} action(s)")
+                                f"resolved to {diff} action(s)")
 
             if resource.labels()[0] in RBP.keys():
 
@@ -724,15 +726,13 @@ class IAM(Ingestor):
                     count = len(actions)
                     acl = BucketACL(resource, resources)
 
-                    principals.extend(
-                        [p for p in acl.principals() if p not in principals])
-                    actions.extend(
-                        [a for a in acl.resolve() if a not in actions])
+                    principals.update(acl.principals())
+                    actions.update(acl.resolve())
 
                     diff = len(actions) - count
                     if diff > 0:
-                        print(f"[+] Bucket ACL ({resource}) "
-                              "resolved to {diff} action(s)")
+                        self._print(f"[+] Bucket ACL ({resource}) "
+                                    f"resolved to {diff} action(s)")
 
                 # Resource Based Policies
 
@@ -746,7 +746,7 @@ class IAM(Ingestor):
                     count = len(actions)
                     resolved = rbp.resolve()
 
-                    principals.extend([p for p in rbp.principals()
+                    principals.update([p for p in rbp.principals()
                                        if p not in principals and
                                        str(p) != RESOURCES.types["AWS::Account"].format(Account=self.account_id)])
 
@@ -764,7 +764,7 @@ class IAM(Ingestor):
 
                             if "AWS::Iam::Role" in resource.labels():
 
-                                trusts.extend([Trusts(properties=action.properties(),
+                                trusts.update([Trusts(properties=action.properties(),
                                                       source=action.target(),
                                                       target=e)
                                                for e in self.entities])
@@ -773,28 +773,25 @@ class IAM(Ingestor):
 
                         else:
                             if not action.source().type("AWS::Domain"):
-                                actions.append(action)
+                                actions.add(action)
 
                             if "AWS::Iam::Role" in resource.labels():
-                                trusts.append(Trusts(properties=action.properties(),
-                                                     source=action.target(),
-                                                     target=action.source()))
+                                trusts.add(Trusts(properties=action.properties(),
+                                                  source=action.target(),
+                                                  target=action.source()))
 
                     diff = len(actions) - count
-
                     if diff > 0:
-                        print(f"[+] Resource based policy ({resource}) "
-                              "resolved to {diff} action(s)")
+                        self._print(f"[+] Resource based policy ({resource}) "
+                                    f"resolved to {diff} action(s)")
 
-        principals = [p for p in principals if p not in self]
-
-        self.extend(principals)
-        self.extend(actions)
-        self.extend(trusts)
+        self.update(principals)
+        self.update(actions)
+        self.update(trusts)
 
         sys.stdout.write("\033[F\033[K")
-        print(
-            f"[+] Produced {len(principals)} new principals and {len(actions)} actions\n")
+        print(f"[+] Produced {len(principals)} "
+              f"new principals and {len(actions)} actions\n")
 
 
 class EC2(Ingestor):
@@ -855,15 +852,15 @@ class EC2(Ingestor):
                     Attribute="userData", DryRun=True, InstanceId=name)
             except ClientError as e:
                 if 'DryRunOperation' not in str(e):
-                    print("EC2: Not authorised to get instance user data.")
+                    self._print("[!] EC2: Not authorised to get instance user data.")
 
             try:
                 response = client.describe_instance_attribute(Attribute="userData",
                                                               DryRun=False,
                                                               InstanceId=name)
             except ClientError as e:
-                self._print(f"[!] Couldn't get user data for "
-                            "{name} -- it may no longer exist.")
+                self._print("[!] Couldn't get user data for "
+                            f"{name} -- it may no longer exist.")
 
             if 'UserData' in response.keys() and 'Value' in response['UserData'].keys():
                 userdata = b64decode(response['UserData']['Value'])
@@ -919,12 +916,12 @@ class S3(Ingestor):
         for bucket in self.get("AWS::S3::Bucket").get("Resource"):
             try:
                 bucket.set("ACL", sr.BucketAcl(bucket.get('Name')).grants)
-                self._print(f"[+] Updated bucket policy for {bucket}")
+                self._print(f"[+] Updated bucket acl for {bucket}")
             except ClientError as e:
                 if "AccessDenied" in str(e):
-                    print(f"[!] Access denied when getting ACL for {bucket}")
+                    self._print(f"[!] Access denied when getting ACL for {bucket}")
                 else:
-                    print("[!]", e)
+                    self._print("[!]", e)
 
     def get_public_access_blocks(self):
 
@@ -932,7 +929,7 @@ class S3(Ingestor):
 
             try:
                 # https://docs.aws.amazon.com/AmazonS3/latest/dev/access-control-block-public-access.html
-                # Implicitly affects Bucket ACLs and Policies (values returned by associated get requests 
+                # Implicitly affects Bucket ACLs and Policies (values returned by associated get requests
                 # specify what is being enforced rather than actual values)
 
                 bucket.set("PublicAccessBlock",
@@ -971,12 +968,13 @@ class Lambda(Ingestor):
                 for i, r in enumerate(self.run)])
         ))
 
-        self += self.list_functions()
+        self.list_functions()
 
         super()._print_stats()
 
     def list_functions(self):
-        functions = []
+
+        functions = Elements()
         self._print("[*] Listing functions (this can take a while)")
         for function in [f
                          for r in self.client.get_paginator("list_functions").paginate()
@@ -993,6 +991,6 @@ class Lambda(Ingestor):
 
             if f not in functions:
                 self._print(f"[*] Adding {f}")
-                functions.append(f)
+                functions.add(f)
 
-        return functions
+        self.update(functions)
