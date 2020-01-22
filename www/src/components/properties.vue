@@ -6,9 +6,9 @@
           v-for="(tab, i) in tabs"
           :key="'title-' + i"
           :disabled="(tabs[i].content.length == 0)"
-          class="text-none subtitle-1"
+          class="text-none"
         >{{tabs[i].title}}</v-tab>
-        <v-tab v-if="notes.enabled" class="text-none subtitle-1">Notes</v-tab>
+        <v-tab v-if="notes.enabled" class="text-none">Notes</v-tab>
       </v-tabs>
 
       <v-tabs-items v-model="tab">
@@ -450,7 +450,6 @@ export default {
 }
 
 .save-notes {
-  font-family: "Roboto Mono";
   background-color: black;
   border: none;
   color: white;

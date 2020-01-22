@@ -10,18 +10,14 @@ export default {
             auth, {
                 encrypted: false
             });
-        var session = driver.session()
-
+            
         Object.defineProperty(
             Vue.prototype,
             '$neo4j', {
-                value: session
+                value: driver
             }
         );
-
     },
 
-    methods: {
-        
-    },
+    methods: {},
 }

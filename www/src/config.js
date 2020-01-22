@@ -45,7 +45,7 @@ export default {
             selector: 'edge',
             style: {
 
-                'font-family': 'Roboto Mono',
+                'font-family': 'Source Code Pro',
                 'font-size': '8px',
 
                 'curve-style': 'bezier',

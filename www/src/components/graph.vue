@@ -98,10 +98,6 @@ export default {
         graph: false,
         enabled: true
       },
-      stats: {
-        nodes: 0,
-        edges: 0
-      },
       events: {
         menu: {},
         select: {},
@@ -338,13 +334,12 @@ export default {
     add_element(elements) {
       let collection = "length" in elements ? elements : [elements];
 
-      if (collection.length < 1) return 0;
+      if (collection.length < 1) return collection;
 
       // TODO: filter for duplicate actions (collapsed vs uncollapsed).
 
       if (collection.length < this.limit.threshold) {
-        this.add_element_continue(collection);
-        return 0;
+        return this.add_element_continue(collection);
       }
 
       this.add_element_pause(collection);
@@ -357,21 +352,19 @@ export default {
     },
 
     add_element_continue(collection) {
-      let length = cy.elements().length;
       this.limit.display = false;
       this.limit.elements = [];
-
       this.loading.graph = true;
       this.destroy_menu();
-      cy.add(collection);
+
+      let elements = cy.add(collection);
       cy.elements()
         .makeLayout({
           ...config.graph.layout
         })
         .run();
-      cy.endBatch();
       this.loading.graph = false;
-      return cy.elements().length - length;
+      return elements;
     },
 
     remove_element(elements) {
@@ -442,7 +435,6 @@ export default {
         };
 
         elements[id] = node;
-        that.stats.nodes += 1;
 
         return elements[id];
       }
@@ -468,7 +460,6 @@ export default {
           });
 
         elements[id] = edge;
-        that.stats.edges += 1;
 
         return [elements[source], elements[target], elements[id]];
       }
@@ -649,8 +640,6 @@ export default {
         });
 
         let collection = cytoscape({ elements: __elements }).elements();
-        that.stats.nodes = collection.nodes().length;
-        that.stats.edges = collection.edges().length;
 
         // Collapse nodes with an indegree > 10
 
@@ -689,16 +678,12 @@ export default {
       }
 
       if (loader) this.loading.query = true;
+      const neo4j = this.$neo4j.session();
 
-      that.stats.nodes = 0;
-      that.stats.edges = 0;
-
-      return this.$neo4j
+      return neo4j
         .run(query)
         .then(response => {
           if (response.records.length <= 0) return [];
-
-          // console.log(`[DBG]: Neo4j returned ${response.records.length} results`);
 
           response.records.forEach(function(record) {
             let result = {};
@@ -718,6 +703,7 @@ export default {
           console.log("[ERR]:", e);
         })
         .finally(() => {
+          neo4j.close();
           if (loader) this.loading.query = false;
         });
     },
@@ -758,11 +744,12 @@ export default {
       this.hide = true;
       fn(target).then(elements => {
         if (!Array.isArray(elements) || elements.length === 0) return;
-        if (this.add_element(elements) > 0) {
-          this.message.text = `Found ${this.stats.nodes} nodes and ${this.stats.edges} edges`;
-          this.message.color = "success";
-          this.message.visible = true;
-        }
+        const added = this.add_element(elements);
+        // if (added.length > 0) {
+        //   this.message.text = `Added ${added.length} elements!`;
+        //   this.message.color = "success";
+        //   this.message.visible = true;
+        // }
       });
     },
 
@@ -1005,6 +992,11 @@ export default {
 </script>
 
 <style>
+.v-application {
+  font-family: "Source Code Pro" !important;
+  font-size: 14px !important;
+}
+
 #graph {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
