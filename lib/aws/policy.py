@@ -649,3 +649,35 @@ class BucketACL(ResourceBasedPolicy):
 
         if "_" in resource.properties():
             del resource.properties()["_"]
+
+
+class ObjectACL(BucketACL):
+    # https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#specifying-grantee
+
+    AccessControlList = {
+        "READ": [
+            "s3:GetObject",
+            "s3:GetObjectVersion",
+            "s3:GetObjectTorrent"
+        ],
+        "WRITE": [
+        ],
+        "READ_ACP": [
+            "s3:GetObjectAcl",
+            "s3:GetObjectVersionAcl",
+        ],
+        "WRITE_ACP": [
+            "s3:PutObjectAcl",
+            "s3:PutObjectVersionAcl",
+        ],
+        "FULL_CONTROL": [
+            "s3:GetObject",
+            "s3:GetObjectVersion",
+            "s3:GetObjectTorrent",
+            "s3:GetObjectAcl",
+            "s3:GetObjectVersionAcl",
+            "s3:PutObjectAcl",
+            "s3:PutObjectVersionAcl",
+        ],
+    }
+

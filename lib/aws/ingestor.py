@@ -9,7 +9,7 @@ from functools import reduce
 import boto3
 from botocore.exceptions import ClientError
 from lib.aws.actions import ACTIONS
-from lib.aws.policy import BucketACL, IdentityBasedPolicy, ResourceBasedPolicy
+from lib.aws.policy import BucketACL, ObjectACL, IdentityBasedPolicy, ResourceBasedPolicy
 from lib.aws.resources import RESOURCES
 from lib.graph.base import Elements
 from lib.graph.db import Neo4j
@@ -691,6 +691,7 @@ class IAM(Ingestor):
 
         RBP = {
             "AWS::S3::Bucket": "Policy",
+            "AWS::S3::Object": "Policy",
             "AWS::Iam::Role": "Trusts"
         }
 
@@ -719,19 +720,22 @@ class IAM(Ingestor):
 
             if resource.labels()[0] in RBP.keys():
 
-                # Bucket ACLs
+                # Bucket & Object ACLs
 
-                if resource.type("AWS::S3::Bucket"):
+                if resource.type("AWS::S3::Bucket") or resource.type("AWS::S3::Object"):
 
                     count = len(actions)
-                    acl = BucketACL(resource, resources)
+                    if resource.type("AWS::S3::Bucket"):
+                        acl = BucketACL(resource, resources)
+                    elif resource.type("AWS::S3::Object"):
+                        acl = ObjectACL(resource, resources)
 
                     principals.update(acl.principals())
                     actions.update(acl.resolve())
 
                     diff = len(actions) - count
                     if diff > 0:
-                        self._print(f"[+] Bucket ACL ({resource}) "
+                        self._print(f"[+] ACL for {resource} "
                                     f"resolved to {diff} action(s)")
 
                 # Resource Based Policies
@@ -893,6 +897,7 @@ class S3(Ingestor):
         self.get_bucket_policies()
         self.get_bucket_acls()
         self.get_public_access_blocks()
+        self.get_object_acls()
 
         self._print_stats()
 
@@ -920,6 +925,23 @@ class S3(Ingestor):
             except ClientError as e:
                 if "AccessDenied" in str(e):
                     self._print(f"[!] Access denied when getting ACL for {bucket}")
+                else:
+                    self._print("[!]", e)
+
+    def get_object_acls(self):
+
+        sr = self.session.resource(self.__class__.__name__.lower())
+
+        for obj in self.get("AWS::S3::Object").get("Resource"):
+            try:
+                arn = obj.get("Arn")
+                bucket, *key = arn.split(':::')[1].split('/')
+                key = "/".join(key)
+                obj.set("ACL", sr.ObjectAcl(bucket,key).grants)
+                self._print(f"[+] Updated object acl for {obj}")
+            except ClientError as e:
+                if "AccessDenied" in str(e):
+                    self._print(f"[!] Access denied when getting ACL for {obj}")
                 else:
                     self._print("[!]", e)
 
