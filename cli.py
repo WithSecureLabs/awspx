@@ -185,6 +185,8 @@ def handle_db(args):
         print(f"[*] Importing records from {args.load_zip}")
         (success, message) = Neo4j.load(args.load_zip, db)
         print(f"{message}\n")
+                  
+        print("Run `awspx attacks` to calculate attack paths.")
 
         if not success:
             sys.exit(1)
@@ -385,7 +387,7 @@ def main():
     db_group.add_argument('--load-zip', dest='load_zip', choices=sorted([z for z in os.listdir("/opt/awspx/data/")
                                                                          if z.endswith(".zip")]),
                           help=("Create a new database from a zip file located in /opt/awspx/data/ (~/bin/awspx/data on Mac)."
-                                "To include attack information `awspx attacks` must be run seperately)."))
+                                "To include attack information `awspx attacks` must be run separately)."))
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
