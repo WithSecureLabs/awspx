@@ -19,45 +19,45 @@ Services = {
     # Implemented
 
     'Iam': {
-        "URL": 'https://docs.aws.amazon.com/IAM/latest/UserGuide/list_identityandaccessmanagement.html'
+        "URL": 'https://docs.aws.amazon.com/IAM/latest/UserGuide/list_identityandaccessmanagement.partial.html'
     },
 
     "Sts": {
-        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awssecuritytokenservice.html",
+        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awssecuritytokenservice.partial.html",
     },
 
     'Ec2': {
-        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonec2.html"
+        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonec2.partial.html"
     },
 
     "S3": {
-        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazons3.html",
+        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazons3.partial.html",
     },
 
     "Lambda": {
-        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awslambda.html"
+        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awslambda.partial.html"
     },
 
     # Partially implemented
 
     "CloudFormation": {
-        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awscloudformation.html"
+        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awscloudformation.partial.html"
     },
     "CloudWatch": {
-        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazoncloudwatch.html"
+        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazoncloudwatch.partial.html"
     },
 
     "DynamoDb": {
-        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazondynamodb.html"
+        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazondynamodb.partial.html"
     },
     "Glacier": {
-        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonglacier.html",
+        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonglacier.partial.html",
     },
     "OpsWorks": {
-        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awsopsworks.html"
+        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awsopsworks.partial.html"
     },
     "Sns": {
-        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonsns.html"
+        "URL": "https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonsns.partial.html"
     },
 
     # Not implemented
@@ -137,7 +137,7 @@ for service, values in Services.items():
                 for k, v in r.items() if k != definition['Action']
             }
 
-            # Ammend Specific (Non-Compulsory) Keys
+            # Amend Specific (Non-Compulsory) Keys
 
             if "Condition Keys" in data and isinstance(data["Condition Keys"], str):
                 data["Condition Keys"] = data["Condition Keys"].split()
@@ -170,6 +170,8 @@ for service, values in Services.items():
 
                 resources.update(matches)
 
+            access = data["Access Level"].title()
+
             urls = [link.get('href') for link in URLs if str(
                 link.text).strip() == r[definition['Action']]]
             url = urls[0] if len(urls) == 1 else ''
@@ -179,7 +181,7 @@ for service, values in Services.items():
 
             data = {
                 "Affects": list(resources),
-                "Access": data["Access Level"].title(),
+                "Access": access,
                 "Description": " ".join(data["Description"].split()),
                 "Reference": url,
                 **{k: v for k, v in data.items() if k not in ["Resource", "Access Level", "Description"]}

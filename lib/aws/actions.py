@@ -30,12 +30,12 @@ ACTIONS = {
       "AWS::CloudFormation::StackSet"
     ],
     "Condition Keys": [
-      "cloudformation:ChangeSetName",
-      "cloudformation:TemplateUrl",
-      "cloudformation:ResourceTypes",
-      "aws:RequestTag/${TagKey}",
       "cloudformation:RoleArn",
+      "cloudformation:TemplateUrl",
       "aws:TagKeys",
+      "cloudformation:ChangeSetName",
+      "aws:RequestTag/${TagKey}",
+      "cloudformation:ResourceTypes",
       "cloudformation:StackPolicyUrl"
     ],
     "Dependent Actions": [],
@@ -49,11 +49,11 @@ ACTIONS = {
       "AWS::CloudFormation::StackSet"
     ],
     "Condition Keys": [
-      "cloudformation:TemplateUrl",
-      "cloudformation:ResourceTypes",
-      "aws:RequestTag/${TagKey}",
       "cloudformation:RoleArn",
+      "cloudformation:TemplateUrl",
       "aws:TagKeys",
+      "aws:RequestTag/${TagKey}",
+      "cloudformation:ResourceTypes",
       "cloudformation:StackPolicyUrl"
     ],
     "Dependent Actions": [],
@@ -476,11 +476,11 @@ ACTIONS = {
       "AWS::CloudFormation::StackSet"
     ],
     "Condition Keys": [
-      "cloudformation:TemplateUrl",
-      "cloudformation:ResourceTypes",
-      "aws:RequestTag/${TagKey}",
       "cloudformation:RoleArn",
+      "cloudformation:TemplateUrl",
       "aws:TagKeys",
+      "aws:RequestTag/${TagKey}",
+      "cloudformation:ResourceTypes",
       "cloudformation:StackPolicyUrl"
     ],
     "Dependent Actions": [],
@@ -503,10 +503,10 @@ ACTIONS = {
       "AWS::CloudFormation::StackSet"
     ],
     "Condition Keys": [
+      "aws:RequestTag/${TagKey}",
       "cloudformation:TemplateUrl",
-      "cloudformation:RoleArn",
       "aws:TagKeys",
-      "aws:RequestTag/${TagKey}"
+      "cloudformation:RoleArn"
     ],
     "Dependent Actions": [],
     "Description": "Updates a stackset as specified in the template.",
@@ -559,6 +559,14 @@ ACTIONS = {
     "Description": "Deletes all CloudWatch dashboards that you specify",
     "Reference": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DeleteDashboards.html"
   },
+  "cloudwatch:DeleteInsightRules": {
+    "Access": "Write",
+    "Affects": [],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Grants permission to delete a collection of insight rules.",
+    "Reference": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DeleteInsightRules.html"
+  },
   "cloudwatch:DescribeAlarmHistory": {
     "Access": "Read",
     "Affects": [
@@ -595,6 +603,14 @@ ACTIONS = {
     "Description": "Lists the anomaly detection models that you have created in your account.",
     "Reference": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeAnomalyDetectors.html"
   },
+  "cloudwatch:DescribeInsightRules": {
+    "Access": "Read",
+    "Affects": [],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Grants permission to describe all insight rules, currently owned by the user's account.",
+    "Reference": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeInsightRules.html"
+  },
   "cloudwatch:DisableAlarmActions": {
     "Access": "Write",
     "Affects": [
@@ -604,6 +620,14 @@ ACTIONS = {
     "Dependent Actions": [],
     "Description": "Disables actions for the specified alarms",
     "Reference": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DisableAlarmActions.html"
+  },
+  "cloudwatch:DisableInsightRules": {
+    "Access": "Write",
+    "Affects": [],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Grants permission to disable a collection of insight rules.",
+    "Reference": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DisableInsightRules.html"
   },
   "cloudwatch:EnableAlarmActions": {
     "Access": "Write",
@@ -615,6 +639,14 @@ ACTIONS = {
     "Description": "Enables actions for the specified alarms",
     "Reference": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_EnableAlarmActions.html"
   },
+  "cloudwatch:EnableInsightRules": {
+    "Access": "Write",
+    "Affects": [],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Grants permission to enable a collection of insight rules.",
+    "Reference": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_EnableInsightRules.html"
+  },
   "cloudwatch:GetDashboard": {
     "Access": "Read",
     "Affects": [
@@ -624,6 +656,14 @@ ACTIONS = {
     "Dependent Actions": [],
     "Description": "Displays the details of the CloudWatch dashboard you specify",
     "Reference": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetDashboard.html"
+  },
+  "cloudwatch:GetInsightRuleReport": {
+    "Access": "Read",
+    "Affects": [],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Grants permission to return the top-N report of unique contributors over a time range for a given insight rule.",
+    "Reference": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetInsightRuleReport.html"
   },
   "cloudwatch:GetMetricData": {
     "Access": "Read",
@@ -693,14 +733,22 @@ ACTIONS = {
     "Description": "Creates a CloudWatch dashboard, or updates an existing dashboard if it already exists",
     "Reference": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutDashboard.html"
   },
+  "cloudwatch:PutInsightRule": {
+    "Access": "Write",
+    "Affects": [],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Grants permission to create a new insight rule or replace an existing insight rule.",
+    "Reference": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutInsightRule.html"
+  },
   "cloudwatch:PutMetricAlarm": {
     "Access": "Write",
     "Affects": [
       "AWS::CloudWatch::Alarm"
     ],
     "Condition Keys": [
-      "aws:TagKeys",
-      "aws:RequestTag/${TagKey}"
+      "aws:RequestTag/${TagKey}",
+      "aws:TagKeys"
     ],
     "Dependent Actions": [],
     "Description": "Creates or updates an alarm and associates it with the specified Amazon CloudWatch metric",
@@ -732,8 +780,8 @@ ACTIONS = {
       "AWS::CloudWatch::Alarm"
     ],
     "Condition Keys": [
-      "aws:TagKeys",
-      "aws:RequestTag/${TagKey}"
+      "aws:RequestTag/${TagKey}",
+      "aws:TagKeys"
     ],
     "Dependent Actions": [],
     "Description": "This action tags an Amazon CloudWatch resource.",
@@ -757,9 +805,9 @@ ACTIONS = {
       "AWS::DynamoDb::Table"
     ],
     "Condition Keys": [
-      "dynamodb:LeadingKeys",
       "dynamodb:ReturnConsumedCapacity",
       "dynamodb:Attributes",
+      "dynamodb:LeadingKeys",
       "dynamodb:Select"
     ],
     "Dependent Actions": [],
@@ -772,9 +820,9 @@ ACTIONS = {
       "AWS::DynamoDb::Table"
     ],
     "Condition Keys": [
-      "dynamodb:LeadingKeys",
       "dynamodb:ReturnConsumedCapacity",
-      "dynamodb:Attributes"
+      "dynamodb:Attributes",
+      "dynamodb:LeadingKeys"
     ],
     "Dependent Actions": [],
     "Description": "Puts or deletes multiple items in one or more tables",
@@ -786,9 +834,9 @@ ACTIONS = {
       "AWS::DynamoDb::Table"
     ],
     "Condition Keys": [
-      "dynamodb:LeadingKeys",
       "dynamodb:ReturnConsumedCapacity",
       "dynamodb:Attributes",
+      "dynamodb:LeadingKeys",
       "dynamodb:ReturnValues"
     ],
     "Dependent Actions": [],
@@ -808,8 +856,8 @@ ACTIONS = {
   "dynamodb:CreateGlobalTable": {
     "Access": "Write",
     "Affects": [
-      "AWS::DynamoDb::Table",
-      "AWS::DynamoDb::GlobalTable"
+      "AWS::DynamoDb::GlobalTable",
+      "AWS::DynamoDb::Table"
     ],
     "Condition Keys": [],
     "Dependent Actions": [],
@@ -825,6 +873,16 @@ ACTIONS = {
     "Dependent Actions": [],
     "Description": "The CreateTable operation adds a new table to your account",
     "Reference": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html"
+  },
+  "dynamodb:CreateTableReplica": {
+    "Access": "Write",
+    "Affects": [
+      "AWS::DynamoDb::Table"
+    ],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Adds a new replica table",
+    "Reference": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/V2gt_IAM.html"
   },
   "dynamodb:DeleteBackup": {
     "Access": "Write",
@@ -844,9 +902,9 @@ ACTIONS = {
     "Condition Keys": [
       "dynamodb:EnclosingOperation",
       "dynamodb:Attributes",
-      "dynamodb:LeadingKeys",
+      "dynamodb:ReturnValues",
       "dynamodb:ReturnConsumedCapacity",
-      "dynamodb:ReturnValues"
+      "dynamodb:LeadingKeys"
     ],
     "Dependent Actions": [],
     "Description": "Deletes a single item in a table by primary key",
@@ -861,6 +919,16 @@ ACTIONS = {
     "Dependent Actions": [],
     "Description": "The DeleteTable operation deletes a table and all of its items",
     "Reference": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html"
+  },
+  "dynamodb:DeleteTableReplica": {
+    "Access": "Write",
+    "Affects": [
+      "AWS::DynamoDb::Table"
+    ],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Deletes a replica table and all of its items",
+    "Reference": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/V2gt_IAM.html"
   },
   "dynamodb:DescribeBackup": {
     "Access": "Read",
@@ -881,6 +949,17 @@ ACTIONS = {
     "Dependent Actions": [],
     "Description": "Checks the status of the backup restore settings on the specified table",
     "Reference": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeContinuousBackups.html"
+  },
+  "dynamodb:DescribeContributorInsights": {
+    "Access": "Read",
+    "Affects": [
+      "AWS::DynamoDb::Index",
+      "AWS::DynamoDb::Table"
+    ],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Describes the contributor insights status and related details for a given table or global secondary index",
+    "Reference": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeContributorInsights.html"
   },
   "dynamodb:DescribeGlobalTable": {
     "Access": "Read",
@@ -946,6 +1025,16 @@ ACTIONS = {
     "Description": "Returns information about the table",
     "Reference": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html"
   },
+  "dynamodb:DescribeTableReplicaAutoScaling": {
+    "Access": "Read",
+    "Affects": [
+      "AWS::DynamoDb::Table"
+    ],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Describes the auto scaling settings across all replicas of the global table",
+    "Reference": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTableReplicaAutoScaling.html"
+  },
   "dynamodb:DescribeTimeToLive": {
     "Access": "Read",
     "Affects": [
@@ -965,8 +1054,8 @@ ACTIONS = {
       "dynamodb:EnclosingOperation",
       "dynamodb:Attributes",
       "dynamodb:Select",
-      "dynamodb:LeadingKeys",
-      "dynamodb:ReturnConsumedCapacity"
+      "dynamodb:ReturnConsumedCapacity",
+      "dynamodb:LeadingKeys"
     ],
     "Dependent Actions": [],
     "Description": "The GetItem operation returns a set of attributes for the item with the given primary key",
@@ -999,6 +1088,16 @@ ACTIONS = {
     "Dependent Actions": [],
     "Description": "List backups associated with the account and endpoint",
     "Reference": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListBackups.html"
+  },
+  "dynamodb:ListContributorInsights": {
+    "Access": "List",
+    "Affects": [
+      "AWS::DynamoDb::Table"
+    ],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Lists the ContributorInsightsSummary for all tables and global secondary indexes associated with the current account and endpoint",
+    "Reference": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListContributorInsights.html"
   },
   "dynamodb:ListGlobalTables": {
     "Access": "List",
@@ -1050,9 +1149,9 @@ ACTIONS = {
     "Condition Keys": [
       "dynamodb:EnclosingOperation",
       "dynamodb:Attributes",
-      "dynamodb:LeadingKeys",
+      "dynamodb:ReturnValues",
       "dynamodb:ReturnConsumedCapacity",
-      "dynamodb:ReturnValues"
+      "dynamodb:LeadingKeys"
     ],
     "Dependent Actions": [],
     "Description": "Creates a new item, or replaces an old item with a new item",
@@ -1065,11 +1164,11 @@ ACTIONS = {
       "AWS::DynamoDb::Table"
     ],
     "Condition Keys": [
-      "dynamodb:Attributes",
       "dynamodb:Select",
-      "dynamodb:LeadingKeys",
+      "dynamodb:Attributes",
+      "dynamodb:ReturnValues",
       "dynamodb:ReturnConsumedCapacity",
-      "dynamodb:ReturnValues"
+      "dynamodb:LeadingKeys"
     ],
     "Dependent Actions": [],
     "Description": "Uses the primary key of a table or a secondary index to directly access items from that table or index",
@@ -1103,11 +1202,11 @@ ACTIONS = {
       "AWS::DynamoDb::Table"
     ],
     "Condition Keys": [
-      "dynamodb:Attributes",
       "dynamodb:Select",
-      "dynamodb:LeadingKeys",
+      "dynamodb:Attributes",
+      "dynamodb:ReturnValues",
       "dynamodb:ReturnConsumedCapacity",
-      "dynamodb:ReturnValues"
+      "dynamodb:LeadingKeys"
     ],
     "Dependent Actions": [],
     "Description": "Returns one or more items and item attributes by accessing every item in a table or a secondary index",
@@ -1143,11 +1242,22 @@ ACTIONS = {
     "Description": "Enables or disables continuous backups",
     "Reference": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateContinuousBackups.html"
   },
+  "dynamodb:UpdateContributorInsights": {
+    "Access": "Write",
+    "Affects": [
+      "AWS::DynamoDb::Index",
+      "AWS::DynamoDb::Table"
+    ],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Updates the status for contributor insights for a specific table or global secondary index",
+    "Reference": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateContributorInsights.html"
+  },
   "dynamodb:UpdateGlobalTable": {
     "Access": "Write",
     "Affects": [
-      "AWS::DynamoDb::Table",
-      "AWS::DynamoDb::GlobalTable"
+      "AWS::DynamoDb::GlobalTable",
+      "AWS::DynamoDb::Table"
     ],
     "Condition Keys": [],
     "Dependent Actions": [],
@@ -1157,8 +1267,8 @@ ACTIONS = {
   "dynamodb:UpdateGlobalTableSettings": {
     "Access": "Write",
     "Affects": [
-      "AWS::DynamoDb::Table",
-      "AWS::DynamoDb::GlobalTable"
+      "AWS::DynamoDb::GlobalTable",
+      "AWS::DynamoDb::Table"
     ],
     "Condition Keys": [],
     "Dependent Actions": [],
@@ -1173,9 +1283,9 @@ ACTIONS = {
     "Condition Keys": [
       "dynamodb:EnclosingOperation",
       "dynamodb:Attributes",
-      "dynamodb:LeadingKeys",
+      "dynamodb:ReturnValues",
       "dynamodb:ReturnConsumedCapacity",
-      "dynamodb:ReturnValues"
+      "dynamodb:LeadingKeys"
     ],
     "Dependent Actions": [],
     "Description": "Edits an existing item's attributes, or adds a new item to the table if it does not already exist",
@@ -1190,6 +1300,16 @@ ACTIONS = {
     "Dependent Actions": [],
     "Description": "Modifies the provisioned throughput settings, global secondary indexes, or DynamoDB Streams settings for a given table",
     "Reference": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html"
+  },
+  "dynamodb:UpdateTableReplicaAutoScaling": {
+    "Access": "Write",
+    "Affects": [
+      "AWS::DynamoDb::Table"
+    ],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Updates auto scaling settings on your replica table",
+    "Reference": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTableReplicaAutoScaling.html"
   },
   "dynamodb:UpdateTimeToLive": {
     "Access": "Write",
@@ -1233,14 +1353,14 @@ ACTIONS = {
   "ec2:AcceptVpcPeeringConnection": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::Vpc",
-      "AWS::Ec2::VpcPeeringConnection"
+      "AWS::Ec2::VpcPeeringConnection",
+      "AWS::Ec2::Vpc"
     ],
     "Condition Keys": [
       "ec2:Region",
-      "ec2:RequesterVpc",
-      "ec2:AccepterVpc",
       "ec2:Tenancy",
+      "ec2:AccepterVpc",
+      "ec2:RequesterVpc",
       "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
@@ -1274,14 +1394,14 @@ ACTIONS = {
   "ec2:ApplySecurityGroupsToClientVpnTargetNetwork": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::Vpc",
-      "AWS::Ec2::ClientVpnEndpoint",
       "AWS::Ec2::VpcPeeringConnection",
+      "AWS::Ec2::ClientVpnEndpoint",
+      "AWS::Ec2::Vpc",
       "AWS::Ec2::SecurityGroup"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Applies a security group to the association between the target network and the Client VPN endpoint.",
@@ -1318,8 +1438,8 @@ ACTIONS = {
       "AWS::Ec2::Subnet"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Associates a target network with a Client VPN endpoint.",
@@ -1374,12 +1494,12 @@ ACTIONS = {
   "ec2:AssociateTransitGatewayRouteTable": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TransitGatewayAttachment",
-      "AWS::Ec2::TransitGatewayRouteTable"
+      "AWS::Ec2::TransitGatewayRouteTable",
+      "AWS::Ec2::TransitGatewayAttachment"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Associates the specified attachment with the specified transit gateway route table",
@@ -1396,22 +1516,22 @@ ACTIONS = {
   "ec2:AttachClassicLinkVpc": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::Vpc",
-      "AWS::Ec2::Instance",
       "AWS::Ec2::VpcPeeringConnection",
+      "AWS::Ec2::Instance",
+      "AWS::Ec2::Vpc",
       "AWS::Ec2::SecurityGroup"
     ],
     "Condition Keys": [
-      "ec2:RootDeviceType",
       "ec2:Region",
-      "ec2:AvailabilityZone",
-      "ec2:PlacementGroup",
       "ec2:Vpc",
+      "ec2:InstanceType",
       "ec2:Tenancy",
-      "ec2:ResourceTag/${TagKey}",
       "ec2:InstanceProfile",
+      "ec2:AvailabilityZone",
+      "ec2:ResourceTag/${TagKey}",
       "ec2:EbsOptimized",
-      "ec2:InstanceType"
+      "ec2:PlacementGroup",
+      "ec2:RootDeviceType"
     ],
     "Dependent Actions": [],
     "Description": "Links an EC2-Classic instance to a ClassicLink-enabled VPC through one or more of the VPC's security groups.",
@@ -1440,20 +1560,20 @@ ACTIONS = {
       "AWS::Ec2::Instance"
     ],
     "Condition Keys": [
-      "ec2:RootDeviceType",
       "ec2:Region",
-      "ec2:VolumeIops",
       "ec2:Encrypted",
-      "ec2:VolumeType",
+      "ec2:InstanceType",
+      "ec2:ParentSnapshot",
+      "ec2:Tenancy",
+      "ec2:InstanceProfile",
       "ec2:VolumeSize",
       "ec2:AvailabilityZone",
       "ec2:ResourceTag/${TagKey}",
-      "ec2:ParentSnapshot",
-      "ec2:Tenancy",
-      "ec2:PlacementGroup",
-      "ec2:InstanceProfile",
+      "ec2:VolumeIops",
       "ec2:EbsOptimized",
-      "ec2:InstanceType"
+      "ec2:PlacementGroup",
+      "ec2:VolumeType",
+      "ec2:RootDeviceType"
     ],
     "Dependent Actions": [],
     "Description": "Attaches an EBS volume to a running or stopped instance and exposes it to the instance with the specified device name.",
@@ -1611,8 +1731,14 @@ ACTIONS = {
   },
   "ec2:CopySnapshot": {
     "Access": "Write",
-    "Affects": [],
-    "Condition Keys": [],
+    "Affects": [
+      "AWS::Ec2::Snapshot"
+    ],
+    "Condition Keys": [
+      "aws:TagKeys",
+      "aws:RequestTag/${TagKey}",
+      "ec2:Region"
+    ],
     "Dependent Actions": [],
     "Description": "Copies a point-in-time snapshot of an EBS volume and stores it in Amazon S3.",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CopySnapshot.html"
@@ -1646,8 +1772,8 @@ ACTIONS = {
       "AWS::Ec2::Subnet"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Adds a route to a network to a Client VPN endpoint.",
@@ -1874,15 +2000,15 @@ ACTIONS = {
       "AWS::Ec2::Snapshot"
     ],
     "Condition Keys": [
-      "ec2:VolumeType",
       "ec2:Region",
-      "ec2:VolumeIops",
       "ec2:Encrypted",
-      "ec2:ParentVolume",
-      "aws:RequestTag/${TagKey}",
+      "ec2:VolumeSize",
       "aws:TagKeys",
+      "aws:RequestTag/${TagKey}",
       "ec2:ResourceTag/${TagKey}",
-      "ec2:VolumeSize"
+      "ec2:ParentVolume",
+      "ec2:VolumeIops",
+      "ec2:VolumeType"
     ],
     "Dependent Actions": [],
     "Description": "Creates a snapshot of an EBS volume and stores it in Amazon S3.",
@@ -1892,26 +2018,26 @@ ACTIONS = {
     "Access": "Write",
     "Affects": [
       "AWS::Ec2::Volume",
-      "AWS::Ec2::Instance",
-      "AWS::Ec2::Snapshot"
+      "AWS::Ec2::Snapshot",
+      "AWS::Ec2::Instance"
     ],
     "Condition Keys": [
-      "ec2:RootDeviceType",
       "ec2:Region",
-      "ec2:VolumeIops",
-      "ec2:ParentVolume",
       "ec2:Encrypted",
-      "ec2:VolumeType",
+      "ec2:InstanceType",
+      "ec2:Tenancy",
+      "ec2:InstanceProfile",
       "ec2:VolumeSize",
+      "aws:TagKeys",
       "ec2:AvailabilityZone",
       "aws:RequestTag/${TagKey}",
-      "ec2:PlacementGroup",
-      "aws:TagKeys",
-      "ec2:Tenancy",
       "ec2:ResourceTag/${TagKey}",
-      "ec2:InstanceProfile",
+      "ec2:VolumeIops",
       "ec2:EbsOptimized",
-      "ec2:InstanceType"
+      "ec2:ParentVolume",
+      "ec2:PlacementGroup",
+      "ec2:VolumeType",
+      "ec2:RootDeviceType"
     ],
     "Dependent Actions": [],
     "Description": "Creates a snapshots of an EBS volumes which attached to an EC2 instance and stores them in Amazon S3.",
@@ -1936,58 +2062,58 @@ ACTIONS = {
   "ec2:CreateTags": {
     "Access": "Tagging",
     "Affects": [
-      "AWS::Ec2::Vpc",
-      "AWS::Ec2::Snapshot",
-      "AWS::Ec2::Image",
-      "AWS::Ec2::TrafficMirrorTarget",
-      "AWS::Ec2::DhcpOptions",
-      "AWS::Ec2::Volume",
+      "AWS::Ec2::Subnet",
       "AWS::Ec2::VpnConnection",
-      "AWS::Ec2::SecurityGroup",
-      "AWS::Ec2::ClientVpnEndpoint",
-      "AWS::Ec2::CapacityReservation",
+      "AWS::Ec2::NetworkAcl",
+      "AWS::Ec2::Snapshot",
+      "AWS::Ec2::TrafficMirrorFilter",
+      "AWS::Ec2::FpgaImage",
+      "AWS::Ec2::TrafficMirrorTarget",
+      "AWS::Ec2::TrafficMirrorSession",
+      "AWS::Ec2::Instance",
+      "AWS::Ec2::Volume",
+      "AWS::Ec2::InternetGateway",
+      "AWS::Ec2::VpnGateway",
+      "AWS::Ec2::NetworkInterface",
+      "AWS::Ec2::ReservedInstances",
+      "AWS::Ec2::DhcpOptions",
+      "AWS::Ec2::TransitGatewayRouteTable",
+      "AWS::Ec2::Image",
       "AWS::Ec2::RouteTable",
       "AWS::Ec2::SpotInstanceRequest",
-      "AWS::Ec2::VpnGateway",
-      "AWS::Ec2::NetworkAcl",
+      "AWS::Ec2::ClientVpnEndpoint",
       "AWS::Ec2::TransitGatewayAttachment",
-      "AWS::Ec2::ReservedInstances",
-      "AWS::Ec2::TrafficMirrorSession",
-      "AWS::Ec2::TrafficMirrorFilter",
-      "AWS::Ec2::Instance",
-      "AWS::Ec2::TransitGatewayRouteTable",
-      "AWS::Ec2::InternetGateway",
-      "AWS::Ec2::FpgaImage",
-      "AWS::Ec2::NetworkInterface",
-      "AWS::Ec2::Subnet",
-      "AWS::Ec2::TransitGateway"
+      "AWS::Ec2::SecurityGroup",
+      "AWS::Ec2::CapacityReservation",
+      "AWS::Ec2::TransitGateway",
+      "AWS::Ec2::Vpc"
     ],
     "Condition Keys": [
+      "ec2:Vpc",
+      "ec2:Public",
+      "ec2:CreateAction",
+      "ec2:InstanceType",
+      "ec2:Tenancy",
+      "ec2:ReservedInstancesOfferingType",
+      "ec2:AvailabilityZone",
+      "ec2:ImageType",
+      "ec2:PlacementGroup",
       "ec2:VolumeType",
       "ec2:Region",
-      "ec2:SnapshotTime",
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:PlacementGroup",
-      "ec2:VolumeSize",
-      "ec2:EbsOptimized",
-      "ec2:VolumeIops",
-      "ec2:Encrypted",
-      "ec2:ImageType",
-      "ec2:Owner",
-      "ec2:Public",
-      "ec2:Tenancy",
-      "ec2:InstanceType",
-      "ec2:AvailabilityZone",
-      "ec2:CreateAction",
-      "aws:TagKeys",
-      "ec2:ReservedInstancesOfferingType",
-      "ec2:RootDeviceType",
-      "ec2:ParentVolume",
-      "ec2:Subnet",
-      "aws:RequestTag/${TagKey}",
-      "ec2:Vpc",
       "ec2:ParentSnapshot",
-      "ec2:InstanceProfile"
+      "ec2:VolumeSize",
+      "ec2:Subnet",
+      "aws:TagKeys",
+      "ec2:EbsOptimized",
+      "ec2:RootDeviceType",
+      "ec2:Encrypted",
+      "ec2:SnapshotTime",
+      "ec2:InstanceProfile",
+      "ec2:Owner",
+      "aws:RequestTag/${TagKey}",
+      "ec2:ResourceTag/${TagKey}",
+      "ec2:ParentVolume",
+      "ec2:VolumeIops"
     ],
     "Dependent Actions": [],
     "Description": "Adds or overwrites one or more tags for the specified Amazon EC2 resource or resources.",
@@ -2015,8 +2141,8 @@ ACTIONS = {
       "AWS::Ec2::TrafficMirrorFilter"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Creates a Traffic Mirror filter rule.",
@@ -2025,17 +2151,17 @@ ACTIONS = {
   "ec2:CreateTrafficMirrorSession": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TrafficMirrorFilterRule",
-      "AWS::Ec2::TrafficMirrorSession",
       "AWS::Ec2::TrafficMirrorFilter",
       "AWS::Ec2::NetworkInterface",
-      "AWS::Ec2::TrafficMirrorTarget"
+      "AWS::Ec2::TrafficMirrorSession",
+      "AWS::Ec2::TrafficMirrorTarget",
+      "AWS::Ec2::TrafficMirrorFilterRule"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
       "ec2:Region",
-      "aws:TagKeys",
-      "aws:RequestTag/${TagKey}"
+      "aws:RequestTag/${TagKey}",
+      "ec2:ResourceTag/${TagKey}",
+      "aws:TagKeys"
     ],
     "Dependent Actions": [],
     "Description": "Creates a Traffic Mirror session.",
@@ -2044,14 +2170,14 @@ ACTIONS = {
   "ec2:CreateTrafficMirrorTarget": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TrafficMirrorTarget",
-      "AWS::Ec2::NetworkInterface"
+      "AWS::Ec2::NetworkInterface",
+      "AWS::Ec2::TrafficMirrorTarget"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
       "ec2:Region",
-      "aws:TagKeys",
-      "aws:RequestTag/${TagKey}"
+      "aws:RequestTag/${TagKey}",
+      "ec2:ResourceTag/${TagKey}",
+      "aws:TagKeys"
     ],
     "Dependent Actions": [],
     "Description": "Creates a Traffic Mirror target.",
@@ -2060,9 +2186,9 @@ ACTIONS = {
   "ec2:CreateTransitGateway": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TransitGatewayAttachment",
+      "AWS::Ec2::TransitGateway",
       "AWS::Ec2::TransitGatewayRouteTable",
-      "AWS::Ec2::TransitGateway"
+      "AWS::Ec2::TransitGatewayAttachment"
     ],
     "Condition Keys": [
       "aws:RequestTag/${TagKey}",
@@ -2080,8 +2206,8 @@ ACTIONS = {
       "AWS::Ec2::TransitGatewayRouteTable"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Creates a static route for the specified transit gateway route table.",
@@ -2090,15 +2216,15 @@ ACTIONS = {
   "ec2:CreateTransitGatewayRouteTable": {
     "Access": "Write",
     "Affects": [
+      "AWS::Ec2::TransitGateway",
       "AWS::Ec2::TransitGatewayAttachment",
-      "AWS::Ec2::TransitGatewayRouteTable",
-      "AWS::Ec2::TransitGateway"
+      "AWS::Ec2::TransitGatewayRouteTable"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
       "ec2:Region",
-      "aws:TagKeys",
-      "aws:RequestTag/${TagKey}"
+      "aws:RequestTag/${TagKey}",
+      "ec2:ResourceTag/${TagKey}",
+      "aws:TagKeys"
     ],
     "Dependent Actions": [],
     "Description": "Creates a route table for the specified transit gateway.",
@@ -2107,18 +2233,18 @@ ACTIONS = {
   "ec2:CreateTransitGatewayVpcAttachment": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::Vpc",
       "AWS::Ec2::TransitGatewayAttachment",
-      "AWS::Ec2::VpcPeeringConnection",
-      "AWS::Ec2::TransitGatewayRouteTable",
       "AWS::Ec2::Subnet",
-      "AWS::Ec2::TransitGateway"
+      "AWS::Ec2::TransitGateway",
+      "AWS::Ec2::Vpc",
+      "AWS::Ec2::VpcPeeringConnection",
+      "AWS::Ec2::TransitGatewayRouteTable"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
       "ec2:Region",
-      "aws:TagKeys",
-      "aws:RequestTag/${TagKey}"
+      "aws:RequestTag/${TagKey}",
+      "ec2:ResourceTag/${TagKey}",
+      "aws:TagKeys"
     ],
     "Dependent Actions": [],
     "Description": "Attaches the specified VPC to the specified transit gateway.",
@@ -2181,14 +2307,14 @@ ACTIONS = {
   "ec2:CreateVpcPeeringConnection": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::Vpc",
-      "AWS::Ec2::VpcPeeringConnection"
+      "AWS::Ec2::VpcPeeringConnection",
+      "AWS::Ec2::Vpc"
     ],
     "Condition Keys": [
       "ec2:Region",
-      "ec2:RequesterVpc",
-      "ec2:AccepterVpc",
       "ec2:Tenancy",
+      "ec2:AccepterVpc",
+      "ec2:RequesterVpc",
       "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
@@ -2197,8 +2323,29 @@ ACTIONS = {
   },
   "ec2:CreateVpnConnection": {
     "Access": "Write",
-    "Affects": [],
-    "Condition Keys": [],
+    "Affects": [
+      "AWS::Ec2::VpnConnection"
+    ],
+    "Condition Keys": [
+      "ec2:Region",
+      "ec2:AuthenticationType",
+      "ec2:DPDTimeoutSeconds",
+      "ec2:GatewayType",
+      "ec2:IKEVersions",
+      "ec2:InsideTunnelCidr",
+      "ec2:Phase1DHGroupNumbers",
+      "ec2:Phase2DHGroupNumbers",
+      "ec2:Phase1EncryptionAlgorithms",
+      "ec2:Phase2EncryptionAlgorithms",
+      "ec2:Phase1IntegrityAlgorithms",
+      "ec2:Phase2IntegrityAlgorithms",
+      "ec2:Phase1LifetimeSeconds",
+      "ec2:Phase2LifetimeSeconds",
+      "ec2:PresharedKeys",
+      "ec2:RekeyFuzzPercentage",
+      "ec2:RekeyMarginTimeSeconds",
+      "ec2:RoutingType"
+    ],
     "Dependent Actions": [],
     "Description": "Creates a VPN connection between an existing virtual private gateway and a VPN customer gateway.",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateVpnConnection.html"
@@ -2239,8 +2386,8 @@ ACTIONS = {
       "AWS::Ec2::Subnet"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Deletes a route from a Client VPN endpoint.",
@@ -2489,34 +2636,34 @@ ACTIONS = {
   "ec2:DeleteTags": {
     "Access": "Tagging",
     "Affects": [
-      "AWS::Ec2::Vpc",
-      "AWS::Ec2::Snapshot",
-      "AWS::Ec2::Image",
-      "AWS::Ec2::Volume",
-      "AWS::Ec2::DhcpOptions",
+      "AWS::Ec2::Subnet",
       "AWS::Ec2::VpnConnection",
-      "AWS::Ec2::SecurityGroup",
-      "AWS::Ec2::ClientVpnEndpoint",
-      "AWS::Ec2::CapacityReservation",
+      "AWS::Ec2::NetworkAcl",
+      "AWS::Ec2::Snapshot",
+      "AWS::Ec2::FpgaImage",
+      "AWS::Ec2::Instance",
+      "AWS::Ec2::Volume",
+      "AWS::Ec2::InternetGateway",
+      "AWS::Ec2::VpnGateway",
+      "AWS::Ec2::NetworkInterface",
+      "AWS::Ec2::ReservedInstances",
+      "AWS::Ec2::DhcpOptions",
+      "AWS::Ec2::TransitGatewayRouteTable",
+      "AWS::Ec2::Image",
       "AWS::Ec2::RouteTable",
       "AWS::Ec2::SpotInstanceRequest",
-      "AWS::Ec2::NetworkAcl",
-      "AWS::Ec2::VpnGateway",
+      "AWS::Ec2::ClientVpnEndpoint",
       "AWS::Ec2::TransitGatewayAttachment",
-      "AWS::Ec2::ReservedInstances",
-      "AWS::Ec2::Instance",
-      "AWS::Ec2::TransitGatewayRouteTable",
-      "AWS::Ec2::InternetGateway",
-      "AWS::Ec2::FpgaImage",
-      "AWS::Ec2::NetworkInterface",
-      "AWS::Ec2::Subnet",
-      "AWS::Ec2::TransitGateway"
+      "AWS::Ec2::SecurityGroup",
+      "AWS::Ec2::CapacityReservation",
+      "AWS::Ec2::TransitGateway",
+      "AWS::Ec2::Vpc"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
       "ec2:Region",
-      "aws:TagKeys",
-      "aws:RequestTag/${TagKey}"
+      "aws:RequestTag/${TagKey}",
+      "ec2:ResourceTag/${TagKey}",
+      "aws:TagKeys"
     ],
     "Dependent Actions": [],
     "Description": "Deletes the specified set of tags from the specified set of resources.",
@@ -2543,8 +2690,8 @@ ACTIONS = {
       "AWS::Ec2::TrafficMirrorFilter"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Deletes the specified Traffic Mirror rule.",
@@ -2579,9 +2726,9 @@ ACTIONS = {
   "ec2:DeleteTransitGateway": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TransitGatewayAttachment",
+      "AWS::Ec2::TransitGateway",
       "AWS::Ec2::TransitGatewayRouteTable",
-      "AWS::Ec2::TransitGateway"
+      "AWS::Ec2::TransitGatewayAttachment"
     ],
     "Condition Keys": [
       "ec2:Region",
@@ -2880,6 +3027,14 @@ ACTIONS = {
     "Description": "Describes the Elastic GPUs associated with your instances.",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeElasticGpus.html"
   },
+  "ec2:DescribeExportImageTasks": {
+    "Access": "List",
+    "Affects": [],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Describes the specified export image tasks or all your export image tasks.",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeExportImageTasks.html"
+  },
   "ec2:DescribeExportTasks": {
     "Access": "List",
     "Affects": [],
@@ -2887,6 +3042,14 @@ ACTIONS = {
     "Dependent Actions": [],
     "Description": "Describes one or more of your export tasks.",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeExportTasks.html"
+  },
+  "ec2:DescribeFastSnapshotRestores": {
+    "Access": "Read",
+    "Affects": [],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Describes the state of fast snapshot restores for your snapshots",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeFastSnapshotRestores.html"
   },
   "ec2:DescribeFleetHistory": {
     "Access": "List",
@@ -3017,8 +3180,10 @@ ACTIONS = {
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImportSnapshotTasks.html"
   },
   "ec2:DescribeInstanceAttribute": {
-    "Access": "List",
-    "Affects": [],
+    "Access": "Read",
+    "Affects": [
+      "AWS::Ec2::Instance"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the specified attribute of the specified instance.",
@@ -3039,6 +3204,14 @@ ACTIONS = {
     "Dependent Actions": [],
     "Description": "Describes the status of one or more instances.",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstanceStatus.html"
+  },
+  "ec2:DescribeInstanceTypes": {
+    "Access": "List",
+    "Affects": [],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Describes all instance types offered in an AWS Region.",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstanceTypes.html"
   },
   "ec2:DescribeInstances": {
     "Access": "List",
@@ -3523,20 +3696,20 @@ ACTIONS = {
   "ec2:DetachClassicLinkVpc": {
     "Access": "Write",
     "Affects": [
+      "AWS::Ec2::VpcPeeringConnection",
       "AWS::Ec2::Vpc",
-      "AWS::Ec2::Instance",
-      "AWS::Ec2::VpcPeeringConnection"
+      "AWS::Ec2::Instance"
     ],
     "Condition Keys": [
-      "ec2:RootDeviceType",
       "ec2:Region",
+      "ec2:InstanceType",
+      "ec2:Tenancy",
+      "ec2:InstanceProfile",
       "ec2:AvailabilityZone",
       "ec2:ResourceTag/${TagKey}",
-      "ec2:Tenancy",
-      "ec2:PlacementGroup",
-      "ec2:InstanceProfile",
       "ec2:EbsOptimized",
-      "ec2:InstanceType"
+      "ec2:PlacementGroup",
+      "ec2:RootDeviceType"
     ],
     "Dependent Actions": [],
     "Description": "Unlinks (detaches) a linked EC2-Classic instance from a VPC.",
@@ -3565,20 +3738,20 @@ ACTIONS = {
       "AWS::Ec2::Instance"
     ],
     "Condition Keys": [
-      "ec2:RootDeviceType",
       "ec2:Region",
-      "ec2:VolumeIops",
       "ec2:Encrypted",
-      "ec2:VolumeType",
+      "ec2:InstanceType",
+      "ec2:ParentSnapshot",
+      "ec2:Tenancy",
+      "ec2:InstanceProfile",
       "ec2:VolumeSize",
       "ec2:AvailabilityZone",
       "ec2:ResourceTag/${TagKey}",
-      "ec2:ParentSnapshot",
-      "ec2:Tenancy",
-      "ec2:PlacementGroup",
-      "ec2:InstanceProfile",
+      "ec2:VolumeIops",
       "ec2:EbsOptimized",
-      "ec2:InstanceType"
+      "ec2:PlacementGroup",
+      "ec2:VolumeType",
+      "ec2:RootDeviceType"
     ],
     "Dependent Actions": [],
     "Description": "Detaches an EBS volume from an instance.",
@@ -3600,15 +3773,34 @@ ACTIONS = {
     "Description": "Disable the default EBS encryption by enabled for your account in the current region",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisableEbsEncryptionByDefault.html"
   },
+  "ec2:DisableFastSnapshotRestores": {
+    "Access": "Write",
+    "Affects": [
+      "AWS::Ec2::Snapshot"
+    ],
+    "Condition Keys": [
+      "ec2:Owner",
+      "ec2:ParentVolume",
+      "ec2:Region",
+      "ec2:AvailabilityZone",
+      "ec2:SnapshotTime",
+      "ec2:Encrypted",
+      "ec2:VolumeSize",
+      "ec2:ResourceTag/${TagKey}"
+    ],
+    "Dependent Actions": [],
+    "Description": "Disables fast snapshot restores for the specified snapshots in the specified Availability Zones",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisableFastSnapshotRestores.html"
+  },
   "ec2:DisableTransitGatewayRouteTablePropagation": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TransitGatewayAttachment",
-      "AWS::Ec2::TransitGatewayRouteTable"
+      "AWS::Ec2::TransitGatewayRouteTable",
+      "AWS::Ec2::TransitGatewayAttachment"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Disables the specified resource attachment from propagating routes to the specified propagation route table.",
@@ -3625,8 +3817,8 @@ ACTIONS = {
   "ec2:DisableVpcClassicLink": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::Vpc",
-      "AWS::Ec2::VpcPeeringConnection"
+      "AWS::Ec2::VpcPeeringConnection",
+      "AWS::Ec2::Vpc"
     ],
     "Condition Keys": [
       "ec2:Region",
@@ -3705,12 +3897,12 @@ ACTIONS = {
   "ec2:DisassociateTransitGatewayRouteTable": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TransitGatewayAttachment",
-      "AWS::Ec2::TransitGatewayRouteTable"
+      "AWS::Ec2::TransitGatewayRouteTable",
+      "AWS::Ec2::TransitGatewayAttachment"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Disassociates a resource attachment from a transit gateway route table.",
@@ -3732,15 +3924,34 @@ ACTIONS = {
     "Description": "Enables EBS encryption by default for your account in the current Region",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_EnableEbsEncryptionByDefault.html"
   },
+  "ec2:EnableFastSnapshotRestores": {
+    "Access": "Write",
+    "Affects": [
+      "AWS::Ec2::Snapshot"
+    ],
+    "Condition Keys": [
+      "ec2:Owner",
+      "ec2:ParentVolume",
+      "ec2:Region",
+      "ec2:AvailabilityZone",
+      "ec2:SnapshotTime",
+      "ec2:Encrypted",
+      "ec2:VolumeSize",
+      "ec2:ResourceTag/${TagKey}"
+    ],
+    "Dependent Actions": [],
+    "Description": "Enables fast snapshot restores for the specified snapshots in the specified Availability Zones",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_EnableFastSnapshotRestores.html"
+  },
   "ec2:EnableTransitGatewayRouteTablePropagation": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TransitGatewayAttachment",
-      "AWS::Ec2::TransitGatewayRouteTable"
+      "AWS::Ec2::TransitGatewayRouteTable",
+      "AWS::Ec2::TransitGatewayAttachment"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Enables the specified attachment to propagate routes to the specified propagation route table.",
@@ -3765,8 +3976,8 @@ ACTIONS = {
   "ec2:EnableVpcClassicLink": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::Vpc",
-      "AWS::Ec2::VpcPeeringConnection"
+      "AWS::Ec2::VpcPeeringConnection",
+      "AWS::Ec2::Vpc"
     ],
     "Condition Keys": [
       "ec2:Region",
@@ -3800,6 +4011,14 @@ ACTIONS = {
     "Dependent Actions": [],
     "Description": "Downloads the contents of the Client VPN endpoint configuration file for the specified Client VPN endpoint.",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ExportClientVpnClientConfiguration.html"
+  },
+  "ec2:ExportImage": {
+    "Access": "Write",
+    "Affects": [],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Exports an Amazon Machine Image (AMI) to a VM file.",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ExportImage.html"
   },
   "ec2:ExportTransitGatewayRoutes": {
     "Access": "Write",
@@ -4002,7 +4221,7 @@ ACTIONS = {
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Changes the default customer master key (CMK) for EBS encryption by default for your account in this Region",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/ModifyEbsDefaultKmsKeyId.html"
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyEbsDefaultKmsKeyId.html"
   },
   "ec2:ModifyFleet": {
     "Access": "Write",
@@ -4087,6 +4306,14 @@ ACTIONS = {
     "Dependent Actions": [],
     "Description": "Modifies the start time for a scheduled EC2 instance event.",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyInstanceEventStartTime.html"
+  },
+  "ec2:ModifyInstanceMetadataOptions": {
+    "Access": "Write",
+    "Affects": [],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Modifies the metadata options for an instance.",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyInstanceMetadataOptions.html"
   },
   "ec2:ModifyInstancePlacement": {
     "Access": "Write",
@@ -4179,8 +4406,8 @@ ACTIONS = {
       "AWS::Ec2::TrafficMirrorFilter"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Modifies the specified Traffic Mirror rule.",
@@ -4189,13 +4416,13 @@ ACTIONS = {
   "ec2:ModifyTrafficMirrorSession": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TrafficMirrorTarget",
       "AWS::Ec2::TrafficMirrorSession",
-      "AWS::Ec2::TrafficMirrorFilter"
+      "AWS::Ec2::TrafficMirrorFilter",
+      "AWS::Ec2::TrafficMirrorTarget"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Modifies a Traffic Mirror session.",
@@ -4208,8 +4435,8 @@ ACTIONS = {
       "AWS::Ec2::Subnet"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Modifies the specified VPC attachment.",
@@ -4289,11 +4516,54 @@ ACTIONS = {
   },
   "ec2:ModifyVpnConnection": {
     "Access": "Write",
-    "Affects": [],
-    "Condition Keys": [],
+    "Affects": [
+      "AWS::Ec2::VpnConnection"
+    ],
+    "Condition Keys": [
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}",
+      "ec2:GatewayType"
+    ],
     "Dependent Actions": [],
     "Description": "Modifies the target gateway of a AWS Site-to-Site VPN connection",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyVpnConnection.html"
+  },
+  "ec2:ModifyVpnTunnelCertificate": {
+    "Access": "Write",
+    "Affects": [],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Modifies the certificate for an AWS Site-to-Site VPN connection.",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyVpnTunnelCertificate"
+  },
+  "ec2:ModifyVpnTunnelOptions": {
+    "Access": "Write",
+    "Affects": [
+      "AWS::Ec2::VpnConnection"
+    ],
+    "Condition Keys": [
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}",
+      "ec2:AuthenticationType",
+      "ec2:DPDTimeoutSeconds",
+      "ec2:IKEVersions",
+      "ec2:InsideTunnelCidr",
+      "ec2:Phase1DHGroupNumbers",
+      "ec2:Phase2DHGroupNumbers",
+      "ec2:Phase1EncryptionAlgorithms",
+      "ec2:Phase2EncryptionAlgorithms",
+      "ec2:Phase1IntegrityAlgorithms",
+      "ec2:Phase2IntegrityAlgorithms",
+      "ec2:Phase1LifetimeSeconds",
+      "ec2:Phase2LifetimeSeconds",
+      "ec2:PresharedKeys",
+      "ec2:RekeyFuzzPercentage",
+      "ec2:RekeyMarginTimeSeconds",
+      "ec2:RoutingType"
+    ],
+    "Dependent Actions": [],
+    "Description": "Modifies the options for an AWS Site-to-Site VPN connection.",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyVpnTunnelOptions.html"
   },
   "ec2:MonitorInstances": {
     "Access": "Write",
@@ -4490,8 +4760,8 @@ ACTIONS = {
       "AWS::Ec2::TransitGatewayRouteTable"
     ],
     "Condition Keys": [
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:Region"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Replaces the specified route in the specified transit gateway route table.",
@@ -4527,7 +4797,7 @@ ACTIONS = {
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Resets the default customer master key (CMK) for EBS encryption for your account in this Region to the AWS managed CMK for EBS",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/ResetEbsDefaultKmsKeyId.html"
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ResetEbsDefaultKmsKeyId.html"
   },
   "ec2:ResetFpgaImageAttribute": {
     "Access": "Write",
@@ -4621,45 +4891,48 @@ ACTIONS = {
   "ec2:RunInstances": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::LaunchTemplate",
-      "AWS::Ec2::SecurityGroup",
-      "AWS::Ec2::Image",
-      "AWS::Ec2::KeyPair",
-      "AWS::Ec2::NetworkInterface",
       "AWS::Ec2::Volume",
-      "AWS::Ec2::Instance",
       "AWS::Ec2::Snapshot",
+      "AWS::Ec2::SecurityGroup",
+      "AWS::Ec2::NetworkInterface",
       "AWS::Ec2::Subnet",
-      "AWS::Ec2::PlacementGroup"
+      "AWS::Ec2::KeyPair",
+      "AWS::Ec2::LaunchTemplate",
+      "AWS::Ec2::Image",
+      "AWS::Ec2::PlacementGroup",
+      "AWS::Ec2::Instance"
     ],
     "Condition Keys": [
+      "ec2:Vpc",
+      "ec2:Public",
+      "ec2:InstanceType",
+      "ec2:Tenancy",
+      "ec2:AvailabilityZone",
+      "ec2:ImageType",
+      "ec2:ResourceTag/",
+      "ec2:MetadataHttpTokens",
+      "ec2:PlacementGroup",
       "ec2:VolumeType",
       "ec2:Region",
-      "ec2:SnapshotTime",
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:PlacementGroup",
-      "ec2:EbsOptimized",
-      "ec2:VolumeSize",
-      "ec2:VolumeIops",
-      "ec2:Encrypted",
-      "ec2:ImageType",
-      "ec2:Owner",
-      "ec2:Public",
-      "ec2:Tenancy",
-      "ec2:IsLaunchTemplateResource",
-      "ec2:InstanceType",
-      "ec2:AvailabilityZone",
-      "aws:TagKeys",
-      "ec2:PlacementGroupStrategy",
-      "ec2:LaunchTemplate",
-      "ec2:ResourceTag/",
-      "ec2:RootDeviceType",
-      "ec2:ParentVolume",
-      "ec2:Subnet",
-      "aws:RequestTag/${TagKey}",
-      "ec2:Vpc",
       "ec2:ParentSnapshot",
-      "ec2:InstanceProfile"
+      "ec2:VolumeSize",
+      "ec2:Subnet",
+      "aws:TagKeys",
+      "ec2:MetadataHttpPutResponseHopLimit",
+      "ec2:MetadataHttpEndpoint",
+      "ec2:EbsOptimized",
+      "ec2:RootDeviceType",
+      "ec2:Encrypted",
+      "ec2:PlacementGroupStrategy",
+      "ec2:SnapshotTime",
+      "ec2:InstanceProfile",
+      "ec2:Owner",
+      "aws:RequestTag/${TagKey}",
+      "ec2:ResourceTag/${TagKey}",
+      "ec2:LaunchTemplate",
+      "ec2:ParentVolume",
+      "ec2:VolumeIops",
+      "ec2:IsLaunchTemplateResource"
     ],
     "Dependent Actions": [],
     "Description": "SCENARIO: EC2-VPC-InstanceStore-Subnet",
@@ -5206,8 +5479,8 @@ ACTIONS = {
       "AWS::Iam::Role"
     ],
     "Condition Keys": [
-      "iam:PolicyARN",
-      "iam:PermissionsBoundary"
+      "iam:PermissionsBoundary",
+      "iam:PolicyARN"
     ],
     "Dependent Actions": [],
     "Description": "Grants permission to attach a managed policy to the specified IAM role",
@@ -5219,8 +5492,8 @@ ACTIONS = {
       "AWS::Iam::User"
     ],
     "Condition Keys": [
-      "iam:PolicyARN",
-      "iam:PermissionsBoundary"
+      "iam:PermissionsBoundary",
+      "iam:PolicyARN"
     ],
     "Dependent Actions": [],
     "Description": "Grants permission to attach a managed policy to the specified IAM user",
@@ -5643,8 +5916,8 @@ ACTIONS = {
       "AWS::Iam::Role"
     ],
     "Condition Keys": [
-      "iam:PolicyARN",
-      "iam:PermissionsBoundary"
+      "iam:PermissionsBoundary",
+      "iam:PolicyARN"
     ],
     "Dependent Actions": [],
     "Description": "Grants permission to detach a managed policy from the specified role",
@@ -5656,8 +5929,8 @@ ACTIONS = {
       "AWS::Iam::User"
     ],
     "Condition Keys": [
-      "iam:PolicyARN",
-      "iam:PermissionsBoundary"
+      "iam:PermissionsBoundary",
+      "iam:PolicyARN"
     ],
     "Dependent Actions": [],
     "Description": "Grants permission to detach a managed policy from the specified IAM user",
@@ -5690,12 +5963,12 @@ ACTIONS = {
       "iam:OrganizationsPolicyId"
     ],
     "Dependent Actions": [
+      "organizations:ListParents",
+      "organizations:ListPoliciesForTarget",
+      "organizations:ListTargetsForPolicy",
       "organizations:ListRoots",
       "organizations:ListChildren",
-      "organizations:DescribePolicy",
-      "organizations:ListParents",
-      "organizations:ListTargetsForPolicy",
-      "organizations:ListPoliciesForTarget"
+      "organizations:DescribePolicy"
     ],
     "Description": "Grants permission to generate an access report for an AWS Organizations entity",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_GenerateOrganizationsAccessReport.html"
@@ -5753,9 +6026,9 @@ ACTIONS = {
   "iam:GetContextKeysForPrincipalPolicy": {
     "Access": "Read",
     "Affects": [
+      "AWS::Iam::Role",
       "AWS::Iam::Group",
-      "AWS::Iam::User",
-      "AWS::Iam::Role"
+      "AWS::Iam::User"
     ],
     "Condition Keys": [],
     "Dependent Actions": [],
@@ -6353,9 +6626,9 @@ ACTIONS = {
   "iam:SimulatePrincipalPolicy": {
     "Access": "Read",
     "Affects": [
+      "AWS::Iam::Role",
       "AWS::Iam::Group",
-      "AWS::Iam::User",
-      "AWS::Iam::Role"
+      "AWS::Iam::User"
     ],
     "Condition Keys": [],
     "Dependent Actions": [],
@@ -6676,6 +6949,16 @@ ACTIONS = {
     "Description": "Deletes a version of a function layer.",
     "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_DeleteLayerVersion.html"
   },
+  "lambda:DisableReplication": {
+    "Access": "Permissions Management",
+    "Affects": [
+      "AWS::Lambda::Function"
+    ],
+    "Condition Keys": [],
+    "Dependent Actions": [],
+    "Description": "Removes resource policy permission that allows Lambda replication service to retrieve function code and configuration.",
+    "Reference": ""
+  },
   "lambda:EnableReplication": {
     "Access": "Permissions Management",
     "Affects": [
@@ -6851,8 +7134,8 @@ ACTIONS = {
   "lambda:PublishLayerVersion": {
     "Access": "Write",
     "Affects": [
-      "AWS::Lambda::LayerVersion",
-      "AWS::Lambda::Layer"
+      "AWS::Lambda::Layer",
+      "AWS::Lambda::LayerVersion"
     ],
     "Condition Keys": [],
     "Dependent Actions": [],
@@ -7687,14 +7970,71 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "Aborts a multipart upload.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/mpUploadAbort.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_AbortMultipartUpload.html"
+  },
+  "s3:BypassGovernanceRetention": {
+    "Access": "Permissions Management",
+    "Affects": [
+      "AWS::S3::Object"
+    ],
+    "Condition Keys": [
+      "s3:object-lock-legal-hold",
+      "s3:object-lock-remaining-retention-days",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:x-amz-grant-read-acp",
+      "s3:x-amz-grant-read",
+      "s3:x-amz-website-redirect-location",
+      "s3:x-amz-copy-source",
+      "s3:DataAccessPointAccount",
+      "s3:RequestObjectTag/<key>",
+      "s3:x-amz-metadata-directive",
+      "s3:AccessPointNetworkOrigin",
+      "s3:object-lock-mode",
+      "s3:x-amz-storage-class",
+      "s3:x-amz-content-sha256",
+      "s3:x-amz-grant-full-control",
+      "s3:x-amz-grant-write-acp",
+      "s3:x-amz-server-side-encryption-aws-kms-key-id",
+      "s3:x-amz-grant-write",
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:RequestObjectTagKeys",
+      "s3:x-amz-server-side-encryption",
+      "s3:object-lock-retain-until-date",
+      "s3:x-amz-acl"
+    ],
+    "Dependent Actions": [],
+    "Description": "Allows circumvention of governance-mode object retention settings",
+    "Reference": ""
+  },
+  "s3:CreateAccessPoint": {
+    "Access": "Write",
+    "Affects": [],
+    "Condition Keys": [
+      "s3:authtype",
+      "s3:locationconstraint",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-acl"
+    ],
+    "Dependent Actions": [],
+    "Description": "Creates a new access point.",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_CreateAccessPoint.html"
   },
   "s3:CreateBucket": {
     "Access": "Write",
@@ -7702,21 +8042,21 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
+      "s3:authtype",
       "s3:x-amz-grant-read-acp",
-      "s3:x-amz-grant-full-control",
-      "s3:x-amz-acl",
-      "s3:x-amz-content-sha256",
       "s3:locationconstraint",
-      "s3:signatureversion",
+      "s3:signatureage",
+      "s3:x-amz-content-sha256",
+      "s3:x-amz-grant-full-control",
       "s3:x-amz-grant-read",
       "s3:x-amz-grant-write-acp",
-      "s3:signatureage",
-      "s3:x-amz-grant-write",
-      "s3:authtype"
+      "s3:signatureversion",
+      "s3:x-amz-acl",
+      "s3:x-amz-grant-write"
     ],
     "Dependent Actions": [],
     "Description": "Creates a new bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUT.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateBucket.html"
   },
   "s3:CreateJob": {
     "Access": "Write",
@@ -7731,7 +8071,39 @@ ACTIONS = {
     ],
     "Dependent Actions": [],
     "Description": "Creates a new Amazon S3 Batch Operations job.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTAccountPOSTCreateJob.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_CreateJob.html"
+  },
+  "s3:DeleteAccessPoint": {
+    "Access": "Write",
+    "Affects": [],
+    "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
+    ],
+    "Dependent Actions": [],
+    "Description": "Deletes the access point named in the URI",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_DeleteAccessPoint.html"
+  },
+  "s3:DeleteAccessPointPolicy": {
+    "Access": "Permissions Management",
+    "Affects": [],
+    "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
+    ],
+    "Dependent Actions": [],
+    "Description": "Delete the policy on a specified access point",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_DeleteAccessPointPolicy.html"
   },
   "s3:DeleteBucket": {
     "Access": "Write",
@@ -7739,14 +8111,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Deletes the bucket named in the URI",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketDELETE.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucket.html"
   },
   "s3:DeleteBucketPolicy": {
     "Access": "Permissions Management",
@@ -7754,14 +8126,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Delete the policy on a specified bucket",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketDELETEpolicy.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucketPolicy.html"
   },
   "s3:DeleteBucketWebsite": {
     "Access": "Write",
@@ -7769,14 +8141,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Removes the website configuration for a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketDELETEwebsite.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucketWebsite.html"
   },
   "s3:DeleteObject": {
     "Access": "Write",
@@ -7784,14 +8156,17 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "Removes the null version (if there is one) of an object and inserts a delete marker, which becomes the current version of the object.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectDELETE.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html"
   },
   "s3:DeleteObjectTagging": {
     "Access": "Tagging",
@@ -7799,15 +8174,18 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:ExistingObjectTag/<key>",
-      "s3:x-amz-content-sha256",
-      "s3:signatureversion",
       "s3:signatureage",
-      "s3:authtype"
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the DELETE operation uses the tagging subresource to remove the entire tag set from the specified object.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectDELETEtagging.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjectTagging.html"
   },
   "s3:DeleteObjectVersion": {
     "Access": "Write",
@@ -7815,15 +8193,18 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:versionid",
-      "s3:x-amz-content-sha256",
-      "s3:signatureversion",
       "s3:signatureage",
-      "s3:authtype"
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "To remove a specific version of a object, you must be the bucket owner and you must use the versionId subresource.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectDELETE.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html"
   },
   "s3:DeleteObjectVersionTagging": {
     "Access": "Tagging",
@@ -7831,16 +8212,19 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:versionid",
       "s3:ExistingObjectTag/<key>",
-      "s3:x-amz-content-sha256",
-      "s3:signatureversion",
       "s3:signatureage",
-      "s3:authtype"
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "DELETE Object tagging (for a Specific Version of the Object)",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectDELETEtagging.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjectTagging.html"
   },
   "s3:DescribeJob": {
     "Access": "Read",
@@ -7848,14 +8232,14 @@ ACTIONS = {
       "AWS::S3::Job"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Retrieves the configuration parameters and status for an Amazon S3 batch operations job.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTAccountGETDescribeJob.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_DescribeJob.html"
   },
   "s3:GetAccelerateConfiguration": {
     "Access": "Read",
@@ -7863,14 +8247,62 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the GET operation uses the accelerate subresource to return the Transfer Acceleration state of a bucket, which is either Enabled or Suspended.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETaccelerate.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketAccelerateConfiguration.html"
+  },
+  "s3:GetAccessPoint": {
+    "Access": "Read",
+    "Affects": [],
+    "Condition Keys": [
+      "s3:DataAccessPointAccount",
+      "s3:DataAccessPointArn",
+      "s3:AccessPointNetworkOrigin",
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion",
+      "s3:x-amz-content-sha256"
+    ],
+    "Dependent Actions": [],
+    "Description": "Retrieve access point metadata",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetAccessPoint.html"
+  },
+  "s3:GetAccessPointPolicy": {
+    "Access": "Read",
+    "Affects": [],
+    "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
+    ],
+    "Dependent Actions": [],
+    "Description": "Return the policy of a specified access point.",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetAccessPointPolicy.html"
+  },
+  "s3:GetAccessPointPolicyStatus": {
+    "Access": "Read",
+    "Affects": [],
+    "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
+    ],
+    "Dependent Actions": [],
+    "Description": "Retrieve the policy status for an specific access point's policy",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetAccessPointPolicyStatus.html"
   },
   "s3:GetAccountPublicAccessBlock": {
     "Access": "Read",
@@ -7883,7 +8315,7 @@ ACTIONS = {
     ],
     "Dependent Actions": [],
     "Description": "Retrieve the PublicAccessBlock configuration for an AWS account",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTAccountGETPublicAccessBlock.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetPublicAccessBlock.html"
   },
   "s3:GetAnalyticsConfiguration": {
     "Access": "Read",
@@ -7891,14 +8323,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the GET operation returns an analytics configuration (identified by the analytics configuration ID) from the bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETAnalyticsConfig.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketAnalyticsConfiguration.html"
   },
   "s3:GetBucketAcl": {
     "Access": "Read",
@@ -7906,14 +8338,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Return the access control list (ACL) of a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETacl.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketAcl.html"
   },
   "s3:GetBucketCORS": {
     "Access": "Read",
@@ -7921,14 +8353,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
-    "Description": "Returns the cors configuration information set for the bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETcors.html"
+    "Description": "Returns the CORS configuration information set for the bucket.",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketCors.html"
   },
   "s3:GetBucketLocation": {
     "Access": "Read",
@@ -7938,7 +8370,7 @@ ACTIONS = {
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Return a bucket's region.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETlocation.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketLocation.html"
   },
   "s3:GetBucketLogging": {
     "Access": "Read",
@@ -7946,14 +8378,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Return the logging status of a bucket and the permissions users have to view and modify that status.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETlogging.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketLogging.html"
   },
   "s3:GetBucketNotification": {
     "Access": "Read",
@@ -7961,28 +8393,28 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Return the notification configuration of a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETnotification.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketNotification.html"
   },
   "s3:GetBucketObjectLockConfiguration": {
-    "Access": "Write",
+    "Access": "Read",
     "Affects": [
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
+      "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion",
-      "s3:authtype"
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "GET Object Lock configuration for a specific bucket",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETObjectLockConfiguration.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectLockConfiguration.html"
   },
   "s3:GetBucketPolicy": {
     "Access": "Read",
@@ -7990,14 +8422,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Return the policy of a specified bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETpolicy.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketPolicy.html"
   },
   "s3:GetBucketPolicyStatus": {
     "Access": "Read",
@@ -8005,14 +8437,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Retrieve the policy status for an specific S3 bucket, indicating whether the bucket is public.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETPolicyStatus.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketPolicyStatus.html"
   },
   "s3:GetBucketPublicAccessBlock": {
     "Access": "Read",
@@ -8020,14 +8452,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Retrieve the PublicAccessBlock configuration for a specific S3 bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETPublicAccessBlock.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetPublicAccessBlock.html"
   },
   "s3:GetBucketRequestPayment": {
     "Access": "Read",
@@ -8035,14 +8467,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Return the request payment configuration of a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTrequestPaymentGET.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketRequestPayment.html"
   },
   "s3:GetBucketTagging": {
     "Access": "Read",
@@ -8050,14 +8482,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Return the tag set associated with the bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETtagging.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketTagging.html"
   },
   "s3:GetBucketVersioning": {
     "Access": "Read",
@@ -8065,14 +8497,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Return the versioning state of a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETversioningStatus.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketVersioning.html"
   },
   "s3:GetBucketWebsite": {
     "Access": "Read",
@@ -8080,14 +8512,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Returns the website configuration associated with a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETwebsite.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketWebsite.html"
   },
   "s3:GetEncryptionConfiguration": {
     "Access": "Read",
@@ -8095,14 +8527,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Returns the encryption configuration information set on the bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETencryption.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketEncryption.html"
   },
   "s3:GetInventoryConfiguration": {
     "Access": "Read",
@@ -8110,14 +8542,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the GET operation returns an inventory configuration (identified by the inventory configuration ID) from the bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETInventoryConfig.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketInventoryConfiguration.html"
   },
   "s3:GetLifecycleConfiguration": {
     "Access": "Read",
@@ -8125,14 +8557,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Returns the lifecycle configuration information set on the bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETlifecycle.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketLifecycleConfiguration.html"
   },
   "s3:GetMetricsConfiguration": {
     "Access": "Read",
@@ -8140,14 +8572,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Gets a metrics configuration for the CloudWatch request metrics (specified by the metrics configuration ID) from the bucket. Note that this doesn't include the daily storage metrics.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETMetricConfiguration.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketMetricsConfiguration.html"
   },
   "s3:GetObject": {
     "Access": "Read",
@@ -8155,15 +8587,18 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:ExistingObjectTag/<key>",
-      "s3:x-amz-content-sha256",
-      "s3:signatureversion",
       "s3:signatureage",
-      "s3:authtype"
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "Retrieves objects from Amazon S3.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html"
   },
   "s3:GetObjectAcl": {
     "Access": "Read",
@@ -8171,45 +8606,54 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:ExistingObjectTag/<key>",
-      "s3:x-amz-content-sha256",
-      "s3:signatureversion",
       "s3:signatureage",
-      "s3:authtype"
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "Return the access control list (ACL) of an object.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGETacl.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectAcl.html"
   },
   "s3:GetObjectLegalHold": {
-    "Access": "Write",
+    "Access": "Read",
     "Affects": [
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "GET Object Legal Hold for a specific object",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGETLegalHold.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectLegalHold.html"
   },
   "s3:GetObjectRetention": {
-    "Access": "Write",
+    "Access": "Read",
     "Affects": [
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "GET Object Legal Hold for a specific object",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGETRetention.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectRetention.html"
   },
   "s3:GetObjectTagging": {
     "Access": "Read",
@@ -8217,15 +8661,18 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:ExistingObjectTag/<key>",
-      "s3:x-amz-content-sha256",
-      "s3:signatureversion",
       "s3:signatureage",
-      "s3:authtype"
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the GET operation returns the tags associated with an object. You send the GET request against the tagging subresource associated with the object.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGETtagging.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectTagging.html"
   },
   "s3:GetObjectTorrent": {
     "Access": "Read",
@@ -8233,14 +8680,14 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "return torrent files from a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGETtorrent.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectTorrent.html"
   },
   "s3:GetObjectVersion": {
     "Access": "Read",
@@ -8248,16 +8695,19 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:versionid",
       "s3:ExistingObjectTag/<key>",
-      "s3:x-amz-content-sha256",
-      "s3:signatureversion",
       "s3:signatureage",
-      "s3:authtype"
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "To return a different version, use the versionId subresource.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html"
   },
   "s3:GetObjectVersionAcl": {
     "Access": "Read",
@@ -8265,16 +8715,19 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:versionid",
       "s3:ExistingObjectTag/<key>",
-      "s3:x-amz-content-sha256",
-      "s3:signatureversion",
       "s3:signatureage",
-      "s3:authtype"
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "To return ACL information about a different version, use the versionId subresource.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/objectGetAclVersions.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectAcl.html"
   },
   "s3:GetObjectVersionForReplication": {
     "Access": "Read",
@@ -8282,13 +8735,13 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
-    "Description": "",
+    "Description": "Permission exercised by S3 replication",
     "Reference": ""
   },
   "s3:GetObjectVersionTagging": {
@@ -8297,16 +8750,19 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:versionid",
       "s3:ExistingObjectTag/<key>",
-      "s3:x-amz-content-sha256",
-      "s3:signatureversion",
       "s3:signatureage",
-      "s3:authtype"
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "GET Object tagging (for a Specific Version of the Object)",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGETtagging.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectTagging.html"
   },
   "s3:GetObjectVersionTorrent": {
     "Access": "Read",
@@ -8314,15 +8770,15 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
       "s3:versionid",
       "s3:x-amz-content-sha256",
-      "s3:signatureversion",
       "s3:signatureage",
-      "s3:authtype"
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "To return Torrent files about a different version, use the versionId subresource.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGETtorrent.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectTorrent.html"
   },
   "s3:GetReplicationConfiguration": {
     "Access": "Read",
@@ -8330,14 +8786,27 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Returns the replication configuration information set on the bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETreplication.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketReplication.html"
+  },
+  "s3:ListAccessPoints": {
+    "Access": "Read",
+    "Affects": [],
+    "Condition Keys": [
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion",
+      "s3:x-amz-content-sha256"
+    ],
+    "Dependent Actions": [],
+    "Description": "Lists access points.",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_ListAccessPoints.html"
   },
   "s3:ListAllMyBuckets": {
     "Access": "List",
@@ -8350,7 +8819,7 @@ ACTIONS = {
     ],
     "Dependent Actions": [],
     "Description": "Returns a list of all buckets owned by the authenticated sender of the request.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTServiceGET.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html"
   },
   "s3:ListBucket": {
     "Access": "List",
@@ -8358,33 +8827,20 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
-      "s3:prefix",
-      "s3:delimiter",
-      "s3:signatureversion",
-      "s3:signatureage",
       "s3:authtype",
-      "s3:max-keys"
+      "s3:max-keys",
+      "s3:AccessPointNetworkOrigin",
+      "s3:delimiter",
+      "s3:signatureage",
+      "s3:prefix",
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "Returns some or all (up to 1000) of the objects in a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGET.html"
-  },
-  "s3:ListBucketByTags": {
-    "Access": "Read",
-    "Affects": [
-      "AWS::S3::Bucket"
-    ],
-    "Condition Keys": [
-      "s3:x-amz-content-sha256",
-      "s3:signatureversion",
-      "s3:signatureage",
-      "s3:authtype",
-      "s3:max-keys"
-    ],
-    "Dependent Actions": [],
-    "Description": "",
-    "Reference": ""
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html"
   },
   "s3:ListBucketMultipartUploads": {
     "Access": "Read",
@@ -8392,14 +8848,17 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "Lists in-progress multipart uploads.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/mpUploadListMPUpload.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListMultipartUploads.html"
   },
   "s3:ListBucketVersions": {
     "Access": "Read",
@@ -8407,17 +8866,20 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
-      "s3:prefix",
-      "s3:delimiter",
-      "s3:signatureversion",
-      "s3:signatureage",
       "s3:authtype",
-      "s3:max-keys"
+      "s3:max-keys",
+      "s3:AccessPointNetworkOrigin",
+      "s3:delimiter",
+      "s3:signatureage",
+      "s3:prefix",
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "Use the versions subresource to list metadata about all of the versions of objects in a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETVersion.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html"
   },
   "s3:ListJobs": {
     "Access": "Read",
@@ -8430,7 +8892,7 @@ ACTIONS = {
     ],
     "Dependent Actions": [],
     "Description": "Lists current jobs and jobs that have ended recently.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTAccountGETListJobs.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_ListJobs.html"
   },
   "s3:ListMultipartUploadParts": {
     "Access": "Read",
@@ -8438,14 +8900,17 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "Lists the parts that have been uploaded for a specific multipart upload.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/mpUploadListParts.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListParts.html"
   },
   "s3:ObjectOwnerOverrideToBucketOwner": {
     "Access": "Permissions Management",
@@ -8453,13 +8918,13 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
-    "Description": "",
+    "Description": "Permission exercised by S3 replication",
     "Reference": ""
   },
   "s3:PutAccelerateConfiguration": {
@@ -8468,14 +8933,30 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the PUT operation uses the accelerate subresource to set the Transfer Acceleration state of an existing bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTaccelerate.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketAccelerateConfiguration.html"
+  },
+  "s3:PutAccessPointPolicy": {
+    "Access": "Permissions Management",
+    "Affects": [],
+    "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
+    ],
+    "Dependent Actions": [],
+    "Description": "Add to or replace a data policy on a access point.",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_PutAccessPointPolicy.html"
   },
   "s3:PutAccountPublicAccessBlock": {
     "Access": "Permissions Management",
@@ -8488,7 +8969,7 @@ ACTIONS = {
     ],
     "Dependent Actions": [],
     "Description": "Create or modify the PublicAccessBlock configuration for an AWS account.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTAccountPUTPublicAccessBlock.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_PutPublicAccessBlock.html"
   },
   "s3:PutAnalyticsConfiguration": {
     "Access": "Write",
@@ -8496,14 +8977,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the PUT operation adds an analytics configuration (identified by the analytics ID) to the bucket. You can have up to 1,000 analytics configurations per bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTAnalyticsConfig.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketAnalyticsConfiguration.html"
   },
   "s3:PutBucketAcl": {
     "Access": "Permissions Management",
@@ -8511,20 +8992,20 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
+      "s3:authtype",
       "s3:x-amz-grant-read-acp",
-      "s3:x-amz-grant-full-control",
-      "s3:x-amz-acl",
       "s3:x-amz-content-sha256",
-      "s3:signatureversion",
+      "s3:signatureage",
+      "s3:x-amz-grant-full-control",
       "s3:x-amz-grant-read",
       "s3:x-amz-grant-write-acp",
-      "s3:signatureage",
-      "s3:x-amz-grant-write",
-      "s3:authtype"
+      "s3:signatureversion",
+      "s3:x-amz-acl",
+      "s3:x-amz-grant-write"
     ],
     "Dependent Actions": [],
     "Description": "Set the permissions on an existing bucket using access control lists (ACL).",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTacl.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketAcl.html"
   },
   "s3:PutBucketCORS": {
     "Access": "Write",
@@ -8532,14 +9013,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
-    "Description": "Sets the cors configuration for your bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTcors.html"
+    "Description": "Sets the CORS configuration for your bucket.",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketCors.html"
   },
   "s3:PutBucketLogging": {
     "Access": "Write",
@@ -8547,14 +9028,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Set the logging parameters for a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTlogging.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLogging.html"
   },
   "s3:PutBucketNotification": {
     "Access": "Write",
@@ -8562,14 +9043,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Enables you to receive notifications when certain events happen in your bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTnotification.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketNotification.html"
   },
   "s3:PutBucketObjectLockConfiguration": {
     "Access": "Write",
@@ -8577,13 +9058,13 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
+      "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion",
-      "s3:authtype"
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "PUT Object Lock configuration on a specific bucket",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTObjectLockConfiguration.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectLockConfiguration.html"
   },
   "s3:PutBucketPolicy": {
     "Access": "Permissions Management",
@@ -8591,14 +9072,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Add to or replace a policy on a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTpolicy.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketPolicy.html"
   },
   "s3:PutBucketPublicAccessBlock": {
     "Access": "Permissions Management",
@@ -8606,14 +9087,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Create or modify the PublicAccessBlock configuration for an specific S3 bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTPublicAccessBlock.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutPublicAccessBlock.html"
   },
   "s3:PutBucketRequestPayment": {
     "Access": "Write",
@@ -8621,14 +9102,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Set the request payment configuration of a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTrequestPaymentPUT.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketRequestPayment.html"
   },
   "s3:PutBucketTagging": {
     "Access": "Tagging",
@@ -8636,14 +9117,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Add a set of tags to an existing bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTtagging.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketTagging.html"
   },
   "s3:PutBucketVersioning": {
     "Access": "Write",
@@ -8651,14 +9132,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Set the versioning state of an existing bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTVersioningStatus.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketVersioning.html"
   },
   "s3:PutBucketWebsite": {
     "Access": "Write",
@@ -8666,14 +9147,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Sets the configuration of the website that is specified in the website subresource.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTwebsite.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketWebsite.html"
   },
   "s3:PutEncryptionConfiguration": {
     "Access": "Write",
@@ -8681,14 +9162,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Sets the encryption configuration for the bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTencryption.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketEncryption.html"
   },
   "s3:PutInventoryConfiguration": {
     "Access": "Write",
@@ -8696,14 +9177,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the PUT operation adds an inventory configuration (identified by the inventory ID) to the bucket. You can have up to 1,000 inventory configurations per bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTInventoryConfig.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketInventoryConfiguration.html"
   },
   "s3:PutLifecycleConfiguration": {
     "Access": "Write",
@@ -8711,14 +9192,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Creates a new lifecycle configuration for the bucket or replaces an existing lifecycle configuration.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTlifecycle.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html"
   },
   "s3:PutMetricsConfiguration": {
     "Access": "Write",
@@ -8726,14 +9207,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "Sets or updates a metrics configuration for the CloudWatch request metrics (specified by the metrics configuration ID) from the bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTMetricConfiguration.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketMetricsConfiguration.html"
   },
   "s3:PutObject": {
     "Access": "Write",
@@ -8741,32 +9222,35 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
-      "s3:x-amz-metadata-directive",
-      "s3:x-amz-grant-read-acp",
-      "s3:x-amz-storage-class",
-      "s3:x-amz-server-side-encryption",
-      "s3:x-amz-grant-write-acp",
-      "s3:signatureversion",
-      "s3:authtype",
-      "s3:x-amz-grant-full-control",
-      "s3:x-amz-acl",
       "s3:object-lock-legal-hold",
-      "s3:RequestObjectTag/<key>",
-      "s3:RequestObjectTagKeys",
-      "s3:x-amz-grant-read",
-      "s3:object-lock-retain-until-date",
-      "s3:x-amz-server-side-encryption-aws-kms-key-id",
       "s3:object-lock-remaining-retention-days",
-      "s3:x-amz-copy-source",
-      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:x-amz-grant-read-acp",
+      "s3:x-amz-grant-read",
       "s3:x-amz-website-redirect-location",
-      "s3:x-amz-grant-write",
+      "s3:x-amz-copy-source",
+      "s3:DataAccessPointAccount",
+      "s3:RequestObjectTag/<key>",
+      "s3:x-amz-metadata-directive",
+      "s3:AccessPointNetworkOrigin",
       "s3:object-lock-mode",
-      "s3:signatureage"
+      "s3:x-amz-storage-class",
+      "s3:x-amz-content-sha256",
+      "s3:x-amz-grant-full-control",
+      "s3:x-amz-grant-write-acp",
+      "s3:x-amz-server-side-encryption-aws-kms-key-id",
+      "s3:x-amz-grant-write",
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:RequestObjectTagKeys",
+      "s3:x-amz-server-side-encryption",
+      "s3:object-lock-retain-until-date",
+      "s3:x-amz-acl"
     ],
     "Dependent Actions": [],
     "Description": "Adds an object to a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPUT.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html"
   },
   "s3:PutObjectAcl": {
     "Access": "Permissions Management",
@@ -8774,22 +9258,25 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
       "s3:x-amz-grant-read-acp",
+      "s3:AccessPointNetworkOrigin",
+      "s3:x-amz-storage-class",
       "s3:ExistingObjectTag/<key>",
-      "s3:x-amz-acl",
+      "s3:signatureage",
       "s3:x-amz-content-sha256",
       "s3:x-amz-grant-full-control",
-      "s3:x-amz-storage-class",
-      "s3:signatureversion",
+      "s3:DataAccessPointArn",
       "s3:x-amz-grant-read",
       "s3:x-amz-grant-write-acp",
-      "s3:signatureage",
-      "s3:x-amz-grant-write",
-      "s3:authtype"
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-acl",
+      "s3:x-amz-grant-write"
     ],
     "Dependent Actions": [],
     "Description": "Set the access control list (ACL) permissions for an object that already exists in a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPUTacl.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectAcl.html"
   },
   "s3:PutObjectLegalHold": {
     "Access": "Write",
@@ -8797,15 +9284,18 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:authtype",
       "s3:object-lock-legal-hold",
-      "s3:signatureversion",
+      "s3:AccessPointNetworkOrigin",
       "s3:signatureage",
-      "s3:authtype"
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "PUT Object Legal Hold on a specific object",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPUTLegalHold.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectLegalHold.html"
   },
   "s3:PutObjectRetention": {
     "Access": "Write",
@@ -8813,17 +9303,20 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
-      "s3:object-lock-remaining-retention-days",
-      "s3:x-amz-content-sha256",
-      "s3:signatureversion",
-      "s3:signatureage",
-      "s3:object-lock-mode",
       "s3:authtype",
-      "s3:object-lock-retain-until-date"
+      "s3:AccessPointNetworkOrigin",
+      "s3:object-lock-remaining-retention-days",
+      "s3:object-lock-mode",
+      "s3:signatureage",
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:object-lock-retain-until-date",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "PUT Object Retention on a specific object",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPUTRetention.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectRetention.html"
   },
   "s3:PutObjectTagging": {
     "Access": "Tagging",
@@ -8831,17 +9324,20 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
-      "s3:ExistingObjectTag/<key>",
-      "s3:x-amz-content-sha256",
+      "s3:authtype",
       "s3:RequestObjectTag/<key>",
+      "s3:AccessPointNetworkOrigin",
+      "s3:ExistingObjectTag/<key>",
+      "s3:signatureage",
+      "s3:x-amz-content-sha256",
+      "s3:DataAccessPointArn",
       "s3:RequestObjectTagKeys",
       "s3:signatureversion",
-      "s3:signatureage",
-      "s3:authtype"
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the PUT operation uses the tagging subresource to add a set of tags to an existing object.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPUTtagging.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectTagging.html"
   },
   "s3:PutObjectVersionAcl": {
     "Access": "Permissions Management",
@@ -8849,23 +9345,26 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
-      "s3:versionid",
+      "s3:authtype",
       "s3:x-amz-grant-read-acp",
+      "s3:AccessPointNetworkOrigin",
+      "s3:versionid",
+      "s3:x-amz-storage-class",
       "s3:ExistingObjectTag/<key>",
-      "s3:x-amz-acl",
+      "s3:signatureage",
       "s3:x-amz-content-sha256",
       "s3:x-amz-grant-full-control",
-      "s3:x-amz-storage-class",
-      "s3:signatureversion",
+      "s3:DataAccessPointArn",
       "s3:x-amz-grant-read",
       "s3:x-amz-grant-write-acp",
-      "s3:signatureage",
-      "s3:x-amz-grant-write",
-      "s3:authtype"
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-acl",
+      "s3:x-amz-grant-write"
     ],
     "Dependent Actions": [],
     "Description": "The ACL of an object is set at the object version level.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPUTacl.html#objectPutAclVersions"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectAcl.html"
   },
   "s3:PutObjectVersionTagging": {
     "Access": "Tagging",
@@ -8873,18 +9372,21 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:RequestObjectTag/<key>",
+      "s3:AccessPointNetworkOrigin",
       "s3:versionid",
       "s3:ExistingObjectTag/<key>",
+      "s3:signatureage",
       "s3:x-amz-content-sha256",
-      "s3:RequestObjectTag/<key>",
+      "s3:DataAccessPointArn",
       "s3:RequestObjectTagKeys",
       "s3:signatureversion",
-      "s3:signatureage",
-      "s3:authtype"
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "PUT Object tagging (for a Specific Version of the Object)",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPUTtagging.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectTagging.html"
   },
   "s3:PutReplicationConfiguration": {
     "Access": "Write",
@@ -8892,14 +9394,14 @@ ACTIONS = {
       "AWS::S3::Bucket"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
     "Description": "In a versioning-enabled bucket, this operation creates a new replication configuration (or replaces an existing one, if present).",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTreplication.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketReplication.html"
   },
   "s3:ReplicateDelete": {
     "Access": "Write",
@@ -8907,13 +9409,13 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
-    "Description": "",
+    "Description": "Permission exercised by S3 replication",
     "Reference": ""
   },
   "s3:ReplicateObject": {
@@ -8922,15 +9424,15 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
-      "s3:x-amz-server-side-encryption-aws-kms-key-id",
+      "s3:authtype",
       "s3:x-amz-content-sha256",
+      "s3:signatureage",
       "s3:x-amz-server-side-encryption",
       "s3:signatureversion",
-      "s3:signatureage",
-      "s3:authtype"
+      "s3:x-amz-server-side-encryption-aws-kms-key-id"
     ],
     "Dependent Actions": [],
-    "Description": "",
+    "Description": "Permission exercised by S3 replication",
     "Reference": ""
   },
   "s3:ReplicateTags": {
@@ -8939,13 +9441,13 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
-      "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:authtype",
+      "s3:signatureage",
+      "s3:signatureversion"
     ],
     "Dependent Actions": [],
-    "Description": "",
+    "Description": "Permission exercised by S3 replication",
     "Reference": ""
   },
   "s3:RestoreObject": {
@@ -8954,14 +9456,17 @@ ACTIONS = {
       "AWS::S3::Object"
     ],
     "Condition Keys": [
+      "s3:authtype",
+      "s3:AccessPointNetworkOrigin",
       "s3:signatureage",
-      "s3:signatureversion",
       "s3:x-amz-content-sha256",
-      "s3:authtype"
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount"
     ],
     "Dependent Actions": [],
     "Description": "Restores a temporary copy of an archived object.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOSTrestore.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_RestoreObject.html"
   },
   "s3:UpdateJobPriority": {
     "Access": "Write",
@@ -8969,17 +9474,17 @@ ACTIONS = {
       "AWS::S3::Job"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
-      "s3:ExistingJobOperation",
-      "s3:ExistingJobPriority",
-      "s3:signatureversion",
-      "s3:signatureage",
+      "s3:authtype",
       "s3:RequestJobPriority",
-      "s3:authtype"
+      "s3:ExistingJobPriority",
+      "s3:x-amz-content-sha256",
+      "s3:signatureage",
+      "s3:signatureversion",
+      "s3:ExistingJobOperation"
     ],
     "Dependent Actions": [],
     "Description": "Updates an existing job's priority.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTAccountPOSTUpdateJobPriority.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_UpdateJobPriority.html"
   },
   "s3:UpdateJobStatus": {
     "Access": "Write",
@@ -8987,17 +9492,17 @@ ACTIONS = {
       "AWS::S3::Job"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
-      "s3:ExistingJobOperation",
+      "s3:authtype",
       "s3:ExistingJobPriority",
+      "s3:x-amz-content-sha256",
+      "s3:signatureage",
       "s3:JobSuspendedCause",
       "s3:signatureversion",
-      "s3:signatureage",
-      "s3:authtype"
+      "s3:ExistingJobOperation"
     ],
     "Dependent Actions": [],
     "Description": "Updates the status for the specified job.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/RESTAccountPOSTUpdateJobStatus.html"
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_UpdateJobStatus.html"
   },
   "sns:AddPermission": {
     "Access": "Permissions Management",
@@ -9249,8 +9754,8 @@ ACTIONS = {
       "AWS::Sns::Topic"
     ],
     "Condition Keys": [
-      "sns:Endpoint",
-      "sns:Protocol"
+      "sns:Protocol",
+      "sns:Endpoint"
     ],
     "Dependent Actions": [],
     "Description": "Prepares to subscribe an endpoint by sending the endpoint a confirmation message.",
@@ -9262,8 +9767,8 @@ ACTIONS = {
       "AWS::Sns::Topic"
     ],
     "Condition Keys": [
-      "aws:TagKeys",
-      "aws:RequestTag/${TagKey}"
+      "aws:RequestTag/${TagKey}",
+      "aws:TagKeys"
     ],
     "Dependent Actions": [],
     "Description": "Add tags to the specified Amazon SNS topic.",
@@ -9283,8 +9788,8 @@ ACTIONS = {
       "AWS::Sns::Topic"
     ],
     "Condition Keys": [
-      "aws:TagKeys",
-      "aws:RequestTag/${TagKey}"
+      "aws:RequestTag/${TagKey}",
+      "aws:TagKeys"
     ],
     "Dependent Actions": [],
     "Description": "Remove tags from the specified Amazon SNS topic.",
@@ -9295,7 +9800,12 @@ ACTIONS = {
     "Affects": [
       "AWS::Iam::Role"
     ],
-    "Condition Keys": [],
+    "Condition Keys": [
+      "sts:TransitiveTagKeys",
+      "aws:PrincipalTag/${TagKey}",
+      "aws:RequestTag/${TagKey}",
+      "aws:TagKeys"
+    ],
     "Dependent Actions": [],
     "Description": "Returns a set of temporary security credentials that you can use to access AWS resources that you might not normally have access to",
     "Reference": "https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html"
@@ -9306,38 +9816,42 @@ ACTIONS = {
       "AWS::Iam::Role"
     ],
     "Condition Keys": [
-      "saml:eduorglegalname",
-      "saml:mail",
-      "saml:sub_type",
-      "saml:eduorgidentityauthnpolicyuri",
-      "saml:primaryGroupSID",
-      "saml:edupersontargetedid",
-      "saml:edupersonnickname",
-      "saml:cn",
-      "saml:edupersonentitlement",
-      "saml:eduorghomepageuri",
-      "saml:edupersonorgunitdn",
-      "saml:surname",
+      "sts:TransitiveTagKeys",
       "saml:sub",
-      "saml:edupersonaffiliation",
-      "saml:namequalifier",
-      "saml:givenName",
+      "aws:PrincipalTag/${TagKey}",
       "saml:eduorgsuperioruri",
-      "saml:organizationStatus",
+      "saml:surname",
+      "saml:primaryGroupSID",
+      "saml:givenName",
+      "saml:x500UniqueIdentifier",
       "saml:edupersonassurance",
-      "saml:edupersonorgdn",
+      "saml:eduorgwhitepagesuri",
+      "saml:eduorgidentityauthnpolicyuri",
+      "saml:edupersonscopedaffiliation",
+      "saml:mail",
+      "saml:cn",
+      "saml:sub_type",
       "saml:iss",
       "saml:aud",
-      "saml:doc",
+      "saml:name",
       "saml:edupersonprimaryaffiliation",
-      "saml:x500UniqueIdentifier",
-      "saml:uid",
-      "saml:edupersonprincipalname",
-      "saml:eduorgwhitepagesuri",
-      "saml:edupersonscopedaffiliation",
-      "saml:edupersonprimaryorgunitdn",
+      "saml:edupersontargetedid",
+      "saml:edupersonorgunitdn",
+      "aws:TagKeys",
+      "saml:edupersonaffiliation",
       "saml:commonName",
-      "saml:name"
+      "saml:edupersonprimaryorgunitdn",
+      "saml:edupersonprincipalname",
+      "saml:edupersonnickname",
+      "saml:edupersonentitlement",
+      "saml:organizationStatus",
+      "saml:eduorghomepageuri",
+      "aws:RequestTag/${TagKey}",
+      "saml:uid",
+      "saml:edupersonorgdn",
+      "saml:eduorglegalname",
+      "saml:doc",
+      "saml:namequalifier"
     ],
     "Dependent Actions": [],
     "Description": "Returns a set of temporary security credentials for users who have been authenticated via a SAML authentication response",
@@ -9349,16 +9863,20 @@ ACTIONS = {
       "AWS::Iam::Role"
     ],
     "Condition Keys": [
-      "cognito-identity.amazonaws.com:aud",
-      "graph.facebook.com:app_id",
-      "graph.facebook.com:id",
-      "cognito-identity.amazonaws.com:sub",
-      "accounts.google.com:aud",
-      "accounts.google.com:oaud",
+      "sts:TransitiveTagKeys",
       "accounts.google.com:sub",
+      "cognito-identity.amazonaws.com:aud",
       "www.amazon.com:user_id",
+      "www.amazon.com:app_id",
       "cognito-identity.amazonaws.com:amr",
-      "www.amazon.com:app_id"
+      "graph.facebook.com:id",
+      "aws:TagKeys",
+      "graph.facebook.com:app_id",
+      "cognito-identity.amazonaws.com:sub",
+      "aws:RequestTag/${TagKey}",
+      "accounts.google.com:aud",
+      "aws:PrincipalTag/${TagKey}",
+      "accounts.google.com:oaud"
     ],
     "Dependent Actions": [],
     "Description": "Returns a set of temporary security credentials for users who have been authenticated in a mobile or web application with a web identity provider",
@@ -9393,7 +9911,11 @@ ACTIONS = {
     "Affects": [
       "AWS::Iam::User"
     ],
-    "Condition Keys": [],
+    "Condition Keys": [
+      "aws:PrincipalTag/${TagKey}",
+      "aws:RequestTag/${TagKey}",
+      "aws:TagKeys"
+    ],
     "Dependent Actions": [],
     "Description": "Returns a set of temporary security credentials (consisting of an access key ID, a secret access key, and a security token) for a federated user",
     "Reference": "https://docs.aws.amazon.com/STS/latest/APIReference/API_GetFederationToken.html"
@@ -9405,5 +9927,21 @@ ACTIONS = {
     "Dependent Actions": [],
     "Description": "Returns a set of temporary security credentials (consisting of an access key ID, a secret access key, and a security token) for an AWS account or IAM user",
     "Reference": "https://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html"
+  },
+  "sts:TagSession": {
+    "Access": "Tagging",
+    "Affects": [
+      "AWS::Iam::Role",
+      "AWS::Iam::User"
+    ],
+    "Condition Keys": [
+      "sts:TransitiveTagKeys",
+      "aws:PrincipalTag/${TagKey}",
+      "aws:RequestTag/${TagKey}",
+      "aws:TagKeys"
+    ],
+    "Dependent Actions": [],
+    "Description": "Grants permission to add tags to a STS session",
+    "Reference": ""
   }
 }
