@@ -1,12 +1,26 @@
 <template>
   <div>
-    <!-- Notifications -->
+    <!-- Success notifications - timeout -->
     <v-snackbar
+      v-if="notification.status === 0"
       v-model="notification.visible"
-      :color="notification.status === 0 ? 'green' : 'red'"
-      :timeout="5000"
+      :timeout="1000"
+      color="success"
       top
-    >{{notification.text}}</v-snackbar>
+    >
+      <span class="mx-auto" v-html="notification.text"></span>
+    </v-snackbar>
+
+    <!-- Errors - dismissible, no timeout -->
+    <v-alert
+      v-else-if="notification.status === 1"
+      v-model="notification.visible"
+      class="mx-auto notification"
+      type="error"
+      dismissible
+    >
+      <span v-html="notification.text"></span>
+    </v-alert>
 
     <!-- Graph -->
     <v-card flat tile append :disabled="busy" class="graph" id="graph">
@@ -815,7 +829,9 @@ export default {
           : "";
       if (message === "") return;
 
-      this.notification.text = message;
+      this.notification.text = message
+        .replace(/ /g, "&nbsp;")
+        .replace(/\n/g, "<br>");
       this.notification.status = 1;
       this.notification.visible = true;
     },
@@ -894,5 +910,16 @@ export default {
 
 .graph canvas {
   left: 0px !important;
+}
+
+.notification {
+  position: absolute !important;
+  max-width: 80% !important;
+  transform: translateX(-50%);
+  word-break: break-word;
+  top: 5px !important;
+  opacity: 1;
+  z-index: 100;
+  left: 50%;
 }
 </style>
