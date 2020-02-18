@@ -187,8 +187,7 @@ export default {
         {
             selector: 'edge.ACTIONS',
             style: {
-                "line-fill": "radial-gradient",
-                // Change to Allow & Deny + remaining action colors
+                "line-fill": "linear-gradient",
                 'line-gradient-stop-colors': (e) => e.classes().filter(s => s in access).map(s => access[s]),
                 'width': '1px',
                 'label': 'data (name)',
