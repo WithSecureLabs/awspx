@@ -11,22 +11,35 @@
         <v-progress-circular :size="200" :width="8" indeterminate color="primary"></v-progress-circular>
       </v-overlay>
     </v-card>
-    <v-fab-transition transition="scale-transition" v-for="(item,i) in menu" :key="'buttons-' + i">
+
+    <!-- Node context menu -->
+    <v-fab-transition
+      transition="scale-transition"
+      v-for="(item,i) in context_menu"
+      :key="'context_menu-' + i"
+    >
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn
-            :style="{top: menu[i].position.y, left: menu[i].position.x}"
-            fab
+            :style="context_menu[i].styles.button"
+            :height="context_menu[i].styles.size"
+            :width="context_menu[i].styles.size"
+            @click="context_menu_item(item.fn, item.target)"
             absolute
-            @click="button(item.fn, item.target)"
+            fab
+            dark
             v-on="on"
           >
-            <v-icon>{{item.icon}}</v-icon>
+            <v-icon
+              :style="context_menu[i].styles.icon"
+              :size="context_menu[i].styles.icon.width"
+            >{{item.icon}}</v-icon>
           </v-btn>
         </template>
         <span v-html="item.name"></span>
       </v-tooltip>
     </v-fab-transition>
+
     <properties ref="properties" :element_properties="element_properties"></properties>
     <search
       ref="search"
@@ -99,7 +112,7 @@ export default {
         enabled: true
       },
       events: {
-        menu: {},
+        context_menu: {},
         select: {},
         alt: false,
         ctrl: false
@@ -107,7 +120,7 @@ export default {
       elements: [],
       hide: false,
       element_properties: null,
-      buttons: [
+      context_menu_items: [
         {
           name: "Outbound <b>Paths</b>",
           icon: "mdi-map-marker-up",
@@ -133,6 +146,51 @@ export default {
   },
 
   methods: {
+    context_menu_item(fn, target) {
+      this.context_menu_destroy();
+      this.hide = true;
+      fn(target).then(elements => {
+        if (!Array.isArray(elements) || elements.length === 0) return;
+        const added = this.add_element(elements);
+        // if (added.length > 0) {
+        //   this.message.text = `Added ${added.length} elements!`;
+        //   this.message.color = "success";
+        //   this.message.visible = true;
+        // }
+      });
+    },
+
+    context_menu_create(element) {
+      if (element.isNode != null && element.isNode()) {
+        this.events.context_menu = {
+          id: element.id(),
+          enabled: true
+        };
+
+        element.removeClass("hover");
+        element.addClass("menu");
+        cy.autoungrabify(true);
+        cy.autounselectify(true);
+        cy.zoomingEnabled(false);
+        cy.panningEnabled(false);
+      }
+    },
+
+    context_menu_destroy() {
+      if (this.events.context_menu.enabled) {
+        const node = cy.$(`#${this.events.context_menu.id}`);
+        this.events.context_menu = {
+          enabled: false
+        };
+
+        node.removeClass("menu");
+        cy.autoungrabify(false);
+        cy.autounselectify(false);
+        cy.zoomingEnabled(true);
+        cy.panningEnabled(true);
+      }
+    },
+
     show() {
       this.hide = !this.hide;
     },
@@ -352,7 +410,7 @@ export default {
       this.limit.display = false;
       this.limit.elements = [];
       this.loading.graph = true;
-      this.destroy_menu();
+      this.context_menu_destroy();
 
       let elements = cy.add(collection);
       const concentric = cy
@@ -409,7 +467,7 @@ export default {
       if (collection.length < 1) return false;
 
       this.loading.graph = true;
-      this.destroy_menu();
+      this.context_menu_destroy();
 
       collection = collection.map(e => {
         let id = (typeof e.data !== "function"
@@ -741,51 +799,6 @@ export default {
         });
     },
 
-    create_menu(element) {
-      if (element.isNode != null && element.isNode()) {
-        this.events.menu = {
-          id: element.id(),
-          enabled: true
-        };
-
-        element.removeClass("hover");
-        element.addClass("menu");
-        cy.autoungrabify(true);
-        cy.autounselectify(true);
-        cy.zoomingEnabled(false);
-        cy.panningEnabled(false);
-      }
-    },
-
-    destroy_menu() {
-      if (this.events.menu.enabled) {
-        const node = cy.$(`#${this.events.menu.id}`);
-        this.events.menu = {
-          enabled: false
-        };
-
-        node.removeClass("menu");
-        cy.autoungrabify(false);
-        cy.autounselectify(false);
-        cy.zoomingEnabled(true);
-        cy.panningEnabled(true);
-      }
-    },
-
-    button(fn, target) {
-      this.destroy_menu();
-      this.hide = true;
-      fn(target).then(elements => {
-        if (!Array.isArray(elements) || elements.length === 0) return;
-        const added = this.add_element(elements);
-        // if (added.length > 0) {
-        //   this.message.text = `Added ${added.length} elements!`;
-        //   this.message.color = "success";
-        //   this.message.visible = true;
-        // }
-      });
-    },
-
     register_listeners() {
       window.addEventListener("keydown", event => {
         switch (event.key) {
@@ -878,7 +891,7 @@ export default {
 
       cy.on("cxttap", "node", event => {
         this.hide = true;
-        this.create_menu(event.target);
+        this.context_menu_create(event.target);
       });
 
       cy.on("click", event => {
@@ -925,7 +938,7 @@ export default {
 
       cy.on("singleclick", event => {
         this.hide = true;
-        this.destroy_menu();
+        this.context_menu_destroy();
 
         if (event.target.group) {
           let collection = cy.collection();
@@ -983,39 +996,49 @@ export default {
   },
 
   computed: {
-    menu: function() {
-      if (Object.keys(this.events.menu).length == 0) return {};
-      if (!this.events.menu.enabled) return {};
+    context_menu: function() {
+      if (Object.keys(this.events.context_menu).length == 0) return {};
+      if (!this.events.context_menu.enabled) return {};
 
-      const br = 28;
-      const bl = 60;
-      const bm = 1.6;
+      const theta = (2 * Math.PI) / this.context_menu_items.length;
+      const delta =
+        this.context_menu_items.length % 2 == 0
+          ? 0
+          : (Math.PI / 2) * this.context_menu_items.length;
 
-      const node = cy.$(`#${this.events.menu.id}`);
-      const theta = (2 * Math.PI) / this.buttons.length;
-
-      const offset =
-        this.buttons.length % 2 == 0 ? 0 : (Math.PI / 2) * this.buttons.length;
-
-      let r = bm * (node.style("height").replace("px", "") / 2) * cy.zoom();
+      const node = cy.$(`#${this.events.context_menu.id}`);
       let position = node.renderedPosition();
 
-      r = r < bl ? bl : r;
-      position.x -= br;
-      position.y -= br;
+      let r =
+        (1.1 /*radius scaling factor*/ *
+        cy.zoom() *
+        0.75 /*zoom dampener */ *
+          parseFloat(node.style("height").replace("px", ""))) /
+        1.5; /*hover size multiplier*/
 
-      for (let i = 0; i < this.buttons.length; i++) {
-        const x = position.x + r * Math.cos(i * theta - offset);
-        const y = position.y + r * Math.sin(i * theta - offset);
+      // button size is relative to node size
+      let button_size = (3 / 4) * r;
+      // account for button size when computing context menu radius
+      r += button_size / 2;
 
-        this.buttons[i].target = node;
-        this.buttons[i].position = {
-          x: x + "px",
-          y: y + "px"
+      for (let i = 0; i < this.context_menu_items.length; i++) {
+        const x = r * Math.cos(i * theta - delta);
+        const y = r * Math.sin(i * theta - delta);
+        this.context_menu_items[i].target = node;
+        this.context_menu_items[i].styles = {
+          button: {
+            top: position.y + y - button_size / 2 + "px",
+            left: position.x + x - button_size / 2 + "px"
+          },
+          icon: {
+            height: button_size / 2 + "px",
+            width: button_size / 2 + "px"
+          },
+          size: button_size
         };
       }
 
-      return this.buttons;
+      return this.context_menu_items;
     },
     busy: function() {
       return this.loading.enabled && (this.loading.query || this.loading.graph);
