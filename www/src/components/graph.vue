@@ -22,6 +22,30 @@
       <span v-html="notification.text"></span>
     </v-alert>
 
+    <!-- Confirmation dialog -->
+    <v-dialog max-width="550" modal v-model="dialog.enabled">
+      <v-card>
+        <v-card-title class="headline py-5">Hold up</v-card-title>
+
+        <v-card-text class="text-md-left">
+          You're about to draw
+          <b>{{dialog.store.length}}</b> nodes and edges, which is probably not a great idea.
+          <br />
+          <br />Consider refining your search or limiting the result set to text-based output only.
+          <br />
+          <br />As a starting point, the query that was issued was:
+          <br />
+          <br />
+          <b>{{neo4j.state.statement}}</b>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-btn outlined color="green darken-1" @click="dialog.enabled = false" text>Cancel</v-btn>
+          <v-btn color="red darken-1" text @click="_add_resume(dialog.store)">Roll the dice!</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Graph -->
     <v-card flat tile append :disabled="busy" class="graph" id="graph">
       <v-overlay :value="busy">
@@ -75,10 +99,10 @@
 <script>
 import properties from "@/components/properties";
 import search from "@/components/search";
-import config from "@/config.js";
 
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
+import config from "@/config.js";
 
 let cy = null;
 
@@ -138,28 +162,13 @@ export default {
       },
       dialog: {
         max_elements: 500,
-        display: false,
+        enabled: false,
         store: []
       }
     };
   },
 
   methods: {
-    context_menu_item(fn, target) {
-      this.context_menu_destroy();
-      this.search.hidden = true;
-      fn(target).then(response => {
-        const elements = response.Graph;
-        if (typeof elements === "undefined" || elements.length === 0) return;
-        const added = this.add(elements);
-        if (added.length > 0) {
-          // this.notification.text = `Added ${added.length} elements!`;
-          // this.notification.status = 0;
-          // this.notification.visible = true;
-        }
-      });
-    },
-
     context_menu_create(element) {
       if (element.isNode != null && element.isNode()) {
         this.events.context_menu = {
@@ -191,6 +200,21 @@ export default {
       }
     },
 
+    context_menu_item(fn, target) {
+      this.context_menu_destroy();
+      this.search.hidden = true;
+      fn(target).then(response => {
+        const elements = response.Graph;
+        if (typeof elements === "undefined" || elements.length === 0) return;
+        const added = this.add(elements);
+        if (added.length > 0) {
+          // this.notification.text = `Added ${added.length} elements!`;
+          // this.notification.status = 0;
+          // this.notification.visible = true;
+        }
+      });
+    },
+
     find_paths_to(element) {
       const id = (typeof element.data == "function"
         ? element.data().id
@@ -220,17 +244,6 @@ export default {
       );
     },
 
-    find_actions(actions) {
-      this.neo4j
-        .run(
-          `WITH "${actions}" AS action ` +
-            "MATCH path=()-[:ACTION{Name:action}]->() RETURN path"
-        )
-        .then(elements => {
-          this.add(elements.Graph);
-        });
-    },
-
     find_actions_to(element) {
       const id = (typeof element.data == "function"
         ? element.data().id
@@ -258,17 +271,31 @@ export default {
       );
     },
 
-    bundle_actions_all() {
-      let elements = [];
-      let actions = {};
-      cy.edges((e, i) => e.hasClass("ACTION")).map(a => {
-        if (!(a.data("source") in actions)) actions[a.data("source")] = [];
-        if (!(a.data("target") in actions[a.data("source")])) {
-          actions[a.data("source")].push(a.data("target"));
-          elements.push(a);
-        }
-      });
-      this.bundle_actions(elements);
+    find_actions(actions) {
+      this.neo4j
+        .run(
+          `WITH "${actions}" AS action ` +
+            "MATCH path=()-[:ACTION{Name:action}]->() RETURN path"
+        )
+        .then(elements => {
+          this.add(elements.Graph);
+        });
+    },
+
+    unbundle_actions(element) {
+      let collection = element.data("properties");
+      cy.zoomingEnabled(false);
+      cy.elements().lock();
+      this.remove(element);
+
+      this.add(
+        Object.keys(collection)
+          .map(k => collection[k])
+          .flat()
+      );
+
+      cy.elements().unlock();
+      cy.zoomingEnabled(true);
     },
 
     bundle_actions(elements) {
@@ -321,20 +348,17 @@ export default {
       cy.zoomingEnabled(true);
     },
 
-    unbundle_actions(element) {
-      let collection = element.data("properties");
-      cy.zoomingEnabled(false);
-      cy.elements().lock();
-      this.remove(element);
-
-      this.add(
-        Object.keys(collection)
-          .map(k => collection[k])
-          .flat()
-      );
-
-      cy.elements().unlock();
-      cy.zoomingEnabled(true);
+    bundle_actions_all() {
+      let elements = [];
+      let actions = {};
+      cy.edges((e, i) => e.hasClass("ACTION")).map(a => {
+        if (!(a.data("source") in actions)) actions[a.data("source")] = [];
+        if (!(a.data("target") in actions[a.data("source")])) {
+          actions[a.data("source")].push(a.data("target"));
+          elements.push(a);
+        }
+      });
+      this.bundle_actions(elements);
     },
 
     expand_collapse(element) {
@@ -409,13 +433,13 @@ export default {
       if (collection.length < this.dialog.max_elements) {
         return this._add_resume(collection);
       }
-
-      this._add_suspend(collection);
+      return this._add_suspend(collection);
     },
 
     _add_suspend(collection) {
-      this.dialog.active = true;
+      this.dialog.enabled = true;
       this.dialog.store = collection;
+      return [];
     },
 
     _add_merge_actions(collection) {
@@ -527,7 +551,7 @@ export default {
     },
 
     _add_resume(collection) {
-      this.dialog.active = false;
+      this.dialog.enabled = false;
       this.dialog.store = [];
       this.loading.value = true;
       this.context_menu_destroy();
@@ -802,12 +826,12 @@ export default {
 
   mounted() {
     cytoscape.use(dagre);
-
+    this.layout = { ...config.graph.layout };
     cy = cytoscape({
       container: document.getElementsByClassName("graph")[0],
       elements: config.elements,
       style: config.graph.style,
-      layout: config.graph.layout,
+      layout: this.layout,
       wheelSensitivity: 0.1,
       maxZoom: 1.5,
       minZoom: 0.2
@@ -880,6 +904,7 @@ export default {
 
       return this.context_menu_items;
     },
+
     busy: function() {
       return (
         this.loading.enabled && (this.neo4j.state.active || this.loading.value)

@@ -17,7 +17,7 @@
 
     <!-- Autocomplete -->
     <v-expand-transition>
-      <div v-if="!editor" :style="{display: show ? '' : 'none'}" class="mb-5">
+      <div :style="{display: show ? '' : 'none'}" class="mb-5">
         <v-card>
           <v-autocomplete
             :filter="filter"
