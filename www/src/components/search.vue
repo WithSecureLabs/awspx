@@ -66,11 +66,17 @@
 
             <!-- Autocomplete selection -->
             <template #selection="data">
-              <v-chip v-on="data.on" close @click="data.select" @click:close="remove(data.item)">
-                <v-avatar left :color="(view === 1) ? colors[data.item.access] : 'white'">
-                  <img :src="icon(data.item)" />
+              <v-chip
+                v-on="data.on"
+                close
+                outlined
+                @click="data.select"
+                @click:close="selected = selected.filter(s => s.id !== data.item.id)"
+              >
+                <v-avatar outlined :color="(view === 1) ? colors[data.item.access] : 'white'">
+                  <v-img :src="icon(data.item)" />
                 </v-avatar>
-                {{ data.item.name }}
+                <span class="ml-2" style="font-size: 11px">{{ data.item.name }}</span>
               </v-chip>
             </template>
 
@@ -82,9 +88,9 @@
                   style="border: 1px solid #ccc; padding: 30px;"
                   :color="(view === 1) ? colors[data.item.access] : 'none'"
                 >
-                  <img :src="icon(data.item)" />
+                  <img height="50" width="50" :src="icon(data.item)" />
                 </v-list-item-avatar>
-                <v-list-item-content>
+                <v-list-item-content style="text-align: center">
                   <v-list-item-title v-html="highlight(data.item.name)"></v-list-item-title>
                   <v-list-item-subtitle v-if="view === 0" v-html="data.item.id"></v-list-item-subtitle>
                   <v-list-item-subtitle v-else-if="view === 1" v-html="data.item.description"></v-list-item-subtitle>
