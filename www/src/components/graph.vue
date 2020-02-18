@@ -177,7 +177,7 @@ export default {
         };
 
         element.removeClass("hover");
-        element.addClass("menu");
+        element.addClass("context-menu");
         cy.autoungrabify(true);
         cy.autounselectify(true);
         cy.zoomingEnabled(false);
@@ -192,7 +192,7 @@ export default {
           enabled: false
         };
 
-        node.removeClass("menu");
+        node.removeClass("context-menu");
         cy.autoungrabify(false);
         cy.autounselectify(false);
         cy.zoomingEnabled(true);

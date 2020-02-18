@@ -87,7 +87,7 @@ export default {
             style: {
 
                 'font-family': 'Source Code Pro',
-                'font-size': '8px',
+                'font-size': '6px',
 
                 'curve-style': 'bezier',
                 'target-arrow-shape': 'triangle',
@@ -271,7 +271,7 @@ export default {
             }
         },
         {
-            selector: 'node.menu',
+            selector: 'node.context-menu',
             style: {
                 label: "",
             }
@@ -293,7 +293,7 @@ export default {
             nodeDimensionsIncludeLabels: true,
             animate: false,
             animateFilter: function (node, i) { return true; },
-            animationDuration: 200,
+            animationDuration: 250,
             animationEasing: undefined,
             boundingBox: undefined,
             transform: function (node, pos) { return pos; },
