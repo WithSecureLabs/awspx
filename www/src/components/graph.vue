@@ -114,7 +114,7 @@ export default {
           fn: this.find_paths_from
         },
         {
-          name: "Effective Outbound <b>Actions</b>",
+          name: "Outbound <b>Actions</b>",
           icon: "mdi-file-search",
           fn: this.find_actions_from
         },
@@ -124,7 +124,7 @@ export default {
           fn: this.find_paths_to
         },
         {
-          name: "Effective Inbound <b>Actions</b>",
+          name: "Inbound <b>Actions</b>",
           icon: "mdi-file-search-outline",
           fn: this.find_actions_to
         }
@@ -175,7 +175,7 @@ export default {
       });
     },
 
-    find_actions_to(element, effective = true) {
+    find_actions_to(element) {
       const id = (typeof element.data == "function"
         ? element.data().id
         : element.data.id
@@ -184,9 +184,8 @@ export default {
       return this.query(
         `MATCH (target) WHERE ID(target) = ${id} ` +
           "OPTIONAL MATCH actions=(_)-[:ACTION]->(target) " +
-          "OPTIONAL MATCH path=(source)-[:TRANSITIVE|ATTACK*0..]->(_) " +
-          "WHERE (_:Resource OR _:External) AND (source:Resource OR source:External) " +
-          "RETURN target, path, actions"
+          "WHERE (_:Resource OR _:External) " +
+          "RETURN target, actions"
       );
     },
 
@@ -197,11 +196,9 @@ export default {
       ).substring(1);
 
       return this.query(
-        "MATCH (source), path=(source)-[:TRANSITIVE|ATTACK*0..]->(target) " +
-          `WHERE ID(source) = ${id} AND (target:Resource OR target:Admin OR target = source) ` + 
-          "WITH path, target " + 
-          "OPTIONAL MATCH actions=(target)-[:ACTION]->(:Resource) " + 
-          "RETURN path, actions"
+        `MATCH (source) WHERE ID(source) = ${id} ` +
+          "OPTIONAL MATCH actions=(source)-[:ACTION]->(:Resource) " +
+          "RETURN source, actions"
       );
     },
 
