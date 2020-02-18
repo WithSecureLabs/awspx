@@ -149,7 +149,7 @@ export default {
     notes_save(value) {
       const id = this.element.data.id;
       this.notes.value = value;
-      this.$parent.$neo4j.run(
+      this.neo4j.run(
         (id.charAt(0) === "n"
           ? `MATCH (e) WHERE ID(e) = ${id.substring(1)}`
           : `MATCH ()-[e]->() WHERE ID(e) = ${id.substring(1)}`) +
@@ -159,27 +159,26 @@ export default {
 
     notes_load() {
       const id = this.element.data.id;
-      this.$parent
-        .query(
+      this.neo4j
+        .run(
           (id.charAt(0) === "n"
             ? `MATCH (e) WHERE ID(e) = ${id.substring(1)}`
             : `MATCH ()-[e]->() WHERE ID(e) = ${id.substring(1)}`) +
-            ` RETURN e.Notes AS Notes`,
-          false
+            ` RETURN e.Notes AS Notes`
         )
         .then(n => {
-          this.notes.value = n[0]["Notes"] == null ? "" : n[0]["Notes"];
+          this.notes.value =
+            n.Text[0]["Notes"] == null ? "" : n.Text[0]["Notes"];
         });
     },
 
     view_set(element) {
       let tabs = [];
-
       this.notes.enabled = true;
 
       if (
         element.classes.includes("ACTIONS") &&
-        element.data.collection != null
+        element.data.properties != null
       ) {
         tabs.push.apply(tabs, this.view_set_actions(element));
       } else if (element.classes.includes("ACTION")) {
@@ -283,10 +282,10 @@ export default {
     view_set_actions(element) {
       let tabs = [];
 
-      Object.keys(element.data.collection).map(k => {
+      Object.keys(element.data.properties).map(k => {
         let actions = {};
 
-        element.data.collection[k].map(e => {
+        element.data.properties[k].map(e => {
           const name = e.data.name;
           let effect = e.data.properties.Effect;
           effect = (e.classes.includes("Conditional")
@@ -412,7 +411,7 @@ export default {
   margin-top: 10px;
   margin-left: 10px;
   text-align: left;
-  max-width: 700px;
+  max-width: 40%;
 }
 
 .list-item {

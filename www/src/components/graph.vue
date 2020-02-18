@@ -149,14 +149,15 @@ export default {
     context_menu_item(fn, target) {
       this.context_menu_destroy();
       this.hide = true;
-      fn(target).then(elements => {
-        if (!Array.isArray(elements) || elements.length === 0) return;
+      fn(target).then(response => {
+        const elements = response.Graph;
+        if (typeof elements === "undefined" || elements.length === 0) return;
         const added = this.add_element(elements);
-        // if (added.length > 0) {
-        //   this.message.text = `Added ${added.length} elements!`;
-        //   this.message.color = "success";
-        //   this.message.visible = true;
-        // }
+        if (added.length > 0) {
+          // this.message.text = `Added ${added.length} elements!`;
+          // this.message.color = "success";
+          // this.message.visible = true;
+        }
       });
     },
 
@@ -201,7 +202,7 @@ export default {
         : element.data.id
       ).substring(1);
 
-      return this.query(
+      return this.neo4j.run(
         "MATCH (source)-[:TRANSITIVE|ATTACK]->(), (target) " +
           `WHERE ID(target) = ${id} AND (source:External OR source:Resource)  ` +
           "WITH source, target " +
@@ -215,7 +216,7 @@ export default {
         ? element.data().id
         : element.data.id
       ).substring(1);
-      return this.query(
+      return this.neo4j.run(
         `MATCH (source) WHERE ID(source) = ${id} ` +
           "OPTIONAL MATCH path=shortestPath((source)-[:TRANSITIVE|ATTACK*0..]->(target)) " +
           "WHERE (target:Resource OR target:Admin) " +
@@ -225,12 +226,14 @@ export default {
     },
 
     find_actions(actions) {
-      this.query(
-        `WITH "${actions}" AS action ` +
-          "MATCH path=()-[:ACTION{Name:action}]->() RETURN path"
-      ).then(elements => {
-        this.add_element(elements);
-      });
+      this.neo4j
+        .run(
+          `WITH "${actions}" AS action ` +
+            "MATCH path=()-[:ACTION{Name:action}]->() RETURN path"
+        )
+        .then(elements => {
+          this.add_element(elements.Graph);
+        });
     },
 
     find_actions_to(element) {
@@ -239,7 +242,7 @@ export default {
         : element.data.id
       ).substring(1);
 
-      return this.query(
+      return this.neo4j.run(
         `MATCH (target) WHERE ID(target) = ${id} ` +
           "OPTIONAL MATCH actions=(_)-[:ACTION]->(target) " +
           "WHERE (_:Resource OR _:External) " +
@@ -253,14 +256,14 @@ export default {
         : element.data.id
       ).substring(1);
 
-      return this.query(
+      return this.neo4j.run(
         `MATCH (source) WHERE ID(source) = ${id} ` +
           "OPTIONAL MATCH actions=(source)-[:ACTION]->(:Resource) " +
           "RETURN source, actions"
       );
     },
 
-    collapse_actions_all() {
+    bundle_actions_all() {
       let elements = [];
       let actions = {};
       cy.edges((e, i) => e.hasClass("ACTION")).map(a => {
@@ -270,59 +273,71 @@ export default {
           elements.push(a);
         }
       });
-      this.collapse_actions(elements);
+      this.bundle_actions(elements);
     },
 
-    collapse_actions(elements) {
-      let add = [];
+    bundle_actions(elements) {
+      let collections = {};
       let remove = [];
+      let add = [];
 
-      elements.map(element => {
-        let source = element.data("source");
-        let target = element.data("target");
-        let edges = cy.edges((e, i) => {
-          return (
-            e.hasClass("ACTION") &&
-            e.data("source") == source &&
-            e.data("target") == target
-          );
-        });
-        let collection = {};
-        edges.jsons().forEach(e => {
-          if (!(e.data.properties.Access in collection))
-            collection[e.data.properties.Access] = [];
-          collection[e.data.properties.Access].push({
-            data: e.data,
-            group: e.group,
-            classes: e.classes
-          });
-        });
+      remove = cy.edges().filter(e => {
+        if (
+          e.hasClass("ACTION") &&
+          elements.every(
+            element =>
+              e.data("source") === element.data("source") &&
+              e.data("target") === element.data("target")
+          )
+        ) {
+          const id = `${e.data("source")}-${e.data("target")}`;
+          const access = e.data("properties").Access;
+          if (!(id in collections)) collections[id] = {};
+          if (!(access in collections[id])) collections[id][access] = [];
+          collections[id][access].push(e.json());
+          return true;
+        }
+        return false;
+      });
 
-        let actions = JSON.parse(JSON.stringify(edges.jsons()[0]));
-        actions.data.id = `c${source}${target}`;
-        actions.data.name = `${edges.length} Actions`;
-        actions.data["collection"] = collection;
-        actions.classes = ["ACTIONS"].concat(Object.keys(collection));
-        add.push(actions);
-        remove.push.apply(remove, edges);
+      Object.keys(collections).forEach(k => {
+        const actions = Object.keys(collections[k])
+          .map(a => collections[k][a])
+          .flat();
+
+        add.push({
+          classes: ["ACTIONS"].concat(
+            Array.from(new Set(actions.map(a => a.data.properties.Effect)))
+          ),
+          data: {
+            id: `c${actions
+              .map(a => parseInt(a.data.id.replace("e", "")))
+              .reduce((a, b) => a + b)}`,
+            name: actions.length > 1 ? `${actions.length} Actions` : `1 Action`,
+            source: actions[0].data.source,
+            target: actions[0].data.target,
+            properties: collections[k]
+          }
+        });
       });
 
       cy.zoomingEnabled(false);
-      this.remove_element(remove);
-      this.add_element(add);
+      this.remove_element(remove).then(() => this.add_element(add));
       cy.zoomingEnabled(true);
     },
 
-    expand_actions(element) {
-      let collection = element.data("collection");
+    unbundle_actions(element) {
+      let collection = element.data("properties");
       cy.zoomingEnabled(false);
       cy.elements().lock();
+      this.remove_element(element);
+
       this.add_element(
         Object.keys(collection)
           .map(k => collection[k])
           .flat()
       );
-      this.remove_element(element);
+
       cy.elements().unlock();
       cy.zoomingEnabled(true);
     },
@@ -359,20 +374,19 @@ export default {
         element.removeClass("collapsed");
         element.addClass("expanded");
       } else {
-        element.addClass("collapsed");
-
         const id = (typeof element.data == "function"
           ? element.data().id
           : element.data.id
         ).substring(1);
 
-        this.query(
-          `MATCH (source) WHERE ID(source) = ${id} ` +
-            `OPTIONAL MATCH path=(source)-[:TRANSITIVE|ASSOCIATIVE]-() ` +
-            "RETURN source, path"
-        )
+        this.neo4j
+          .run(
+            `MATCH (source) WHERE ID(source) = ${id} ` +
+              `OPTIONAL MATCH path=(source)-[:TRANSITIVE|ASSOCIATIVE]-() ` +
+              "RETURN source, path"
+          )
           .then(elements => {
-            let collection = cytoscape().collection(elements);
+            let collection = cytoscape().collection(elements.Graph);
             collection = collection.difference(cy.elements());
             element.data("elements", collection);
             this.add_element(element.data("elements"));
@@ -466,7 +480,7 @@ export default {
 
       if (collection.length < 1) return false;
 
-      this.loading.graph = true;
+      this.loading.value = true;
       this.context_menu_destroy();
 
       collection = collection.map(e => {
@@ -479,326 +493,28 @@ export default {
 
       remove.merge(cy.elements("node").edgesWith(remove));
 
-      this.loading.graph = false;
-      remove.animate({
-        style: {
-          opacity: "0",
-          "background-color": "Red",
-          "line-color": "Red"
-        },
-        duration: 250,
-        complete: function() {
-          cy.remove(remove);
-          that.elements = cy
-            .elements("node")
-            .map(n => n.data("properties").Arn);
-        }
+      this.loading.value = false;
+
+      return new Promise((resolve, reject) => {
+        // TODO: Animation bug, promise resolves prematurely
+
+        // remove.animate({
+        //   style: {
+        //     opacity: "0",
+        //     "background-color": "Red",
+        //     "line-color": "Red"
+        //   },
+        //   duration: 250,
+        //   complete: function() {
+        //     cy.remove(remove);
+        //     resolve();
+        //   }
+        // });
+
+        cy.remove(remove);
+        resolve();
       });
-      return true;
     },
-
-    query(query, loader = true) {
-      const that = this;
-      let results = [];
-      let elements = {};
-
-      this.limit.query = query;
-
-      function add_node(__node) {
-        let node = {};
-        let id = "n" + __node.identity.toString();
-
-        if (id in elements) return elements[id];
-
-        node.group = "nodes";
-        node.classes = __node.labels.join(" ").replace(/::/g, " ");
-        node.scratch = {};
-        node.data = {
-          id: id,
-          name: __node.properties.Name,
-          properties: __node.properties,
-          type: __node.labels.filter(
-            c =>
-              !["Resource", "Pattern", "Generic", "Admin", "External"].includes(
-                c
-              )
-          )[0]
-        };
-
-        elements[id] = node;
-
-        return elements[id];
-      }
-
-      function add_edge(__edge) {
-        let edge = {};
-        let source = "n" + __edge.relationship.start.toString();
-        let target = "n" + __edge.relationship.end.toString();
-        let id = "e" + __edge.relationship.identity.toString();
-
-        add_node(__edge.start);
-        add_node(__edge.end);
-
-        edge.group = "edges";
-        edge.classes = __edge.relationship.type;
-        (edge.scratch = {}),
-          (edge.data = {
-            id: id,
-            name: __edge.relationship.properties.Name,
-            source: source,
-            target: target,
-            properties: __edge.relationship.properties
-          });
-
-        elements[id] = edge;
-
-        return [elements[source], elements[target], elements[id]];
-      }
-
-      function typecast(result) {
-        if (result == null || typeof result === "number") return result;
-        // Node
-        else if (typeof result == "object" && "labels" in result)
-          return add_node(result);
-        // Path
-        else if (
-          typeof result === "object" &&
-          "segments" in result &&
-          result.segments.length > 0
-        )
-          return result.segments.map(segment => {
-            return add_edge(segment);
-          });
-        // Boolean
-        else if (
-          typeof result === "boolean" ||
-          result.toString().toLowerCase() == "true" ||
-          result.toString().toLowerCase() == "false"
-        )
-          return result.toString().toLowerCase() === "true";
-        // Integer
-        else if (
-          typeof result === "object" &&
-          Object.keys(result).includes("high") &&
-          Object.keys(result).includes("low")
-        )
-          return parseInt(result.toString());
-
-        // String
-        if (typeof result === "string") return result.toString();
-        // Array
-        else if (Array.isArray(result)) return result.map(e => typecast(e));
-        else if (typeof result === "object") {
-          Object.keys(result).map(k => (result[k] = typecast(result[k])));
-          return result;
-        }
-
-        // Unknown
-        //else console.log(result, "is of an unknown type");
-        return null;
-      }
-
-      function format(elements) {
-        let __action_count = 0;
-        let __elements = [];
-        let __actions = {};
-
-        elements.forEach(function(node) {
-          if (
-            node.classes.indexOf("Resource") != -1 ||
-            node.classes.indexOf("Generic") != -1 ||
-            node.classes.indexOf("External") != -1
-          )
-            __elements.unshift(node);
-          else if (
-            node.classes.indexOf("TRANSITIVE") != -1 ||
-            node.classes.indexOf("ASSOCIATIVE") != -1
-          )
-            __elements.push(node);
-          else if (node.classes.indexOf("ACTION") != -1) {
-            node.classes += ` ${node.data.properties.Effect}`;
-            node.classes += ` ${node.data.properties.Access.replace(" ", "")}`;
-            if ("Condition" in node.data.properties) {
-              if (
-                typeof node.data.properties.Condition === "string" &&
-                node.data.properties.Condition !== "[]"
-              )
-                node.classes += " Conditional";
-              else delete node.data.properties.Condition;
-            }
-
-            if (!(node.data.source in __actions))
-              __actions[node.data.source] = {};
-
-            if (!(node.data.target in __actions[node.data.source])) {
-              __actions[node.data.source][node.data.target] = {
-                group: "edges",
-                scratch: {},
-                data: {
-                  name: "Actions",
-                  id: node.data.id.replace("e", "c"),
-                  source: node.data.source,
-                  target: node.data.target
-                }
-              };
-              __actions[node.data.source][
-                node.data.target
-              ].data.collection = {};
-            }
-
-            const collection =
-              __actions[node.data.source][node.data.target].data.collection;
-            if (!(node.data.properties.Access in collection))
-              collection[node.data.properties.Access] = [];
-
-            let action = {
-              data: node.data,
-              group: node.group,
-              classes: ["ACTION", node.data.properties.Access]
-            };
-
-            if (Object.keys(node.data.properties).includes("Condition"))
-              action.classes.push("Conditional");
-
-            collection[node.data.properties.Access].push(action);
-            __action_count += 1;
-          } else if (node.classes.indexOf("Admin") != -1) {
-            __elements.unshift(node);
-
-            elements
-              .filter(
-                n => n.data.target != null && n.data.target === node.data.id
-              )
-              .forEach(function(e) {
-                e.classes = "ATTACK";
-                __elements.push(e);
-              });
-          } else if (node.classes.indexOf("Pattern") != -1) {
-            var source_edge = {};
-            var target_edges = [];
-            var option_edges = [];
-
-            source_edge = elements.find(
-              n => n.data.target != null && n.data.target === node.data.id
-            );
-
-            for (var i = 0; i < elements.length; i++) {
-              var n = elements[i];
-
-              if (n.group != "edges") continue;
-
-              if (
-                n.classes.indexOf("ATTACK") != -1 &&
-                n.data.source == node.data.id
-              ) {
-                target_edges.push(n);
-              } else if (
-                n.classes.indexOf("OPTION") != -1 &&
-                n.data.source == node.data.id
-              )
-                option_edges.push(n);
-            }
-
-            target_edges.forEach(function(e) {
-              e.classes = "ATTACK";
-              e.data.source = source_edge.data.source;
-              e.data.options = option_edges;
-              __elements.push(e);
-            });
-          }
-        });
-
-        // Post process actions:
-
-        Object.keys(__actions).map(k => {
-          Object.keys(__actions[k]).map(v => {
-            const collection = Object.keys(__actions[k][v].data.collection)
-              .map(c => __actions[k][v].data.collection[c])
-              .flat();
-            // Group actions if there are more than 'x' in the result set
-            // or if there are more than 'y' between two nodes (directed).
-            if (true && (__action_count > 200 || collection.length > 20)) {
-              __actions[k][v].data.name = `${collection.length} Actions`;
-              __actions[k][v].data.id = `c${k}${v}`;
-              __actions[k][v].classes = ["ACTIONS"].concat(
-                Object.keys(__actions[k][v].data.collection)
-              );
-              __elements.push(__actions[k][v]);
-            } else {
-              __elements.push.apply(__elements, collection);
-            }
-          });
-        });
-
-        let collection = cytoscape({ elements: __elements }).elements();
-
-        // Collapse nodes with an indegree > 10
-
-        let exclude = [];
-
-        collection.filter("[[indegree > 10]]").map(e => {
-          // Skip nodes that are in the process of being expanded
-          if (cy.filter(`#${e.data("id")}`).some(n => n.hasClass("collapsed")))
-            return false;
-
-          let nodes = e
-            .connectedEdges(`edge.TRANSITIVE[target = "${e.data("id")}"]`)
-            .connectedNodes()
-            .filter("[[degree = 1]]")
-            .filter(`[id != '${e.data("id")}']`);
-
-          let edges = collection.filter(`#${e.data("id")}`).edgesWith(nodes);
-
-          e.data("elements", []);
-          e.addClass("collapsed");
-
-          exclude.push.apply(
-            exclude,
-            nodes
-              .union(edges)
-              .jsons()
-              .map(n => n.data.id)
-          );
-        });
-
-        return collection
-          .filter(e => {
-            return !exclude.includes(e.data("id"));
-          })
-          .jsons();
-      }
-
-      if (loader) this.loading.query = true;
-      const neo4j = this.$neo4j.session();
-
-      return neo4j
-        .run(query)
-        .then(response => {
-          if (response.records.length <= 0) return [];
-
-          response.records.forEach(function(record) {
-            let result = {};
-            for (var i = 0; i < record._fields.length; i++) {
-              result[record.keys[i]] = typecast(record._fields[i]);
-            }
-            results.push(result);
-          });
-
-          if (Object.keys(elements).length === 0) return results;
-          else return format(Object.keys(elements).map(k => elements[k]));
-        })
-        .catch(e => {
-          this.message.color = "error";
-          this.message.text = e;
-          this.message.visible = true;
-          console.log("[ERR]:", e);
-        })
-        .finally(() => {
-          neo4j.close();
-          if (loader) this.loading.query = false;
-        });
-    },
-
     register_listeners() {
       window.addEventListener("keydown", event => {
         switch (event.key) {
@@ -863,7 +579,7 @@ export default {
             break;
           case "Enter":
             if (event.altKey) {
-              // this.collapse_actions_all();
+              // this.bundle_actions_all();
               cy.elements()
                 .makeLayout({
                   ...config.graph.layout
@@ -929,11 +645,11 @@ export default {
       });
 
       cy.on("doubleclick", "edge.ACTIONS", event => {
-        this.expand_actions(event.target);
+        this.unbundle_actions(event.target);
       });
 
       cy.on("doubleclick", "edge.ACTION", event => {
-        this.collapse_actions(event.target);
+        this.bundle_actions(event.target);
       });
 
       cy.on("singleclick", event => {
@@ -995,7 +711,23 @@ export default {
     this.register_listeners();
   },
 
+  watch: {
+    db_error() {}
+  },
+
   computed: {
+    db_error: function() {
+      const message =
+        typeof this.neo4j.error.message === "string"
+          ? this.neo4j.error.message
+          : "";
+      if (message === "") return;
+
+      this.message.text = message;
+      this.message.color = "error";
+      this.message.visible = true;
+    },
+
     context_menu: function() {
       if (Object.keys(this.events.context_menu).length == 0) return {};
       if (!this.events.context_menu.enabled) return {};

@@ -163,9 +163,15 @@ export default {
 
     add(elements) {
       if (this.view === 0)
-        this.$emit("add_element", elements.map(e => e.element));
+        this.$emit(
+          "add_element",
+          elements.map(e => e.element)
+        );
       else if (this.view === 1)
-        this.$emit("find_actions", elements.map(e => e.name));
+        this.$emit(
+          "find_actions",
+          elements.map(e => e.name)
+        );
     },
     remove(item) {
       this.selected = this.selected.filter(s => s.id !== item.id);
@@ -174,8 +180,8 @@ export default {
       const types = ["Admin", "External", "Resource", "Generic"];
       this.loading = true;
 
-      this.$parent
-        .query(
+      this.neo4j
+        .run(
           "MATCH ()-[action:ACTION]->() " +
             "WITH DISTINCT action.Name AS name, " +
             "action.Description AS description, " +
@@ -183,45 +189,43 @@ export default {
             "RETURN name, description, access ORDER BY name"
         )
         .then(actions => {
-          this.actions = actions
-            .map(a => {
-              return {
-                name: a.name,
-                id: a.name,
-                description: a.description,
-                access: a.access
-              };
-            })
-            .sort((a, b) => (a.name > b.name ? 1 : -1));
+          this.actions = actions.Text.map(a => {
+            return {
+              name: a.name,
+              id: a.name,
+              description: a.description,
+              access: a.access
+            };
+          }).sort((a, b) => (a.name > b.name ? 1 : -1));
         });
 
-      this.$parent
-        .query("MATCH (r) WHERE NOT (r:Pattern OR r:`AWS::Domain`) RETURN r")
+      this.neo4j
+        .run("MATCH (r) WHERE NOT (r:Pattern OR r:`AWS::Domain`) RETURN r")
         .then(elements => {
-          this.resources = elements
-            .map(r => {
-              const id =
-                typeof r.data.properties.Arn !== "undefined"
-                  ? r.data.properties.Arn
-                  : r.data.name;
-              const classification = r.classes
-                .split(" ")
-                .filter(c => types.indexOf(c) != -1)[0];
-              return {
-                name: r.data.name,
-                id: id,
-                type: r.data.name === "Effective Admin" ? "Admin" : r.data.type,
-                class:
-                  r.data.name === "Effective Admin" ? "Admin" : classification,
-                element: r
-              };
-            })
-            .sort((a, b) => {
-              let c = types.indexOf(a.class) - types.indexOf(b.class);
-              if (c !== 0) return c;
-              else return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1;
-              return c;
-            });
+          this.resources = elements.Graph.map(r => {
+            const id =
+              typeof r.data.properties.Arn !== "undefined"
+                ? r.data.properties.Arn
+                : r.data.name;
+
+            const classification = r.classes
+              .filter(c => types.indexOf(c) != -1)
+              .concat("")[0];
+
+            return {
+              name: r.data.name,
+              id: id,
+              type: r.data.name === "Effective Admin" ? "Admin" : r.data.type,
+              class:
+                r.data.name === "Effective Admin" ? "Admin" : classification,
+              element: r
+            };
+          }).sort((a, b) => {
+            let c = types.indexOf(a.class) - types.indexOf(b.class);
+            if (c !== 0) return c;
+            else return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1;
+            return c;
+          });
           this.items = this.resources;
         })
         .then(() => {
