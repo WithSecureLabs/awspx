@@ -1,5 +1,5 @@
 <template>
-  <div class="properties" v-if="element_properties">
+  <div class="properties" v-if="properties">
     <template>
       <v-tabs v-model="tab" class="elevation-24" color="black" grow>
         <v-tab
@@ -120,7 +120,7 @@ import cytoscape from "cytoscape";
 export default {
   name: "Properties",
   props: {
-    element_properties: {}
+    properties: {}
   },
   data: function() {
     return {
@@ -135,7 +135,7 @@ export default {
     };
   },
   watch: {
-    element_properties: function(element) {
+    properties: function(element) {
       if (element) {
         this.element = element;
         this.view_set(element);

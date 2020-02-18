@@ -164,7 +164,7 @@ export default {
     add(elements) {
       if (this.view === 0)
         this.$emit(
-          "add_element",
+          "add",
           elements.map(e => e.element)
         );
       else if (this.view === 1)
@@ -240,7 +240,7 @@ export default {
         return !this.hide;
       },
       set: function() {
-        this.$emit("show");
+        this.$emit("toggle");
       }
     }
   },

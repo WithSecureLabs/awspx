@@ -1,12 +1,15 @@
 <template>
   <div>
+    <!-- Notifications -->
+    <v-snackbar
+      v-model="notification.visible"
+      :color="notification.status === 0 ? 'green' : 'red'"
+      :timeout="5000"
+      top
+    >{{notification.text}}</v-snackbar>
+
+    <!-- Graph -->
     <v-card flat tile append :disabled="busy" class="graph" id="graph">
-      <v-snackbar
-        v-model="message.visible"
-        :color="message.color"
-        :timeout="5000"
-        top
-      >{{message.text}}</v-snackbar>
       <v-overlay :value="busy">
         <v-progress-circular :size="200" :width="8" indeterminate color="primary"></v-progress-circular>
       </v-overlay>
@@ -40,41 +43,18 @@
       </v-tooltip>
     </v-fab-transition>
 
-    <properties ref="properties" :element_properties="element_properties"></properties>
+    <!-- Element properties pane (left hand side) -->
+    <properties v-if="properties.enabled" :properties="properties.value"></properties>
+
+    <!-- Search bar (bottom) -->
     <search
-      ref="search"
-      @add_element="add_element"
-      @remove_element="remove_element"
-      @show="show"
+      v-if="search.enabled"
+      @add="add"
+      @toggle="search.hidden = $event"
       @find_actions="find_actions"
-      :hide="hide"
-      :alt="events.alt"
+      :alt="events.keys.alt"
+      :hide="search.hidden"
     ></search>
-    <v-dialog max-width="550" modal v-model="limit.display">
-      <v-card>
-        <v-card-title class="headline py-5">Eish...</v-card-title>
-
-        <v-card-text class="text-md-left">
-          Query returned
-          <b>{{limit["size"]}}</b> results. The UI will probably break while trying to render such a large graph.
-          Consider refining your search by using Neo4j (http://localhost:7474) directly.
-          <br />
-          <br />The query that was issued was:
-          <br />
-          <br />
-          <b>{{limit["query"]}}</b>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-btn outlined color="green darken-1" @click="limit.display = false" text>Cancel</v-btn>
-          <v-btn
-            color="red darken-1"
-            text
-            @click="add_element_continue(limit.elements)"
-          >Roll the dice!</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -94,32 +74,24 @@ export default {
 
   data: function() {
     return {
-      limit: {
-        threshold: 500,
-        display: false,
-        elements: [],
-        query: "",
-        size: 0
-      },
-      message: {
-        visible: false,
+      notification: {
         text: "",
-        color: "success"
+        status: 0,
+        visible: false
       },
       loading: {
-        query: false,
-        graph: false,
+        value: false,
         enabled: true
       },
-      events: {
-        context_menu: {},
-        select: {},
-        alt: false,
-        ctrl: false
+      properties: {
+        value: null,
+        enabled: true
       },
-      elements: [],
-      hide: false,
-      element_properties: null,
+      search: {
+        hidden: false,
+        editor: false,
+        enabled: true
+      },
       context_menu_items: [
         {
           name: "Outbound <b>Paths</b>",
@@ -141,22 +113,35 @@ export default {
           icon: "mdi-file-search-outline",
           fn: this.find_actions_to
         }
-      ]
+      ],
+      events: {
+        keys: {
+          alt: false,
+          ctrl: false
+        },
+        clicked: {},
+        context_menu: {}
+      },
+      dialog: {
+        max_elements: 500,
+        display: false,
+        store: []
+      }
     };
   },
 
   methods: {
     context_menu_item(fn, target) {
       this.context_menu_destroy();
-      this.hide = true;
+      this.search.hidden = true;
       fn(target).then(response => {
         const elements = response.Graph;
         if (typeof elements === "undefined" || elements.length === 0) return;
-        const added = this.add_element(elements);
+        const added = this.add(elements);
         if (added.length > 0) {
-          // this.message.text = `Added ${added.length} elements!`;
-          // this.message.color = "success";
-          // this.message.visible = true;
+          // this.notification.text = `Added ${added.length} elements!`;
+          // this.notification.status = 0;
+          // this.notification.visible = true;
         }
       });
     },
@@ -190,10 +175,6 @@ export default {
         cy.zoomingEnabled(true);
         cy.panningEnabled(true);
       }
-    },
-
-    show() {
-      this.hide = !this.hide;
     },
 
     find_paths_to(element) {
@@ -232,7 +213,7 @@ export default {
             "MATCH path=()-[:ACTION{Name:action}]->() RETURN path"
         )
         .then(elements => {
-          this.add_element(elements.Graph);
+          this.add(elements.Graph);
         });
     },
 
@@ -322,7 +303,7 @@ export default {
       });
 
       cy.zoomingEnabled(false);
-      this.remove_element(remove).then(() => this.add_element(add));
+      this.remove(remove).then(() => this.add(add));
       cy.zoomingEnabled(true);
     },
 
@@ -330,9 +311,9 @@ export default {
       let collection = element.data("properties");
       cy.zoomingEnabled(false);
       cy.elements().lock();
-      this.remove_element(element);
+      this.remove(element);
 
-      this.add_element(
+      this.add(
         Object.keys(collection)
           .map(k => collection[k])
           .flat()
@@ -366,7 +347,7 @@ export default {
             let collection = cytoscape().collection(elements.Graph);
             collection = collection.difference(cy.elements());
 
-            if (that.add_element(collection).length > 0)
+            if (that.add(collection).length > 0)
               element.addClass("collapsible");
             else element.addClass("unexpandible");
           })
@@ -394,7 +375,7 @@ export default {
         let elements = nodes.union(edges);
 
         if (elements.length > 0) {
-          that.remove_element(elements);
+          that.remove(elements);
           element.removeClass("unexpandible");
           element.addClass("expandible");
         }
@@ -407,33 +388,30 @@ export default {
       }
     },
 
-    add_element(elements) {
+    add(elements) {
       let collection = "length" in elements ? elements : [elements];
-
       if (collection.length < 1) return collection;
 
-      // TODO: filter for duplicate actions (collapsed vs uncollapsed).
-
-      if (collection.length < this.limit.threshold) {
-        return this.add_element_continue(collection);
+      if (collection.length < this.dialog.max_elements) {
+        return this._add_resume(collection);
       }
 
-      this.add_element_pause(collection);
+      this._add_suspend(collection);
     },
 
-    add_element_pause(collection) {
-      this.limit.display = true;
-      this.limit.elements = collection;
-      this.limit.size = collection.length;
+    _add_suspend(collection) {
+      this.dialog.active = true;
+      this.dialog.store = collection;
     },
 
-    add_element_continue(collection) {
-      this.limit.display = false;
-      this.limit.elements = [];
-      this.loading.graph = true;
+    _add_resume(collection) {
+      this.dialog.active = false;
+      this.dialog.store = [];
+      this.loading.value = true;
       this.context_menu_destroy();
 
-      let elements = cy.add(collection);
+      const elements = cy.add(collection);
+
       const concentric = cy
         .edges()
         .map(e => [e.data("source"), e.data("target")])
@@ -475,11 +453,14 @@ export default {
         })
         .run()
         .promiseOn("layoutstop", () => {});
-      this.loading.graph = false;
+      this.loading.value = false;
+      this.layout = {
+        ...layout
+      };
       return elements;
     },
 
-    remove_element(elements) {
+    remove(elements) {
       const that = this;
 
       let remove = cy.collection();
@@ -522,18 +503,20 @@ export default {
         resolve();
       });
     },
+
     register_listeners() {
+      // Keyboard events
       window.addEventListener("keydown", event => {
         switch (event.key) {
           case "Tab":
             event.preventDefault();
-            this.hide = false;
-            this.events.alt = !this.events.alt;
+            this.search.hidden = false;
+            this.events.keys.alt = !this.events.keys.alt;
 
             break;
           case "Control":
             event.preventDefault();
-            this.events.ctrl = true;
+            this.events.keys.ctrl = true;
             break;
           case "a":
             if (event.ctrlKey) {
@@ -545,51 +528,45 @@ export default {
           case "s":
             if (event.ctrlKey) {
               event.preventDefault();
-              this.hide = false;
+              this.search.hidden = false;
             }
             break;
-          // TODO: add 'Up' and 'Down' arrow keys to move node(s)
-          // case "h":
-          //   event.preventDefault();
-          //   if (event.ctrlKey) {
-          //   }
-          //   break;
+          // TODO: Add panning using arrow keys
           case "default":
-            this.events.ctrl = event.ctrlKey;
+            this.events.keys.ctrl = event.ctrlKey;
             break;
         }
       });
 
-      // Keyboard events
       window.addEventListener("keyup", event => {
         switch (event.key) {
           case "Control":
             event.preventDefault();
-            this.events.ctrl = false;
+            this.events.keys.ctrl = false;
             break;
-          case "c":
-            if (event.ctrlKey) {
-              const clipboard = JSON.stringify(
-                cy.elements("node.selected").map(e => {
-                  return e.data("properties");
-                })
-              );
-              navigator.clipboard.writeText(clipboard);
-            }
-            break;
+          // TODO: Breaks clipboard, when copying foreground objects (eg policy documents)
+          // case "c":
+          //   if (event.ctrlKey) {
+          //     const clipboard = JSON.stringify(
+          //       cy.elements("node.selected").map(e => {
+          //         return e.data("properties");
+          //       })
+          //     );
+          //     navigator.clipboard.writeText(clipboard);
+          //   }
+          //   break;
           case "Delete":
-            this.remove_element(cy.elements(".selected"));
+            this.remove(cy.elements(".selected"));
             break;
           case "Escape":
-            this.element_properties = null;
-            this.hide = true;
+            this.properties.value = null;
+            this.search.hidden = true;
             break;
           case "Enter":
             if (event.altKey) {
-              // this.bundle_actions_all();
               cy.elements()
                 .makeLayout({
-                  ...config.graph.layout
+                  ...this.layout
                 })
                 .run();
             }
@@ -613,7 +590,7 @@ export default {
       });
 
       cy.on("cxttap", "node", event => {
-        this.hide = true;
+        this.search.hidden = true;
         this.context_menu_create(event.target);
       });
 
@@ -631,17 +608,17 @@ export default {
         }
 
         if (
-          click.id === this.events.select.id &&
-          click.time - this.events.select.time < timeout
+          click.id === this.events.clicked.id &&
+          click.time - this.events.clicked.time < timeout
         ) {
-          clearTimeout(this.events.select.timeout);
+          clearTimeout(this.events.clicked.timeout);
           event.target.trigger("doubleclick");
         } else {
-          if (this.events.select.timeout)
-            clearTimeout(this.events.select.timeout);
+          if (this.events.clicked.timeout)
+            clearTimeout(this.events.clicked.timeout);
 
-          this.events.select = click;
-          this.events.select.timeout = setTimeout(() => {
+          this.events.clicked = click;
+          this.events.clicked.timeout = setTimeout(() => {
             event.target.trigger("singleclick");
           }, timeout);
         }
@@ -660,13 +637,13 @@ export default {
       });
 
       cy.on("singleclick", event => {
-        this.hide = true;
+        this.search.hidden = true;
         this.context_menu_destroy();
 
         if (event.target.group) {
           let collection = cy.collection();
 
-          if (!this.events.ctrl) {
+          if (!this.events.keys.ctrl) {
             if (event.target.group() == "nodes") {
               let edges = event.target.edgesTo("node");
               let nodes = edges.connectedNodes();
@@ -682,7 +659,7 @@ export default {
 
             event.target.addClass("selected");
             collection.removeClass("unselected");
-            this.element_properties = event.target.json();
+            this.properties.value = event.target.json();
           } else {
             event.target.removeClass("unselected");
 
@@ -692,8 +669,8 @@ export default {
               event.target.addClass("selected");
             }
           }
-        } else if (!this.events.ctrl) {
-          this.element_properties = null;
+        } else if (!this.events.keys.ctrl) {
+          this.properties.value = null;
           cy.elements(".unselected").removeClass("unselected");
           cy.elements(".selected").removeClass("selected");
         }
@@ -730,9 +707,9 @@ export default {
           : "";
       if (message === "") return;
 
-      this.message.text = message;
-      this.message.color = "error";
-      this.message.visible = true;
+      this.notification.text = message;
+      this.notification.status = 1;
+      this.notification.visible = true;
     },
 
     context_menu: function() {
@@ -780,7 +757,9 @@ export default {
       return this.context_menu_items;
     },
     busy: function() {
-      return this.loading.enabled && (this.loading.query || this.loading.graph);
+      return (
+        this.loading.enabled && (this.neo4j.state.active || this.loading.value)
+      );
     }
   }
 };
