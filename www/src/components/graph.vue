@@ -343,13 +343,46 @@ export default {
     },
 
     expand_collapse(element) {
-      this.loading.enabled = false;
+      const that = this;
 
-      if (element.hasClass("expanded")) {
+      function _expand(element) {
+        that.loading.enabled = false;
+        const id = (typeof element.data == "function"
+          ? element.data().id
+          : element.data.id
+        ).substring(1);
+
+        that.neo4j
+          .run(
+            `MATCH (source) WHERE ID(source) = ${id} ` +
+              `OPTIONAL MATCH path=(source)-[:TRANSITIVE|ASSOCIATIVE]-() ` +
+              "RETURN source, path"
+          )
+          .then(elements => {
+            that.loading.enabled = true;
+
+            element.removeClass("expandible");
+
+            let collection = cytoscape().collection(elements.Graph);
+            collection = collection.difference(cy.elements());
+
+            if (that.add_element(collection).length > 0)
+              element.addClass("collapsible");
+            else element.addClass("unexpandible");
+          })
+          .finally(() => {
+            that.loading.enabled = true;
+          });
+      }
+
+      function _collapse(element) {
+        element.removeClass("collapsible");
+        // Removes all derivative nodes (:ANY to element, ASSOCIATIVE to|from element)
         let nodes = cy
           .elements()
           .filter(`#${element.data("id")}`)
           .connectedEdges()
+          .filter(e => e.hasClass("ASSOCIATIVE") || e.hasClass("TRANSITIVE"))
           .connectedNodes()
           .filter(`[[degree = 1]][id != '${element.data("id")}']`);
 
@@ -359,44 +392,18 @@ export default {
           .edgesWith(nodes);
 
         let elements = nodes.union(edges);
-        element.data("elements", elements.jsons());
 
         if (elements.length > 0) {
-          this.remove_element(elements);
-          element.removeClass("expanded");
-          element.addClass("collapsed");
+          that.remove_element(elements);
+          element.removeClass("unexpandible");
+          element.addClass("expandible");
         }
-      } else if (
-        element.hasClass("collapsed") &&
-        element.data("elements").length > 0
-      ) {
-        this.add_element(element.data("elements"));
-        element.removeClass("collapsed");
-        element.addClass("expanded");
-      } else {
-        const id = (typeof element.data == "function"
-          ? element.data().id
-          : element.data.id
-        ).substring(1);
+      }
 
-        this.neo4j
-          .run(
-            `MATCH (source) WHERE ID(source) = ${id} ` +
-              `OPTIONAL MATCH path=(source)-[:TRANSITIVE|ASSOCIATIVE]-() ` +
-              "RETURN source, path"
-          )
-          .then(elements => {
-            let collection = cytoscape().collection(elements.Graph);
-            collection = collection.difference(cy.elements());
-            element.data("elements", collection);
-            this.add_element(element.data("elements"));
-            element.removeClass("collapsed");
-            element.addClass("expanded");
-            this.loading.enabled = true;
-          })
-          .finally(() => {
-            this.loading.enabled = true;
-          });
+      if (element.hasClass("collapsible") || element.hasClass("unexpandible")) {
+        _collapse(element);
+      } else {
+        _expand(element);
       }
     },
 
