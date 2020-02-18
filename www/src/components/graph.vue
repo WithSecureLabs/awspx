@@ -404,13 +404,121 @@ export default {
       this.dialog.store = collection;
     },
 
+    _add_merge_actions(collection) {
+      cy.startBatch();
+      const merged = collection
+        .map(c => (typeof c.data === "function" ? c.json() : c))
+        .filter(e => {
+          if (!(e.classes.includes("ACTION") || e.classes.includes("ACTIONS")))
+            return true;
+
+          const existing = cy
+            .edges()
+            .filter(
+              a =>
+                a.data("id") !== e.data.id &&
+                !a.removed() &&
+                (a.hasClass("ACTION") || a.hasClass("ACTIONS")) &&
+                a.data("source") === e.data.source &&
+                a.data("target") === e.data.target
+            );
+
+          // No existing action(s), add them all
+          if (existing.length === 0) return true;
+
+          let bundle = null;
+          const new_action = e.classes.includes("ACTION") ? [e] : [];
+          const new_actions = e.classes.includes("ACTIONS") ? [e] : [];
+          let actions = existing.filter(a => a.hasClass("ACTION"));
+          let bundles = existing.filter(a => a.hasClass("ACTIONS"));
+
+          if (bundles.length === 0) {
+            // We need to modify an action to create a bundle
+            const action = actions[0].json();
+            bundle = actions[0];
+            bundle.classes().map(c => bundle.removeClass(c));
+            bundle
+              .addClass("ACTIONS")
+              .addClass(bundle.data("properties").Effect);
+
+            bundle.data("properties", {
+              [bundle.data("properties").Access]: [action]
+            });
+            bundle.data("type", "ACTIONS");
+
+            actions = actions.filter(
+              a => a.data("id") !== actions[0].data("id")
+            );
+
+            bundle = cy.remove(bundle).json();
+            bundle = cy.add({
+              ...bundle,
+              data: {
+                ...bundle.data,
+                id: `a${bundle.data.source}-${bundle.data.target}`
+              }
+            });
+          } else {
+            // We can use an existing bundle
+            bundle = bundles[0];
+            bundles = bundles.filter(
+              a => a.data("id") !== bundles[0].data("id")
+            );
+          }
+
+          // Add actions to bundle
+          bundles
+            .jsons()
+            .concat(new_actions)
+            .map(b =>
+              Object.keys(b.data.properties)
+                .map(k => b.data.properties[k])
+                .flat()
+            )
+            .flat()
+            .concat(actions.jsons())
+            .concat(new_action)
+            .map(a => {
+              if (!(a.data.properties.Access in bundle.data("properties")))
+                bundle.data("properties")[a.data.properties.Access] = [];
+              if (
+                !bundle
+                  .data("properties")
+                  [a.data.properties.Access].map(x => x.data.id)
+                  .includes(a.data.id)
+              ) {
+                bundle.data("properties")[a.data.properties.Access].push(a);
+              }
+            });
+
+          // Remove processed actions
+          cy.remove(bundles);
+          cy.remove(actions);
+
+          actions = Object.keys(bundle.data("properties"))
+            .map(k => bundle.data("properties")[k])
+            .flat();
+
+          // Update bundle properties
+          bundle.data("name", `${actions.length} Actions`);
+          bundle.classes().map(c => bundle.removeClass(c));
+          Array.from(new Set(actions.map(a => a.data.properties.Effect)))
+            .concat("ACTIONS")
+            .map(c => bundle.addClass(c));
+
+          return false;
+        });
+      cy.endBatch();
+      return merged;
+    },
+
     _add_resume(collection) {
       this.dialog.active = false;
       this.dialog.store = [];
       this.loading.value = true;
       this.context_menu_destroy();
 
-      const elements = cy.add(collection);
+      const elements = cy.add(this._add_merge_actions(collection));
 
       const concentric = cy
         .edges()
