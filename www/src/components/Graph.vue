@@ -82,23 +82,23 @@
     </v-fab-transition>
 
     <!-- Element properties pane (left hand side) -->
-    <properties v-if="properties.enabled" :properties="properties.value"></properties>
+    <Properties v-if="properties.enabled" :properties="properties.value"></Properties>
 
     <!-- Search bar (bottom) -->
-    <search
+    <Search
       v-if="search.enabled"
       @add="add"
       @toggle="search.hidden = $event"
       @find_actions="find_actions"
       :alt="events.keys.alt"
       :hide="search.hidden"
-    ></search>
+    ></Search>
   </div>
 </template>
 
 <script>
-import properties from "@/components/properties";
-import search from "@/components/search";
+import Properties from "@/components/Properties";
+import Search from "@/components/Search";
 
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
@@ -108,7 +108,7 @@ let cy = null;
 
 export default {
   name: "Graph",
-  components: { properties, search },
+  components: { Properties, Search },
 
   data: function() {
     return {

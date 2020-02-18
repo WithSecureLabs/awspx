@@ -9,10 +9,10 @@
 </template>
 
 <script>
-import graph from "@/components/graph";
+import Graph from "@/components/Graph";
 
 export default {
-  components: { graph },
+  components: { Graph },
   name: "App"
 };
 </script>
