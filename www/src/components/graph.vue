@@ -355,11 +355,47 @@ export default {
       this.destroy_menu();
 
       let elements = cy.add(collection);
+      const concentric = cy
+        .edges()
+        .map(e => [e.data("source"), e.data("target")])
+        .reduce((v, e, i) => {
+          if (i === 0) return e;
+          else return v.filter(x => e.includes(x));
+        }, []);
+
+      const layout =
+        cy.elements().filter("edge").length === 0
+          ? // Set 'grid' layout when there are no edges
+            {
+              name: "grid",
+              rows: Math.ceil(cy.nodes().length / 10),
+              avoidOverlap: true,
+              avoidOverlapPadding: 20,
+              nodeDimensionsIncludeLabels: true
+            }
+          : concentric.length > 0
+          ? // Set 'concentric' layout when the graph consists of
+            // one node connected to every other node
+            {
+              name: "concentric",
+              minNodeSpacing: 50,
+              concentric: n => {
+                return concentric.includes(n.data("id")) ? n.degree() : 1;
+              },
+              spacingFactor: Math.max(10 / cy.elements().nodes().length, 1),
+              startAngle: 0,
+              fit: true
+            }
+          : // Otherwise set default (dagre)
+            config.graph.layout;
+
       cy.elements()
         .makeLayout({
-          ...config.graph.layout
+          ...layout,
+          animate: true
         })
-        .run();
+        .run()
+        .promiseOn("layoutstop", () => {});
       this.loading.graph = false;
       return elements;
     },
