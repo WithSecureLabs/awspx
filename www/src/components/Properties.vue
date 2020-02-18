@@ -1,6 +1,7 @@
 <template>
   <div class="properties" v-if="properties">
     <template>
+      <!-- Tab titles -->
       <v-tabs v-model="tab" class="elevation-24" color="black" grow>
         <v-tab
           v-for="(tab, i) in tabs"
@@ -11,6 +12,7 @@
         <v-tab v-if="notes.enabled" class="text-none">Notes</v-tab>
       </v-tabs>
 
+      <!-- Tab content -->
       <v-tabs-items v-model="tab">
         <v-tab-item v-for="(tab, i) in tabs" :key="'content' + i">
           <v-data-iterator
@@ -23,6 +25,7 @@
                 <v-card v-for="(item, i) in props.items" :key="'item-' + i" flat tile>
                   <v-row no-gutters class="mx-0">
                     <v-col>
+                      <!-- Action -->
                       <v-row class="mx-0" v-if="tab.style === 'action' && item.key !== 'Condition'">
                         <v-col cols="5">
                           <a v-if="'href' in item" :href="item.href" target="_blank">{{item.key}}</a>
@@ -31,6 +34,7 @@
                         <v-col cols="7" class="font-weight-light">{{item.value}}</v-col>
                       </v-row>
 
+                      <!-- Codeblock (i.e. policy or action condition) -->
                       <v-card
                         flat
                         class="pt-5 ma-2"
@@ -42,6 +46,7 @@
                         </v-row>
                       </v-card>
 
+                      <!-- Actions -->
                       <v-expansion-panels v-else-if="tab.style === 'actions'" :accordian="true">
                         <v-expansion-panel>
                           <v-expansion-panel-header>
@@ -52,7 +57,7 @@
                                   <v-icon
                                     v-on="on"
                                     :color="(item.effect.includes('Allow')) ? 'green' : 'red'"
-                                    :style="(item.effect.includes('Conditional')) ? '-webkit-text-fill-color: white; -webkit-text-stroke-width: 1px;' : ''"
+                                    :class="(item.effect.includes('Conditional')) ? 'conditional-action' : ''"
                                   >mdi-chevron-down</v-icon>
                                 </template>
                                 <span>{{item.effect}}</span>
@@ -65,6 +70,7 @@
                         </v-expansion-panel>
                       </v-expansion-panels>
 
+                      <!-- Attacks -->
                       <v-card class="pt-5 ma-2" flat v-else-if="tab.style === 'attack'">
                         <v-row class="ma-2" no-gutters>
                           <v-col cols="2">Step {{i + 1}}:</v-col>
@@ -79,6 +85,7 @@
                         </v-row>
                       </v-card>
 
+                      <!-- Standard case properties comprise of key, value pairs -->
                       <v-row class="mx-0" v-else>
                         <v-col cols="5">{{item.key}}</v-col>
                         <v-col cols="7" class="font-weight-light">{{item.value}}</v-col>
@@ -90,6 +97,8 @@
             </template>
           </v-data-iterator>
         </v-tab-item>
+
+        <!-- Notes -->
         <v-tab-item v-if="notes.enabled">
           <v-row>
             <v-col align="center">
@@ -456,5 +465,10 @@ export default {
   text-align: center;
   text-decoration: none;
   float: right;
+}
+
+.conditional-action {
+  -webkit-text-fill-color: white;
+  -webkit-text-stroke-width: 1px;
 }
 </style>
