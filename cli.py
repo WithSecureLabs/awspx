@@ -186,8 +186,6 @@ def handle_db(args):
         (success, message) = Neo4j.load(args.load_zip, db)
         print(f"{message}\n")
                   
-        print("Run `awspx attacks` to calculate attack paths.")
-
         if not success:
             sys.exit(1)
 

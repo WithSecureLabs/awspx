@@ -12,6 +12,47 @@ export const access = {
     "Permissions Management": colors.deepPurple.darken1,
 }
 
+const cache = {}
+const badge = (n, m) => {
+
+    if (!(Object.keys(cache).includes(m)))
+        cache[m] = {}
+
+    if (!(n.data().type in cache[m])) {
+
+        let svg = decodeURIComponent(n.style("background-image")).split('<svg ')
+        let vb = svg[1].match(/viewBox="([-\.\d]+) ([-\.\d]+) ([-\.\d]+) ([-\.\d]+)"/i)
+
+        if (vb === null || vb.length < 4)
+            return n.style("background-image")
+
+        vb = vb.splice(1, 4).map(i => parseFloat(i))
+
+        const width = 2 * vb[2] * 0.0125
+        const length = 9 * vb[3] * 0.0125
+
+        const radius = 0.5 * length + 1.5 * width
+        const dx = vb[0] + vb[2] - 2 * radius;
+        const dy = vb[1] + radius;
+
+        const suffix = `<g fill="#FFF">` +
+            `<circle fill="${(m === "collapsible") ? "#6cae3e" : "black"}"` +
+            `   cx="${dx + Math.max(length, width) / 2}" ` +
+            `   cy="${dy + Math.max(length, width) / 2}" r="${radius}"/>` +
+            `<rect x="${dx}" y="${dy + Math.abs(length - width) / 2}" width="${length}" height="${width}"/>` +
+            ((m === "collapsible") ?
+                `<rect x="${dx + Math.abs(length - width) / 2}" y="${dy}" width="${width}" height="${length}"/>` :
+                ""
+            ) + `</g>`
+
+        cache[m][n.data().type] = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+            '<svg ' +
+            svg[1].replace("</svg>", suffix + "</svg>"));
+    }
+
+    return cache[m][n.data().type]
+}
+
 export default {
 
     graph: {
@@ -46,7 +87,7 @@ export default {
             style: {
 
                 'font-family': 'Source Code Pro',
-                'font-size': '8px',
+                'font-size': '6px',
 
                 'curve-style': 'bezier',
                 'target-arrow-shape': 'triangle',
@@ -146,8 +187,7 @@ export default {
         {
             selector: 'edge.ACTIONS',
             style: {
-                "line-fill": "radial-gradient",
-                // Change to Allow & Deny + remaining action colors
+                "line-fill": "linear-gradient",
                 'line-gradient-stop-colors': (e) => e.classes().filter(s => s in access).map(s => access[s]),
                 'width': '1px',
                 'label': 'data (name)',
@@ -210,23 +250,27 @@ export default {
                 opacity: 0.7,
             }
         },
-
         {
-            selector: 'node.collapsed',
+            selector: 'node.expandible',
             style: {
-                borderStyle: "double",
-                borderWidth: 5,
+                'background-image': (n) => badge(n, "collapsible")
             }
         },
-
         {
-            selector: 'node.expanded',
+            selector: 'node.unexpandible',
             style: {
+                borderColor: "silver",
+                borderWidth: 2,
             }
         },
-
         {
-            selector: 'node.menu',
+            selector: 'node.collapsible',
+            style: {
+                'background-image': (n) => badge(n, "expandible")
+            }
+        },
+        {
+            selector: 'node.context-menu',
             style: {
                 label: "",
             }
@@ -248,7 +292,7 @@ export default {
             nodeDimensionsIncludeLabels: true,
             animate: false,
             animateFilter: function (node, i) { return true; },
-            animationDuration: 200,
+            animationDuration: 250,
             animationEasing: undefined,
             boundingBox: undefined,
             transform: function (node, pos) { return pos; },
