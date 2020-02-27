@@ -409,11 +409,9 @@ def main():
 
     args = parser.parse_args()
 
-    # If environment variables are in use and the database is undefined, default to general.db
-    if args.env and args.database is None:
-        args.database = "general.db"
-    # If environment variable are not being used and the database is undefined default to <profile>.db
-    elif "profile" in args and args.database is None:
+    # Unless a database has been defined for ingest, default to <profile>.db
+    if 'database' in args and args.database is None:
+        args.database = f"{args.profile}.db"
         args.database = f"{args.profile}.db"
 
     try:
