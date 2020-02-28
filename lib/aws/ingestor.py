@@ -54,7 +54,7 @@ class Ingestor(Elements):
     def _print(self, *messages):
         if not self._verbose:
             sys.stdout.write("\033[F\033[K")
-        print(''.join(messages))
+        print(''.join([str(m) for m in messages]))
 
     def _print_stats(self):
         self._print(f"[+] {self.__class__.__name__} ingested ",
@@ -926,7 +926,7 @@ class S3(Ingestor):
                 if "AccessDenied" in str(e):
                     self._print(f"[!] Access denied when getting ACL for {bucket}")
                 else:
-                    self._print("[!]", e)
+                    self._print("[!]", str(e))
 
     def get_object_acls(self):
 
@@ -943,7 +943,7 @@ class S3(Ingestor):
                 if "AccessDenied" in str(e):
                     self._print(f"[!] Access denied when getting ACL for {obj}")
                 else:
-                    self._print("[!]", e)
+                    self._print("[!]", str(e))
 
     def get_public_access_blocks(self):
 
