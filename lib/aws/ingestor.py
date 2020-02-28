@@ -926,7 +926,7 @@ class S3(Ingestor):
                 if "AccessDenied" in str(e):
                     self._print(f"[!] Access denied when getting ACL for {bucket}")
                 else:
-                    self._print("[!]", str(e))
+                    self._print("[!]", e)
 
     def get_object_acls(self):
 
@@ -943,7 +943,7 @@ class S3(Ingestor):
                 if "AccessDenied" in str(e):
                     self._print(f"[!] Access denied when getting ACL for {obj}")
                 else:
-                    self._print("[!]", str(e))
+                    self._print("[!]", e)
 
     def get_public_access_blocks(self):
 
