@@ -73,25 +73,39 @@ def handle_ingest(args):
     session = None
     graph = None
 
-    if args.profile not in CREDENTIALS.sections():
-        if input(f"[-] The profile '{args.profile}' was not found. "
-                 "Would you like to create it? (y/n) ").upper() == "Y":
-            args.create_profile = args.profile
-            handle_profile(args)
-        else:
-            return
+    # Check to see if environment variables are being used for credentials.
+    if args.env:
+        try:
+            session = boto3.session.Session(
+                region_name=args.region)
+            identity = session.client('sts').get_caller_identity()
+            account = identity["Account"]
 
-    try:
-        session = boto3.session.Session(
-            profile_name=args.profile,
-            region_name=args.region)
-        identity = session.client('sts').get_caller_identity()
-        account = identity["Account"]
+            print(f"[+] User set to: {identity['Arn']}")
 
-        print(f"[+] User set to: {identity['Arn']}")
+        except:
+            print("[-] Request to establish identity (sts:GetCallerIdentity) failed.")
+    # If environment variables are not being used, use the aws profile.
+    else:
+        if args.profile not in CREDENTIALS.sections():
+            if input(f"[-] The profile '{args.profile}' was not found. "
+                    "Would you like to create it? (y/n) ").upper() == "Y":
+                args.create_profile = args.profile
+                handle_profile(args)
+            else:
+                return
 
-    except:
-        print("[-] Request to establish identity (sts:GetCallerIdentity) failed.")
+        try:
+            session = boto3.session.Session(
+                profile_name=args.profile,
+                region_name=args.region)
+            identity = session.client('sts').get_caller_identity()
+            account = identity["Account"]
+
+            print(f"[+] User set to: {identity['Arn']}")
+
+        except:
+            print("[-] Request to establish identity (sts:GetCallerIdentity) failed.")
 
     print(f"[+] Region set to: {args.region}")
     print(f"[+] Database set to: {args.database}")
@@ -304,6 +318,8 @@ def main():
 
     # Profile & region args
     pnr = ingest_parser.add_argument_group("Profile and region")
+    pnr.add_argument('--env', action='store_true',
+                     help="Enables the use of the Environment Variables for AWS credentials.")
     pnr.add_argument('--profile', dest='profile', default="default",
                      help="Profile to use for ingestion (corresponds to a [section] in ~/.aws/credentials).")
     pnr.add_argument('--assume-role', dest='role_to_assume',
@@ -394,7 +410,8 @@ def main():
     args = parser.parse_args()
 
     # Unless a database has been defined for ingest, default to <profile>.db
-    if "profile" in args and args.database is None:
+    if 'database' in args and args.database is None:
+        args.database = f"{args.profile}.db"
         args.database = f"{args.profile}.db"
 
     try:
