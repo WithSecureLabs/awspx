@@ -8,7 +8,9 @@ from configparser import ConfigParser
 from random import randrange
 
 import boto3
+from botocore.credentials import InstanceMetadataProvider
 from botocore.exceptions import ProfileNotFound
+from botocore.utils import InstanceMetadataFetcher
 
 from lib.aws.attacks import Attacks
 from lib.aws.ingestor import *
@@ -75,37 +77,42 @@ def handle_ingest(args):
 
     # Check to see if environment variables are being used for credentials.
     if args.env:
+        session = boto3.session.Session(region_name=args.region)
+    # Use existing profile
+    elif args.profile in CREDENTIALS.sections():
+        session = boto3.session.Session(region_name=args.region,
+                                        profile_name=args.profile)
+    # Use instance profile
+    elif args.profile == "default":
         try:
-            session = boto3.session.Session(
-                region_name=args.region)
-            identity = session.client('sts').get_caller_identity()
-            account = identity["Account"]
+            provider = InstanceMetadataProvider(
+                iam_role_fetcher=InstanceMetadataFetcher())
+            creds = provider.load()
 
-            print(f"[+] User set to: {identity['Arn']}")
-
+            session = boto3.session.Session(region_name=args.region,
+                                            aws_access_key_id=creds.access_key,
+                                            aws_secret_access_key=creds.secret_key,
+                                            aws_session_token=creds.token)
         except:
-            print("[-] Request to establish identity (sts:GetCallerIdentity) failed.")
-    # If environment variables are not being used, use the aws profile.
-    else:
-        if args.profile not in CREDENTIALS.sections():
-            if input(f"[-] The profile '{args.profile}' was not found. "
-                    "Would you like to create it? (y/n) ").upper() == "Y":
-                args.create_profile = args.profile
-                handle_profile(args)
-            else:
-                return
+            pass
 
-        try:
-            session = boto3.session.Session(
-                profile_name=args.profile,
-                region_name=args.region)
-            identity = session.client('sts').get_caller_identity()
-            account = identity["Account"]
+    # Create new profile
+    if not session:
+        if input(f"[-] Would you like to create the profile '{args.profile}'? (y/n) ").upper() == "Y":
+            args.create_profile = args.profile
+            handle_profile(args)
+        else:
+            sys.exit(1)
 
-            print(f"[+] User set to: {identity['Arn']}")
+    try:
+        identity = session.client('sts').get_caller_identity()
+        account = identity["Account"]
 
-        except:
-            print("[-] Request to establish identity (sts:GetCallerIdentity) failed.")
+        print(f"[+] User set to: {identity['Arn']}")
+
+    except:
+        print("[-] Request to establish identity (sts:GetCallerIdentity) failed.")
+        sys.exit(1)
 
     print(f"[+] Region set to: {args.region}")
     print(f"[+] Database set to: {args.database}")
@@ -147,7 +154,7 @@ def handle_ingest(args):
                              only_types=args.only_types, except_types=args.except_types,
                              only_arns=args.only_arns, except_arns=args.except_arns)
 
-    if graph is None:  
+    if graph is None:
         graph = IAM(session, verbose=args.verbose,
                     db=args.database,
                     resources=resources)
@@ -199,7 +206,7 @@ def handle_db(args):
         print(f"[*] Importing records from {args.load_zip}")
         (success, message) = Neo4j.load(args.load_zip, db)
         print(f"{message}\n")
-                  
+
         if not success:
             sys.exit(1)
 
@@ -321,7 +328,7 @@ def main():
     pnr.add_argument('--env', action='store_true',
                      help="Enables the use of the Environment Variables for AWS credentials.")
     pnr.add_argument('--profile', dest='profile', default="default",
-                     help="Profile to use for ingestion (corresponds to a [section] in ~/.aws/credentials).")
+                     help="Profile to use for ingestion (corresponds to a [section] in ~/.aws/credentials). If no profile is specified, awspx will attempt to find and use an instance profile from IMDS.")
     pnr.add_argument('--assume-role', dest='role_to_assume',
                      help="ARN of role to assume for ingestion (useful for cross-account ingestion).")
     pnr.add_argument('--region', dest='region', default="eu-west-1", type=region,
@@ -351,12 +358,11 @@ def main():
 
     verbosity = ingest_parser.add_argument_group("Verbosity")
     verbosity.add_argument('--verbose', dest='verbose', action='store_true', default=False,
-                   help="Enables verbose output messages.")
+                           help="Enables verbose output messages.")
 
     actions = ingest_parser.add_argument_group("Actions")
     actions.add_argument('--skip-actions', dest='skip_actions', action='store_true', default=False,
-                    help="Skip policy resolution (actions will not be processed).")
-
+                         help="Skip policy resolution (actions will not be processed).")
 
     #
     # awspx attacks
@@ -411,7 +417,6 @@ def main():
 
     # Unless a database has been defined for ingest, default to <profile>.db
     if 'database' in args and args.database is None:
-        args.database = f"{args.profile}.db"
         args.database = f"{args.profile}.db"
 
     try:
