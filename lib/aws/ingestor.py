@@ -54,7 +54,7 @@ class Ingestor(Elements):
     def _print(self, *messages):
         if not self._verbose:
             sys.stdout.write("\033[F\033[K")
-        print(''.join(messages))
+        print(''.join([str(m) for m in messages]))
 
     def _print_stats(self):
         self._print(f"[+] {self.__class__.__name__} ingested ",
