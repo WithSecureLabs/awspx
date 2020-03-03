@@ -101,6 +101,8 @@ def handle_ingest(args):
         if input(f"[-] Would you like to create the profile '{args.profile}'? (y/n) ").upper() == "Y":
             args.create_profile = args.profile
             handle_profile(args)
+            session = boto3.session.Session(region_name=args.region,
+                                            profile_name=args.profile)
         else:
             sys.exit(1)
 
