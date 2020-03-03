@@ -1,6 +1,6 @@
 {
   "name": "awspx",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "AWS resource, relationship, and attack path visualisation",
   "author": "craig.koorn@f-secure.com",
   "private": true,
