@@ -695,6 +695,10 @@ class IAM(Ingestor):
             "AWS::Iam::Role": "Trusts"
         }
 
+        # add info resource
+        info = Resource(labels=["Info"], properties={"Name": "Info", "Arn": "arn:aws:::::info" })
+        self.add(info)
+
         (principals, actions, trusts) = (Elements(), Elements(), Elements())
         resources = self.get("Resource") + self.get("Generic")
 

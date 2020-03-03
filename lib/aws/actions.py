@@ -14,6 +14,7 @@ ACTIONS = {
     "Access": "Write",
     "Affects": [
       "AWS::CloudFormation::Stack",
+      "Info",
       "AWS::CloudFormation::StackSet"
     ],
     "Condition Keys": [
@@ -27,16 +28,17 @@ ACTIONS = {
     "Access": "Write",
     "Affects": [
       "AWS::CloudFormation::Stack",
+      "Info",
       "AWS::CloudFormation::StackSet"
     ],
     "Condition Keys": [
       "cloudformation:RoleArn",
       "cloudformation:TemplateUrl",
-      "aws:TagKeys",
-      "cloudformation:ChangeSetName",
-      "aws:RequestTag/${TagKey}",
       "cloudformation:ResourceTypes",
-      "cloudformation:StackPolicyUrl"
+      "cloudformation:ChangeSetName",
+      "aws:TagKeys",
+      "cloudformation:StackPolicyUrl",
+      "aws:RequestTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Creates a list of changes for a stack.",
@@ -46,15 +48,16 @@ ACTIONS = {
     "Access": "Write",
     "Affects": [
       "AWS::CloudFormation::Stack",
+      "Info",
       "AWS::CloudFormation::StackSet"
     ],
     "Condition Keys": [
       "cloudformation:RoleArn",
       "cloudformation:TemplateUrl",
-      "aws:TagKeys",
-      "aws:RequestTag/${TagKey}",
       "cloudformation:ResourceTypes",
-      "cloudformation:StackPolicyUrl"
+      "aws:TagKeys",
+      "cloudformation:StackPolicyUrl",
+      "aws:RequestTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Creates a stack as specified in the template.",
@@ -72,7 +75,9 @@ ACTIONS = {
   },
   "cloudformation:CreateStackSet": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
       "cloudformation:RoleArn",
       "cloudformation:TemplateUrl",
@@ -85,7 +90,9 @@ ACTIONS = {
   },
   "cloudformation:CreateUploadBucket": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "",
@@ -95,6 +102,7 @@ ACTIONS = {
     "Access": "Write",
     "Affects": [
       "AWS::CloudFormation::Stack",
+      "Info",
       "AWS::CloudFormation::StackSet"
     ],
     "Condition Keys": [
@@ -108,6 +116,7 @@ ACTIONS = {
     "Access": "Write",
     "Affects": [
       "AWS::CloudFormation::Stack",
+      "Info",
       "AWS::CloudFormation::StackSet"
     ],
     "Condition Keys": [
@@ -139,7 +148,9 @@ ACTIONS = {
   },
   "cloudformation:DescribeAccountLimits": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Retrieves your account's AWS CloudFormation limits.",
@@ -149,6 +160,7 @@ ACTIONS = {
     "Access": "Read",
     "Affects": [
       "AWS::CloudFormation::Stack",
+      "Info",
       "AWS::CloudFormation::StackSet"
     ],
     "Condition Keys": [
@@ -160,7 +172,9 @@ ACTIONS = {
   },
   "cloudformation:DescribeStackDriftDetectionStatus": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns information about a stack drift detection operation.",
@@ -275,7 +289,9 @@ ACTIONS = {
   },
   "cloudformation:EstimateTemplateCost": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns the estimated monthly cost of a template.",
@@ -285,6 +301,7 @@ ACTIONS = {
     "Access": "Write",
     "Affects": [
       "AWS::CloudFormation::Stack",
+      "Info",
       "AWS::CloudFormation::StackSet"
     ],
     "Condition Keys": [
@@ -340,7 +357,9 @@ ACTIONS = {
   },
   "cloudformation:ListExports": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Lists all exported output values in the account and region in which you call this action.",
@@ -348,7 +367,9 @@ ACTIONS = {
   },
   "cloudformation:ListImports": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Lists all stacks that are importing an exported output value.",
@@ -407,7 +428,9 @@ ACTIONS = {
   },
   "cloudformation:ListStacks": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns the summary information for stacks whose status matches the specified StackStatusFilter.",
@@ -417,6 +440,7 @@ ACTIONS = {
     "Access": "Permissions Management",
     "Affects": [
       "AWS::CloudFormation::Stack",
+      "Info",
       "AWS::CloudFormation::StackSet"
     ],
     "Condition Keys": [
@@ -473,15 +497,16 @@ ACTIONS = {
     "Access": "Write",
     "Affects": [
       "AWS::CloudFormation::Stack",
+      "Info",
       "AWS::CloudFormation::StackSet"
     ],
     "Condition Keys": [
       "cloudformation:RoleArn",
       "cloudformation:TemplateUrl",
-      "aws:TagKeys",
-      "aws:RequestTag/${TagKey}",
       "cloudformation:ResourceTypes",
-      "cloudformation:StackPolicyUrl"
+      "aws:TagKeys",
+      "cloudformation:StackPolicyUrl",
+      "aws:RequestTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Updates a stack as specified in the template.",
@@ -500,13 +525,14 @@ ACTIONS = {
   "cloudformation:UpdateStackSet": {
     "Access": "Write",
     "Affects": [
-      "AWS::CloudFormation::StackSet"
+      "AWS::CloudFormation::StackSet",
+      "Info"
     ],
     "Condition Keys": [
-      "aws:RequestTag/${TagKey}",
-      "cloudformation:TemplateUrl",
       "aws:TagKeys",
-      "cloudformation:RoleArn"
+      "cloudformation:RoleArn",
+      "aws:RequestTag/${TagKey}",
+      "cloudformation:TemplateUrl"
     ],
     "Dependent Actions": [],
     "Description": "Updates a stackset as specified in the template.",
@@ -525,7 +551,9 @@ ACTIONS = {
   },
   "cloudformation:ValidateTemplate": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Validates a specified template.",
@@ -543,7 +571,9 @@ ACTIONS = {
   },
   "cloudwatch:DeleteAnomalyDetector": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes the specified anomaly detection model from your account.",
@@ -561,7 +591,9 @@ ACTIONS = {
   },
   "cloudwatch:DeleteInsightRules": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to delete a collection of insight rules.",
@@ -589,7 +621,9 @@ ACTIONS = {
   },
   "cloudwatch:DescribeAlarmsForMetric": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Retrieves all alarms for a single metric",
@@ -597,7 +631,9 @@ ACTIONS = {
   },
   "cloudwatch:DescribeAnomalyDetectors": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Lists the anomaly detection models that you have created in your account.",
@@ -605,7 +641,9 @@ ACTIONS = {
   },
   "cloudwatch:DescribeInsightRules": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to describe all insight rules, currently owned by the user's account.",
@@ -623,7 +661,9 @@ ACTIONS = {
   },
   "cloudwatch:DisableInsightRules": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to disable a collection of insight rules.",
@@ -641,7 +681,9 @@ ACTIONS = {
   },
   "cloudwatch:EnableInsightRules": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to enable a collection of insight rules.",
@@ -659,7 +701,9 @@ ACTIONS = {
   },
   "cloudwatch:GetInsightRuleReport": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to return the top-N report of unique contributors over a time range for a given insight rule.",
@@ -667,7 +711,9 @@ ACTIONS = {
   },
   "cloudwatch:GetMetricData": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Required to retrieve batch amounts of CloudWatch metric data and perform metric math on retrieved data",
@@ -675,7 +721,9 @@ ACTIONS = {
   },
   "cloudwatch:GetMetricStatistics": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Gets statistics for the specified metric",
@@ -683,7 +731,9 @@ ACTIONS = {
   },
   "cloudwatch:GetMetricWidgetImage": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Required to retrieve snapshots of metric widgets",
@@ -691,7 +741,9 @@ ACTIONS = {
   },
   "cloudwatch:ListDashboards": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns a list of all CloudWatch dashboards in your account",
@@ -699,7 +751,9 @@ ACTIONS = {
   },
   "cloudwatch:ListMetrics": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns a list of valid metrics stored for the AWS account owner",
@@ -717,7 +771,9 @@ ACTIONS = {
   },
   "cloudwatch:PutAnomalyDetector": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates or updates an anomaly detection model for a CloudWatch metric.",
@@ -735,7 +791,9 @@ ACTIONS = {
   },
   "cloudwatch:PutInsightRule": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to create a new insight rule or replace an existing insight rule.",
@@ -744,11 +802,12 @@ ACTIONS = {
   "cloudwatch:PutMetricAlarm": {
     "Access": "Write",
     "Affects": [
-      "AWS::CloudWatch::Alarm"
+      "AWS::CloudWatch::Alarm",
+      "Info"
     ],
     "Condition Keys": [
-      "aws:RequestTag/${TagKey}",
-      "aws:TagKeys"
+      "aws:TagKeys",
+      "aws:RequestTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Creates or updates an alarm and associates it with the specified Amazon CloudWatch metric",
@@ -756,7 +815,9 @@ ACTIONS = {
   },
   "cloudwatch:PutMetricData": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
       "cloudwatch:namespace"
     ],
@@ -777,11 +838,12 @@ ACTIONS = {
   "cloudwatch:TagResource": {
     "Access": "Tagging",
     "Affects": [
-      "AWS::CloudWatch::Alarm"
+      "AWS::CloudWatch::Alarm",
+      "Info"
     ],
     "Condition Keys": [
-      "aws:RequestTag/${TagKey}",
-      "aws:TagKeys"
+      "aws:TagKeys",
+      "aws:RequestTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "This action tags an Amazon CloudWatch resource.",
@@ -790,7 +852,8 @@ ACTIONS = {
   "cloudwatch:UntagResource": {
     "Access": "Tagging",
     "Affects": [
-      "AWS::CloudWatch::Alarm"
+      "AWS::CloudWatch::Alarm",
+      "Info"
     ],
     "Condition Keys": [
       "aws:TagKeys"
@@ -802,12 +865,13 @@ ACTIONS = {
   "dynamodb:BatchGetItem": {
     "Access": "Read",
     "Affects": [
-      "AWS::DynamoDb::Table"
+      "AWS::DynamoDb::Table",
+      "Info"
     ],
     "Condition Keys": [
+      "dynamodb:LeadingKeys",
       "dynamodb:ReturnConsumedCapacity",
       "dynamodb:Attributes",
-      "dynamodb:LeadingKeys",
       "dynamodb:Select"
     ],
     "Dependent Actions": [],
@@ -817,12 +881,13 @@ ACTIONS = {
   "dynamodb:BatchWriteItem": {
     "Access": "Write",
     "Affects": [
-      "AWS::DynamoDb::Table"
+      "AWS::DynamoDb::Table",
+      "Info"
     ],
     "Condition Keys": [
+      "dynamodb:LeadingKeys",
       "dynamodb:ReturnConsumedCapacity",
-      "dynamodb:Attributes",
-      "dynamodb:LeadingKeys"
+      "dynamodb:Attributes"
     ],
     "Dependent Actions": [],
     "Description": "Puts or deletes multiple items in one or more tables",
@@ -831,12 +896,13 @@ ACTIONS = {
   "dynamodb:ConditionCheckItem": {
     "Access": "Read",
     "Affects": [
-      "AWS::DynamoDb::Table"
+      "AWS::DynamoDb::Table",
+      "Info"
     ],
     "Condition Keys": [
+      "dynamodb:LeadingKeys",
       "dynamodb:ReturnConsumedCapacity",
       "dynamodb:Attributes",
-      "dynamodb:LeadingKeys",
       "dynamodb:ReturnValues"
     ],
     "Dependent Actions": [],
@@ -897,14 +963,15 @@ ACTIONS = {
   "dynamodb:DeleteItem": {
     "Access": "Write",
     "Affects": [
-      "AWS::DynamoDb::Table"
+      "AWS::DynamoDb::Table",
+      "Info"
     ],
     "Condition Keys": [
-      "dynamodb:EnclosingOperation",
-      "dynamodb:Attributes",
-      "dynamodb:ReturnValues",
       "dynamodb:ReturnConsumedCapacity",
-      "dynamodb:LeadingKeys"
+      "dynamodb:ReturnValues",
+      "dynamodb:LeadingKeys",
+      "dynamodb:EnclosingOperation",
+      "dynamodb:Attributes"
     ],
     "Dependent Actions": [],
     "Description": "Deletes a single item in a table by primary key",
@@ -953,8 +1020,8 @@ ACTIONS = {
   "dynamodb:DescribeContributorInsights": {
     "Access": "Read",
     "Affects": [
-      "AWS::DynamoDb::Index",
-      "AWS::DynamoDb::Table"
+      "AWS::DynamoDb::Table",
+      "AWS::DynamoDb::Index"
     ],
     "Condition Keys": [],
     "Dependent Actions": [],
@@ -983,7 +1050,9 @@ ACTIONS = {
   },
   "dynamodb:DescribeLimits": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns the current provisioned-capacity limits for your AWS account in a region, both for the region as a whole and for any one DynamoDB table that you create there",
@@ -991,7 +1060,9 @@ ACTIONS = {
   },
   "dynamodb:DescribeReservedCapacity": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of the Reserved Capacity purchased",
@@ -999,7 +1070,9 @@ ACTIONS = {
   },
   "dynamodb:DescribeReservedCapacityOfferings": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes Reserved Capacity offerings that are available for purchase",
@@ -1048,14 +1121,15 @@ ACTIONS = {
   "dynamodb:GetItem": {
     "Access": "Read",
     "Affects": [
-      "AWS::DynamoDb::Table"
+      "AWS::DynamoDb::Table",
+      "Info"
     ],
     "Condition Keys": [
-      "dynamodb:EnclosingOperation",
-      "dynamodb:Attributes",
-      "dynamodb:Select",
       "dynamodb:ReturnConsumedCapacity",
-      "dynamodb:LeadingKeys"
+      "dynamodb:Select",
+      "dynamodb:LeadingKeys",
+      "dynamodb:EnclosingOperation",
+      "dynamodb:Attributes"
     ],
     "Dependent Actions": [],
     "Description": "The GetItem operation returns a set of attributes for the item with the given primary key",
@@ -1083,7 +1157,9 @@ ACTIONS = {
   },
   "dynamodb:ListBackups": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "List backups associated with the account and endpoint",
@@ -1101,7 +1177,9 @@ ACTIONS = {
   },
   "dynamodb:ListGlobalTables": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Lists all global tables that have a replica in the specified region",
@@ -1109,7 +1187,9 @@ ACTIONS = {
   },
   "dynamodb:ListStreams": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns an array of stream ARNs associated with the current account and endpoint",
@@ -1117,7 +1197,9 @@ ACTIONS = {
   },
   "dynamodb:ListTables": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns an array of table names associated with the current account and endpoint",
@@ -1135,7 +1217,9 @@ ACTIONS = {
   },
   "dynamodb:PurchaseReservedCapacityOfferings": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Purchases Reserved Capacity for use with your account",
@@ -1144,14 +1228,15 @@ ACTIONS = {
   "dynamodb:PutItem": {
     "Access": "Write",
     "Affects": [
-      "AWS::DynamoDb::Table"
+      "AWS::DynamoDb::Table",
+      "Info"
     ],
     "Condition Keys": [
-      "dynamodb:EnclosingOperation",
-      "dynamodb:Attributes",
-      "dynamodb:ReturnValues",
       "dynamodb:ReturnConsumedCapacity",
-      "dynamodb:LeadingKeys"
+      "dynamodb:ReturnValues",
+      "dynamodb:LeadingKeys",
+      "dynamodb:EnclosingOperation",
+      "dynamodb:Attributes"
     ],
     "Dependent Actions": [],
     "Description": "Creates a new item, or replaces an old item with a new item",
@@ -1160,15 +1245,16 @@ ACTIONS = {
   "dynamodb:Query": {
     "Access": "Read",
     "Affects": [
-      "AWS::DynamoDb::Index",
-      "AWS::DynamoDb::Table"
+      "AWS::DynamoDb::Table",
+      "Info",
+      "AWS::DynamoDb::Index"
     ],
     "Condition Keys": [
-      "dynamodb:Select",
-      "dynamodb:Attributes",
-      "dynamodb:ReturnValues",
       "dynamodb:ReturnConsumedCapacity",
-      "dynamodb:LeadingKeys"
+      "dynamodb:ReturnValues",
+      "dynamodb:Select",
+      "dynamodb:LeadingKeys",
+      "dynamodb:Attributes"
     ],
     "Dependent Actions": [],
     "Description": "Uses the primary key of a table or a secondary index to directly access items from that table or index",
@@ -1177,8 +1263,8 @@ ACTIONS = {
   "dynamodb:RestoreTableFromBackup": {
     "Access": "Write",
     "Affects": [
-      "AWS::DynamoDb::Backup",
-      "AWS::DynamoDb::Table"
+      "AWS::DynamoDb::Table",
+      "AWS::DynamoDb::Backup"
     ],
     "Condition Keys": [],
     "Dependent Actions": [],
@@ -1198,15 +1284,16 @@ ACTIONS = {
   "dynamodb:Scan": {
     "Access": "Read",
     "Affects": [
-      "AWS::DynamoDb::Index",
-      "AWS::DynamoDb::Table"
+      "AWS::DynamoDb::Table",
+      "Info",
+      "AWS::DynamoDb::Index"
     ],
     "Condition Keys": [
-      "dynamodb:Select",
-      "dynamodb:Attributes",
-      "dynamodb:ReturnValues",
       "dynamodb:ReturnConsumedCapacity",
-      "dynamodb:LeadingKeys"
+      "dynamodb:ReturnValues",
+      "dynamodb:Select",
+      "dynamodb:LeadingKeys",
+      "dynamodb:Attributes"
     ],
     "Dependent Actions": [],
     "Description": "Returns one or more items and item attributes by accessing every item in a table or a secondary index",
@@ -1245,8 +1332,8 @@ ACTIONS = {
   "dynamodb:UpdateContributorInsights": {
     "Access": "Write",
     "Affects": [
-      "AWS::DynamoDb::Index",
-      "AWS::DynamoDb::Table"
+      "AWS::DynamoDb::Table",
+      "AWS::DynamoDb::Index"
     ],
     "Condition Keys": [],
     "Dependent Actions": [],
@@ -1278,14 +1365,15 @@ ACTIONS = {
   "dynamodb:UpdateItem": {
     "Access": "Write",
     "Affects": [
-      "AWS::DynamoDb::Table"
+      "AWS::DynamoDb::Table",
+      "Info"
     ],
     "Condition Keys": [
-      "dynamodb:EnclosingOperation",
-      "dynamodb:Attributes",
-      "dynamodb:ReturnValues",
       "dynamodb:ReturnConsumedCapacity",
-      "dynamodb:LeadingKeys"
+      "dynamodb:ReturnValues",
+      "dynamodb:LeadingKeys",
+      "dynamodb:EnclosingOperation",
+      "dynamodb:Attributes"
     ],
     "Dependent Actions": [],
     "Description": "Edits an existing item's attributes, or adds a new item to the table if it does not already exist",
@@ -1323,7 +1411,9 @@ ACTIONS = {
   },
   "ec2:AcceptReservedInstancesExchangeQuote": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Accepts the Convertible Reserved Instance exchange quote described in the GetReservedInstancesExchangeQuote call.",
@@ -1344,7 +1434,9 @@ ACTIONS = {
   },
   "ec2:AcceptVpcEndpointConnections": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Accepts one or more interface VPC endpoint connection requests to your VPC endpoint service.",
@@ -1353,15 +1445,15 @@ ACTIONS = {
   "ec2:AcceptVpcPeeringConnection": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::VpcPeeringConnection",
-      "AWS::Ec2::Vpc"
+      "AWS::Ec2::Vpc",
+      "AWS::Ec2::VpcPeeringConnection"
     ],
     "Condition Keys": [
-      "ec2:Region",
       "ec2:Tenancy",
-      "ec2:AccepterVpc",
       "ec2:RequesterVpc",
-      "ec2:ResourceTag/${TagKey}"
+      "ec2:ResourceTag/${TagKey}",
+      "ec2:Region",
+      "ec2:AccepterVpc"
     ],
     "Dependent Actions": [],
     "Description": "Accept a VPC peering connection request.",
@@ -1369,7 +1461,9 @@ ACTIONS = {
   },
   "ec2:AdvertiseByoipCidr": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Advertises an IPv4 address range that is provisioned for use with your AWS resources through bring your own IP addresses (BYOIP)",
@@ -1377,7 +1471,9 @@ ACTIONS = {
   },
   "ec2:AllocateAddress": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Acquires an Elastic IP address.",
@@ -1385,7 +1481,9 @@ ACTIONS = {
   },
   "ec2:AllocateHosts": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Allocates a Dedicated Host to your account.",
@@ -1394,10 +1492,10 @@ ACTIONS = {
   "ec2:ApplySecurityGroupsToClientVpnTargetNetwork": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::VpcPeeringConnection",
       "AWS::Ec2::ClientVpnEndpoint",
+      "AWS::Ec2::SecurityGroup",
       "AWS::Ec2::Vpc",
-      "AWS::Ec2::SecurityGroup"
+      "AWS::Ec2::VpcPeeringConnection"
     ],
     "Condition Keys": [
       "ec2:Region",
@@ -1409,7 +1507,9 @@ ACTIONS = {
   },
   "ec2:AssignIpv6Addresses": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Assigns one or more IPv6 addresses to the specified network interface.",
@@ -1417,7 +1517,9 @@ ACTIONS = {
   },
   "ec2:AssignPrivateIpAddresses": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Assigns one or more secondary private IP addresses to the specified network interface.",
@@ -1425,7 +1527,9 @@ ACTIONS = {
   },
   "ec2:AssociateAddress": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Associates an Elastic IP address with an instance or a network interface.",
@@ -1447,7 +1551,9 @@ ACTIONS = {
   },
   "ec2:AssociateDhcpOptions": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Associates a set of DHCP options (that you've previously created) with the specified VPC, or associates no DHCP options with the VPC.",
@@ -1477,7 +1583,9 @@ ACTIONS = {
   },
   "ec2:AssociateRouteTable": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Associates a subnet with a route table.",
@@ -1485,7 +1593,9 @@ ACTIONS = {
   },
   "ec2:AssociateSubnetCidrBlock": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Associates a CIDR block with your subnet.",
@@ -1494,8 +1604,8 @@ ACTIONS = {
   "ec2:AssociateTransitGatewayRouteTable": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TransitGatewayRouteTable",
-      "AWS::Ec2::TransitGatewayAttachment"
+      "AWS::Ec2::TransitGatewayAttachment",
+      "AWS::Ec2::TransitGatewayRouteTable"
     ],
     "Condition Keys": [
       "ec2:Region",
@@ -1507,7 +1617,9 @@ ACTIONS = {
   },
   "ec2:AssociateVpcCidrBlock": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Associates a CIDR block with your VPC.",
@@ -1516,22 +1628,22 @@ ACTIONS = {
   "ec2:AttachClassicLinkVpc": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::VpcPeeringConnection",
-      "AWS::Ec2::Instance",
       "AWS::Ec2::Vpc",
-      "AWS::Ec2::SecurityGroup"
+      "AWS::Ec2::SecurityGroup",
+      "AWS::Ec2::Instance",
+      "AWS::Ec2::VpcPeeringConnection"
     ],
     "Condition Keys": [
-      "ec2:Region",
       "ec2:Vpc",
-      "ec2:InstanceType",
       "ec2:Tenancy",
-      "ec2:InstanceProfile",
-      "ec2:AvailabilityZone",
+      "ec2:RootDeviceType",
       "ec2:ResourceTag/${TagKey}",
-      "ec2:EbsOptimized",
+      "ec2:Region",
       "ec2:PlacementGroup",
-      "ec2:RootDeviceType"
+      "ec2:AvailabilityZone",
+      "ec2:InstanceProfile",
+      "ec2:InstanceType",
+      "ec2:EbsOptimized"
     ],
     "Dependent Actions": [],
     "Description": "Links an EC2-Classic instance to a ClassicLink-enabled VPC through one or more of the VPC's security groups.",
@@ -1539,7 +1651,9 @@ ACTIONS = {
   },
   "ec2:AttachInternetGateway": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Attaches an Internet gateway to a VPC, enabling connectivity between the Internet and the VPC.",
@@ -1547,7 +1661,9 @@ ACTIONS = {
   },
   "ec2:AttachNetworkInterface": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Attaches a network interface to an instance.",
@@ -1560,20 +1676,20 @@ ACTIONS = {
       "AWS::Ec2::Instance"
     ],
     "Condition Keys": [
+      "ec2:Tenancy",
+      "ec2:RootDeviceType",
+      "ec2:ParentSnapshot",
+      "ec2:VolumeSize",
+      "ec2:ResourceTag/${TagKey}",
       "ec2:Region",
       "ec2:Encrypted",
-      "ec2:InstanceType",
-      "ec2:ParentSnapshot",
-      "ec2:Tenancy",
-      "ec2:InstanceProfile",
-      "ec2:VolumeSize",
-      "ec2:AvailabilityZone",
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:VolumeIops",
-      "ec2:EbsOptimized",
       "ec2:PlacementGroup",
+      "ec2:AvailabilityZone",
+      "ec2:InstanceProfile",
       "ec2:VolumeType",
-      "ec2:RootDeviceType"
+      "ec2:InstanceType",
+      "ec2:EbsOptimized",
+      "ec2:VolumeIops"
     ],
     "Dependent Actions": [],
     "Description": "Attaches an EBS volume to a running or stopped instance and exposes it to the instance with the specified device name.",
@@ -1581,7 +1697,9 @@ ACTIONS = {
   },
   "ec2:AttachVpnGateway": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Attaches a virtual private gateway to a VPC.",
@@ -1630,7 +1748,9 @@ ACTIONS = {
   },
   "ec2:BundleInstance": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Bundles an Amazon instance store-backed Windows instance.",
@@ -1638,7 +1758,9 @@ ACTIONS = {
   },
   "ec2:CancelBundleTask": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Cancels a bundling operation for an instance store-backed Windows instance.",
@@ -1659,7 +1781,9 @@ ACTIONS = {
   },
   "ec2:CancelConversionTask": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Cancels an active conversion task.",
@@ -1667,7 +1791,9 @@ ACTIONS = {
   },
   "ec2:CancelExportTask": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Cancels an active export task.",
@@ -1675,7 +1801,9 @@ ACTIONS = {
   },
   "ec2:CancelImportTask": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Cancels an in-process import virtual machine or import snapshot task.",
@@ -1683,7 +1811,9 @@ ACTIONS = {
   },
   "ec2:CancelReservedInstancesListing": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Cancels the specified Reserved Instance listing in the Reserved Instance Marketplace.",
@@ -1691,7 +1821,9 @@ ACTIONS = {
   },
   "ec2:CancelSpotFleetRequests": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Cancels the specified Spot fleet requests.",
@@ -1699,7 +1831,9 @@ ACTIONS = {
   },
   "ec2:CancelSpotInstanceRequests": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Cancels one or more Spot instance requests.",
@@ -1707,7 +1841,9 @@ ACTIONS = {
   },
   "ec2:ConfirmProductInstance": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Determines whether a product code is associated with an instance.",
@@ -1715,7 +1851,9 @@ ACTIONS = {
   },
   "ec2:CopyFpgaImage": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Initiates the copy of an Amazon FPGA Image (AFI) from the specified source region to the current region.",
@@ -1723,7 +1861,9 @@ ACTIONS = {
   },
   "ec2:CopyImage": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Initiates the copy of an AMI from the specified source region to the current region.",
@@ -1745,7 +1885,9 @@ ACTIONS = {
   },
   "ec2:CreateCapacityReservation": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a new Capacity Reservation with the specified attributes.",
@@ -1781,7 +1923,9 @@ ACTIONS = {
   },
   "ec2:CreateCustomerGateway": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Provides information to AWS about your VPN customer gateway device.",
@@ -1789,7 +1933,9 @@ ACTIONS = {
   },
   "ec2:CreateDefaultSubnet": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a default subnet with a size /20 IPv4 CIDR block in the specified Availability Zone in your default VPC.",
@@ -1797,7 +1943,9 @@ ACTIONS = {
   },
   "ec2:CreateDefaultVpc": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a default VPC with a size /16 IPv4 CIDR block and a default subnet in each Availability Zone.",
@@ -1805,7 +1953,9 @@ ACTIONS = {
   },
   "ec2:CreateDhcpOptions": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a set of DHCP options for your VPC.",
@@ -1813,7 +1963,9 @@ ACTIONS = {
   },
   "ec2:CreateEgressOnlyInternetGateway": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates an egress-only Internet gateway for your VPC.",
@@ -1821,7 +1973,9 @@ ACTIONS = {
   },
   "ec2:CreateFleet": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Launches an EC2 Fleet.",
@@ -1829,7 +1983,9 @@ ACTIONS = {
   },
   "ec2:CreateFlowLogs": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates one or more flow logs to capture IP traffic for a specific network interface, subnet, or VPC.",
@@ -1837,7 +1993,9 @@ ACTIONS = {
   },
   "ec2:CreateFpgaImage": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates an Amazon FPGA Image (AFI) from the specified design checkpoint (DCP).",
@@ -1845,7 +2003,9 @@ ACTIONS = {
   },
   "ec2:CreateImage": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates an Amazon EBS-backed AMI from an Amazon EBS-backed instance that is either running or stopped.",
@@ -1853,7 +2013,9 @@ ACTIONS = {
   },
   "ec2:CreateInstanceExportTask": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Exports a running or stopped instance to an S3 bucket.",
@@ -1861,7 +2023,9 @@ ACTIONS = {
   },
   "ec2:CreateInternetGateway": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates an Internet gateway for use with a VPC.",
@@ -1869,7 +2033,9 @@ ACTIONS = {
   },
   "ec2:CreateKeyPair": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a 2048-bit RSA key pair with the specified name.",
@@ -1877,7 +2043,9 @@ ACTIONS = {
   },
   "ec2:CreateLaunchTemplate": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a new launch template.",
@@ -1898,7 +2066,9 @@ ACTIONS = {
   },
   "ec2:CreateNatGateway": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a NAT gateway in the specified subnet.",
@@ -1906,7 +2076,9 @@ ACTIONS = {
   },
   "ec2:CreateNetworkAcl": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a network ACL in a VPC.",
@@ -1914,7 +2086,9 @@ ACTIONS = {
   },
   "ec2:CreateNetworkAclEntry": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates an entry (a rule) in a network ACL with the specified rule number.",
@@ -1922,7 +2096,9 @@ ACTIONS = {
   },
   "ec2:CreateNetworkInterface": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a network interface in the specified subnet.",
@@ -1949,7 +2125,9 @@ ACTIONS = {
   },
   "ec2:CreatePlacementGroup": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a placement group that you launch cluster instances into.",
@@ -1957,7 +2135,9 @@ ACTIONS = {
   },
   "ec2:CreateReservedInstancesListing": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a listing for Amazon EC2 Standard Reserved Instances to be sold in the Reserved Instance Marketplace.",
@@ -1979,7 +2159,9 @@ ACTIONS = {
   },
   "ec2:CreateRouteTable": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a route table for the specified VPC.",
@@ -1987,7 +2169,9 @@ ACTIONS = {
   },
   "ec2:CreateSecurityGroup": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a security group.",
@@ -2000,15 +2184,15 @@ ACTIONS = {
       "AWS::Ec2::Snapshot"
     ],
     "Condition Keys": [
+      "ec2:VolumeSize",
+      "ec2:ResourceTag/${TagKey}",
       "ec2:Region",
       "ec2:Encrypted",
-      "ec2:VolumeSize",
+      "ec2:VolumeType",
       "aws:TagKeys",
       "aws:RequestTag/${TagKey}",
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:ParentVolume",
       "ec2:VolumeIops",
-      "ec2:VolumeType"
+      "ec2:ParentVolume"
     ],
     "Dependent Actions": [],
     "Description": "Creates a snapshot of an EBS volume and stores it in Amazon S3.",
@@ -2018,26 +2202,26 @@ ACTIONS = {
     "Access": "Write",
     "Affects": [
       "AWS::Ec2::Volume",
-      "AWS::Ec2::Snapshot",
-      "AWS::Ec2::Instance"
+      "AWS::Ec2::Instance",
+      "AWS::Ec2::Snapshot"
     ],
     "Condition Keys": [
-      "ec2:Region",
-      "ec2:Encrypted",
-      "ec2:InstanceType",
       "ec2:Tenancy",
-      "ec2:InstanceProfile",
+      "ec2:RootDeviceType",
       "ec2:VolumeSize",
-      "aws:TagKeys",
-      "ec2:AvailabilityZone",
-      "aws:RequestTag/${TagKey}",
       "ec2:ResourceTag/${TagKey}",
+      "ec2:Region",
+      "ec2:InstanceType",
+      "ec2:Encrypted",
+      "ec2:PlacementGroup",
+      "ec2:AvailabilityZone",
+      "ec2:InstanceProfile",
+      "ec2:VolumeType",
+      "aws:TagKeys",
+      "aws:RequestTag/${TagKey}",
       "ec2:VolumeIops",
       "ec2:EbsOptimized",
-      "ec2:ParentVolume",
-      "ec2:PlacementGroup",
-      "ec2:VolumeType",
-      "ec2:RootDeviceType"
+      "ec2:ParentVolume"
     ],
     "Dependent Actions": [],
     "Description": "Creates a snapshots of an EBS volumes which attached to an EC2 instance and stores them in Amazon S3.",
@@ -2045,7 +2229,9 @@ ACTIONS = {
   },
   "ec2:CreateSpotDatafeedSubscription": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a data feed for Spot instances, enabling you to view Spot instance usage logs. You can create one data feed per AWS account.",
@@ -2053,7 +2239,9 @@ ACTIONS = {
   },
   "ec2:CreateSubnet": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a subnet in an existing VPC.",
@@ -2062,58 +2250,59 @@ ACTIONS = {
   "ec2:CreateTags": {
     "Access": "Tagging",
     "Affects": [
-      "AWS::Ec2::Subnet",
-      "AWS::Ec2::VpnConnection",
-      "AWS::Ec2::NetworkAcl",
-      "AWS::Ec2::Snapshot",
-      "AWS::Ec2::TrafficMirrorFilter",
-      "AWS::Ec2::FpgaImage",
-      "AWS::Ec2::TrafficMirrorTarget",
-      "AWS::Ec2::TrafficMirrorSession",
-      "AWS::Ec2::Instance",
-      "AWS::Ec2::Volume",
-      "AWS::Ec2::InternetGateway",
-      "AWS::Ec2::VpnGateway",
-      "AWS::Ec2::NetworkInterface",
-      "AWS::Ec2::ReservedInstances",
-      "AWS::Ec2::DhcpOptions",
-      "AWS::Ec2::TransitGatewayRouteTable",
-      "AWS::Ec2::Image",
-      "AWS::Ec2::RouteTable",
-      "AWS::Ec2::SpotInstanceRequest",
-      "AWS::Ec2::ClientVpnEndpoint",
       "AWS::Ec2::TransitGatewayAttachment",
-      "AWS::Ec2::SecurityGroup",
-      "AWS::Ec2::CapacityReservation",
+      "AWS::Ec2::VpnGateway",
+      "AWS::Ec2::Instance",
+      "AWS::Ec2::Image",
+      "AWS::Ec2::ClientVpnEndpoint",
+      "AWS::Ec2::Subnet",
       "AWS::Ec2::TransitGateway",
-      "AWS::Ec2::Vpc"
+      "AWS::Ec2::SecurityGroup",
+      "AWS::Ec2::SpotInstanceRequest",
+      "AWS::Ec2::TrafficMirrorSession",
+      "AWS::Ec2::TransitGatewayRouteTable",
+      "AWS::Ec2::TrafficMirrorFilter",
+      "AWS::Ec2::DhcpOptions",
+      "AWS::Ec2::NetworkAcl",
+      "AWS::Ec2::InternetGateway",
+      "AWS::Ec2::NetworkInterface",
+      "AWS::Ec2::FpgaImage",
+      "AWS::Ec2::ReservedInstances",
+      "AWS::Ec2::RouteTable",
+      "AWS::Ec2::Snapshot",
+      "AWS::Ec2::TrafficMirrorTarget",
+      "AWS::Ec2::CapacityReservation",
+      "AWS::Ec2::Vpc",
+      "AWS::Ec2::Volume",
+      "Info",
+      "AWS::Ec2::VpnConnection"
     ],
     "Condition Keys": [
-      "ec2:Vpc",
-      "ec2:Public",
-      "ec2:CreateAction",
-      "ec2:InstanceType",
-      "ec2:Tenancy",
-      "ec2:ReservedInstancesOfferingType",
-      "ec2:AvailabilityZone",
-      "ec2:ImageType",
-      "ec2:PlacementGroup",
-      "ec2:VolumeType",
+      "aws:RequestTag/${TagKey}",
       "ec2:Region",
+      "ec2:CreateAction",
+      "ec2:Owner",
+      "ec2:Tenancy",
+      "ec2:RootDeviceType",
       "ec2:ParentSnapshot",
       "ec2:VolumeSize",
-      "ec2:Subnet",
-      "aws:TagKeys",
-      "ec2:EbsOptimized",
-      "ec2:RootDeviceType",
       "ec2:Encrypted",
+      "ec2:PlacementGroup",
+      "ec2:AvailabilityZone",
       "ec2:SnapshotTime",
       "ec2:InstanceProfile",
-      "ec2:Owner",
-      "aws:RequestTag/${TagKey}",
-      "ec2:ResourceTag/${TagKey}",
+      "aws:TagKeys",
+      "ec2:ImageType",
+      "ec2:InstanceType",
+      "ec2:Subnet",
+      "ec2:EbsOptimized",
       "ec2:ParentVolume",
-      "ec2:VolumeIops"
+      "ec2:VolumeIops",
+      "ec2:Vpc",
+      "ec2:ResourceTag/${TagKey}",
+      "ec2:Public",
+      "ec2:VolumeType",
+      "ec2:ReservedInstancesOfferingType"
     ],
     "Dependent Actions": [],
     "Description": "Adds or overwrites one or more tags for the specified Amazon EC2 resource or resources.",
@@ -2151,17 +2340,17 @@ ACTIONS = {
   "ec2:CreateTrafficMirrorSession": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TrafficMirrorFilter",
-      "AWS::Ec2::NetworkInterface",
       "AWS::Ec2::TrafficMirrorSession",
       "AWS::Ec2::TrafficMirrorTarget",
+      "AWS::Ec2::TrafficMirrorFilter",
+      "AWS::Ec2::NetworkInterface",
       "AWS::Ec2::TrafficMirrorFilterRule"
     ],
     "Condition Keys": [
       "ec2:Region",
+      "aws:TagKeys",
       "aws:RequestTag/${TagKey}",
-      "ec2:ResourceTag/${TagKey}",
-      "aws:TagKeys"
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Creates a Traffic Mirror session.",
@@ -2174,10 +2363,10 @@ ACTIONS = {
       "AWS::Ec2::TrafficMirrorTarget"
     ],
     "Condition Keys": [
-      "ec2:Region",
+      "aws:TagKeys",
       "aws:RequestTag/${TagKey}",
-      "ec2:ResourceTag/${TagKey}",
-      "aws:TagKeys"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Creates a Traffic Mirror target.",
@@ -2186,9 +2375,9 @@ ACTIONS = {
   "ec2:CreateTransitGateway": {
     "Access": "Write",
     "Affects": [
+      "AWS::Ec2::TransitGatewayAttachment",
       "AWS::Ec2::TransitGateway",
-      "AWS::Ec2::TransitGatewayRouteTable",
-      "AWS::Ec2::TransitGatewayAttachment"
+      "AWS::Ec2::TransitGatewayRouteTable"
     ],
     "Condition Keys": [
       "aws:RequestTag/${TagKey}",
@@ -2216,15 +2405,15 @@ ACTIONS = {
   "ec2:CreateTransitGatewayRouteTable": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TransitGateway",
       "AWS::Ec2::TransitGatewayAttachment",
+      "AWS::Ec2::TransitGateway",
       "AWS::Ec2::TransitGatewayRouteTable"
     ],
     "Condition Keys": [
       "ec2:Region",
+      "aws:TagKeys",
       "aws:RequestTag/${TagKey}",
-      "ec2:ResourceTag/${TagKey}",
-      "aws:TagKeys"
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Creates a route table for the specified transit gateway.",
@@ -2234,17 +2423,17 @@ ACTIONS = {
     "Access": "Write",
     "Affects": [
       "AWS::Ec2::TransitGatewayAttachment",
-      "AWS::Ec2::Subnet",
-      "AWS::Ec2::TransitGateway",
-      "AWS::Ec2::Vpc",
+      "AWS::Ec2::TransitGatewayRouteTable",
       "AWS::Ec2::VpcPeeringConnection",
-      "AWS::Ec2::TransitGatewayRouteTable"
+      "AWS::Ec2::Vpc",
+      "AWS::Ec2::Subnet",
+      "AWS::Ec2::TransitGateway"
     ],
     "Condition Keys": [
       "ec2:Region",
+      "aws:TagKeys",
       "aws:RequestTag/${TagKey}",
-      "ec2:ResourceTag/${TagKey}",
-      "aws:TagKeys"
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Attaches the specified VPC to the specified transit gateway.",
@@ -2272,7 +2461,9 @@ ACTIONS = {
   },
   "ec2:CreateVpc": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a VPC with the specified CIDR block.",
@@ -2280,7 +2471,9 @@ ACTIONS = {
   },
   "ec2:CreateVpcEndpoint": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [
       "route53:AssociateVPCWithHostedZone"
@@ -2290,7 +2483,9 @@ ACTIONS = {
   },
   "ec2:CreateVpcEndpointConnectionNotification": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a connection notification for a specified VPC endpoint or VPC endpoint service.",
@@ -2298,7 +2493,9 @@ ACTIONS = {
   },
   "ec2:CreateVpcEndpointServiceConfiguration": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a VPC endpoint service configuration to which service consumers (AWS accounts, IAM users, and IAM roles) can connect.",
@@ -2307,15 +2504,15 @@ ACTIONS = {
   "ec2:CreateVpcPeeringConnection": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::VpcPeeringConnection",
-      "AWS::Ec2::Vpc"
+      "AWS::Ec2::Vpc",
+      "AWS::Ec2::VpcPeeringConnection"
     ],
     "Condition Keys": [
-      "ec2:Region",
       "ec2:Tenancy",
-      "ec2:AccepterVpc",
       "ec2:RequesterVpc",
-      "ec2:ResourceTag/${TagKey}"
+      "ec2:ResourceTag/${TagKey}",
+      "ec2:Region",
+      "ec2:AccepterVpc"
     ],
     "Dependent Actions": [],
     "Description": "Requests a VPC peering connection between two VPCs: a requester VPC that you own and a peer VPC with which to create the connection.",
@@ -2352,7 +2549,9 @@ ACTIONS = {
   },
   "ec2:CreateVpnConnectionRoute": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a static route associated with a VPN connection between an existing virtual private gateway and a VPN customer gateway.",
@@ -2360,7 +2559,9 @@ ACTIONS = {
   },
   "ec2:CreateVpnGateway": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a virtual private gateway.",
@@ -2421,7 +2622,9 @@ ACTIONS = {
   },
   "ec2:DeleteEgressOnlyInternetGateway": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes the specified egress-only Internet gateway.",
@@ -2429,7 +2632,9 @@ ACTIONS = {
   },
   "ec2:DeleteFleets": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes the specified EC2 Fleet.",
@@ -2437,7 +2642,9 @@ ACTIONS = {
   },
   "ec2:DeleteFlowLogs": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes one or more flow logs.",
@@ -2445,7 +2652,9 @@ ACTIONS = {
   },
   "ec2:DeleteFpgaImage": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes the specified Amazon FPGA Image (AFI).",
@@ -2466,7 +2675,9 @@ ACTIONS = {
   },
   "ec2:DeleteKeyPair": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes the specified key pair, by removing the public key from Amazon EC2.",
@@ -2500,7 +2711,9 @@ ACTIONS = {
   },
   "ec2:DeleteNatGateway": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes the specified NAT gateway.",
@@ -2536,7 +2749,9 @@ ACTIONS = {
   },
   "ec2:DeleteNetworkInterface": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes the specified network interface. You must detach the network interface before you can delete it.",
@@ -2544,7 +2759,9 @@ ACTIONS = {
   },
   "ec2:DeleteNetworkInterfacePermission": {
     "Access": "Permissions Management",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes a permission associated with a network interface.",
@@ -2552,7 +2769,9 @@ ACTIONS = {
   },
   "ec2:DeletePlacementGroup": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes the specified placement group.",
@@ -2619,7 +2838,9 @@ ACTIONS = {
   },
   "ec2:DeleteSpotDatafeedSubscription": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes the data feed for Spot instances.",
@@ -2627,7 +2848,9 @@ ACTIONS = {
   },
   "ec2:DeleteSubnet": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes the specified subnet.",
@@ -2636,34 +2859,34 @@ ACTIONS = {
   "ec2:DeleteTags": {
     "Access": "Tagging",
     "Affects": [
-      "AWS::Ec2::Subnet",
-      "AWS::Ec2::VpnConnection",
-      "AWS::Ec2::NetworkAcl",
-      "AWS::Ec2::Snapshot",
-      "AWS::Ec2::FpgaImage",
-      "AWS::Ec2::Instance",
-      "AWS::Ec2::Volume",
-      "AWS::Ec2::InternetGateway",
-      "AWS::Ec2::VpnGateway",
-      "AWS::Ec2::NetworkInterface",
-      "AWS::Ec2::ReservedInstances",
-      "AWS::Ec2::DhcpOptions",
-      "AWS::Ec2::TransitGatewayRouteTable",
-      "AWS::Ec2::Image",
-      "AWS::Ec2::RouteTable",
-      "AWS::Ec2::SpotInstanceRequest",
-      "AWS::Ec2::ClientVpnEndpoint",
       "AWS::Ec2::TransitGatewayAttachment",
-      "AWS::Ec2::SecurityGroup",
-      "AWS::Ec2::CapacityReservation",
+      "AWS::Ec2::VpnGateway",
+      "AWS::Ec2::Instance",
+      "AWS::Ec2::Image",
+      "AWS::Ec2::ClientVpnEndpoint",
+      "AWS::Ec2::Subnet",
       "AWS::Ec2::TransitGateway",
-      "AWS::Ec2::Vpc"
+      "AWS::Ec2::SecurityGroup",
+      "AWS::Ec2::SpotInstanceRequest",
+      "AWS::Ec2::TransitGatewayRouteTable",
+      "AWS::Ec2::DhcpOptions",
+      "AWS::Ec2::NetworkAcl",
+      "AWS::Ec2::InternetGateway",
+      "AWS::Ec2::NetworkInterface",
+      "AWS::Ec2::FpgaImage",
+      "AWS::Ec2::ReservedInstances",
+      "AWS::Ec2::RouteTable",
+      "AWS::Ec2::Snapshot",
+      "AWS::Ec2::CapacityReservation",
+      "AWS::Ec2::Vpc",
+      "AWS::Ec2::Volume",
+      "AWS::Ec2::VpnConnection"
     ],
     "Condition Keys": [
-      "ec2:Region",
+      "aws:TagKeys",
       "aws:RequestTag/${TagKey}",
-      "ec2:ResourceTag/${TagKey}",
-      "aws:TagKeys"
+      "ec2:Region",
+      "ec2:ResourceTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Deletes the specified set of tags from the specified set of resources.",
@@ -2726,9 +2949,9 @@ ACTIONS = {
   "ec2:DeleteTransitGateway": {
     "Access": "Write",
     "Affects": [
+      "AWS::Ec2::TransitGatewayAttachment",
       "AWS::Ec2::TransitGateway",
-      "AWS::Ec2::TransitGatewayRouteTable",
-      "AWS::Ec2::TransitGatewayAttachment"
+      "AWS::Ec2::TransitGatewayRouteTable"
     ],
     "Condition Keys": [
       "ec2:Region",
@@ -2798,7 +3021,9 @@ ACTIONS = {
   },
   "ec2:DeleteVpc": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes the specified VPC. You must detach or delete all gateways and resources that are associated with the VPC before you can delete it.",
@@ -2806,7 +3031,9 @@ ACTIONS = {
   },
   "ec2:DeleteVpcEndpointConnectionNotifications": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes one or more VPC endpoint connection notifications.",
@@ -2814,7 +3041,9 @@ ACTIONS = {
   },
   "ec2:DeleteVpcEndpointServiceConfigurations": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes one or more VPC endpoint service configurations in your account.",
@@ -2822,7 +3051,9 @@ ACTIONS = {
   },
   "ec2:DeleteVpcEndpoints": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes one or more specified VPC endpoints.",
@@ -2845,7 +3076,9 @@ ACTIONS = {
   },
   "ec2:DeleteVpnConnection": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes a VPC peering connection.",
@@ -2853,7 +3086,9 @@ ACTIONS = {
   },
   "ec2:DeleteVpnConnectionRoute": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes the specified static route associated with a VPN connection between an existing virtual private gateway and a VPN customer gateway.",
@@ -2861,7 +3096,9 @@ ACTIONS = {
   },
   "ec2:DeleteVpnGateway": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes the specified virtual private gateway.",
@@ -2869,7 +3106,9 @@ ACTIONS = {
   },
   "ec2:DeprovisionByoipCidr": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Releases the specified address range that you provisioned for use with your AWS resources through bring your own IP addresses (BYOIP) and deletes the corresponding address pool.",
@@ -2877,7 +3116,9 @@ ACTIONS = {
   },
   "ec2:DeregisterImage": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deregisters the specified AMI.",
@@ -2885,7 +3126,9 @@ ACTIONS = {
   },
   "ec2:DescribeAccountAttributes": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes attributes of your AWS account.",
@@ -2893,7 +3136,9 @@ ACTIONS = {
   },
   "ec2:DescribeAddresses": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your Elastic IP addresses.",
@@ -2901,7 +3146,9 @@ ACTIONS = {
   },
   "ec2:DescribeAggregateIdFormat": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the longer ID format settings for all resource types in a specific region.",
@@ -2909,7 +3156,9 @@ ACTIONS = {
   },
   "ec2:DescribeAvailabilityZones": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of the Availability Zones that are available to you.",
@@ -2917,7 +3166,9 @@ ACTIONS = {
   },
   "ec2:DescribeBundleTasks": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your bundling tasks.",
@@ -2925,7 +3176,9 @@ ACTIONS = {
   },
   "ec2:DescribeByoipCidrs": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the IP address ranges that were specified in calls to ProvisionByoipCidr.",
@@ -2933,7 +3186,9 @@ ACTIONS = {
   },
   "ec2:DescribeCapacityReservations": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your Capacity Reservations.",
@@ -2941,7 +3196,9 @@ ACTIONS = {
   },
   "ec2:DescribeClassicLinkInstances": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your linked EC2-Classic instances.",
@@ -2949,7 +3206,9 @@ ACTIONS = {
   },
   "ec2:DescribeClientVpnAuthorizationRules": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the authorization rules for a specified Client VPN endpoint.",
@@ -2957,7 +3216,9 @@ ACTIONS = {
   },
   "ec2:DescribeClientVpnConnections": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes active client connections and connections that have been terminated within the last 60 minutes for the specified Client VPN endpoint.",
@@ -2965,7 +3226,9 @@ ACTIONS = {
   },
   "ec2:DescribeClientVpnEndpoints": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more Client VPN endpoints in the account.",
@@ -2973,7 +3236,9 @@ ACTIONS = {
   },
   "ec2:DescribeClientVpnRoutes": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the routes for the specified Client VPN endpoint.",
@@ -2981,7 +3246,9 @@ ACTIONS = {
   },
   "ec2:DescribeClientVpnTargetNetworks": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the target networks associated with the specified Client VPN endpoint.",
@@ -2989,7 +3256,9 @@ ACTIONS = {
   },
   "ec2:DescribeConversionTasks": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your conversion tasks.",
@@ -2997,7 +3266,9 @@ ACTIONS = {
   },
   "ec2:DescribeCustomerGateways": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your VPN customer gateways.",
@@ -3005,7 +3276,9 @@ ACTIONS = {
   },
   "ec2:DescribeDhcpOptions": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your DHCP options sets.",
@@ -3013,7 +3286,9 @@ ACTIONS = {
   },
   "ec2:DescribeEgressOnlyInternetGateways": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your egress-only Internet gateways.",
@@ -3021,7 +3296,9 @@ ACTIONS = {
   },
   "ec2:DescribeElasticGpus": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the Elastic GPUs associated with your instances.",
@@ -3029,7 +3306,9 @@ ACTIONS = {
   },
   "ec2:DescribeExportImageTasks": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the specified export image tasks or all your export image tasks.",
@@ -3037,7 +3316,9 @@ ACTIONS = {
   },
   "ec2:DescribeExportTasks": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your export tasks.",
@@ -3045,7 +3326,9 @@ ACTIONS = {
   },
   "ec2:DescribeFastSnapshotRestores": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the state of fast snapshot restores for your snapshots",
@@ -3053,7 +3336,9 @@ ACTIONS = {
   },
   "ec2:DescribeFleetHistory": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the events for the specified EC2 Fleet during the specified time.",
@@ -3061,7 +3346,9 @@ ACTIONS = {
   },
   "ec2:DescribeFleetInstances": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the running instances for the specified EC2 Fleet.",
@@ -3069,7 +3356,9 @@ ACTIONS = {
   },
   "ec2:DescribeFleets": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your EC2 Fleet.",
@@ -3077,7 +3366,9 @@ ACTIONS = {
   },
   "ec2:DescribeFlowLogs": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more flow logs.",
@@ -3085,7 +3376,9 @@ ACTIONS = {
   },
   "ec2:DescribeFpgaImageAttribute": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the specified attribute of the specified Amazon FPGA Images (AFI).",
@@ -3093,7 +3386,9 @@ ACTIONS = {
   },
   "ec2:DescribeFpgaImages": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of the Amazon FPGA Images (AFIs) available to you.",
@@ -3101,7 +3396,9 @@ ACTIONS = {
   },
   "ec2:DescribeHostReservationOfferings": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the Dedicated Host Reservations that are available to purchase.",
@@ -3109,7 +3406,9 @@ ACTIONS = {
   },
   "ec2:DescribeHostReservations": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes Dedicated Host Reservations which are associated with Dedicated Hosts in your account.",
@@ -3117,7 +3416,9 @@ ACTIONS = {
   },
   "ec2:DescribeHosts": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your Dedicated Hosts.",
@@ -3125,7 +3426,9 @@ ACTIONS = {
   },
   "ec2:DescribeIamInstanceProfileAssociations": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes your IAM instance profile associations.",
@@ -3133,7 +3436,9 @@ ACTIONS = {
   },
   "ec2:DescribeIdFormat": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the ID format settings for your resources on a per-region basis, for example, to view which resource types are enabled for longer IDs.",
@@ -3141,7 +3446,9 @@ ACTIONS = {
   },
   "ec2:DescribeIdentityIdFormat": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the ID format settings for resources for the specified IAM user, IAM role, or root user.",
@@ -3149,7 +3456,9 @@ ACTIONS = {
   },
   "ec2:DescribeImageAttribute": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the specified attribute of the specified AMI.",
@@ -3157,7 +3466,9 @@ ACTIONS = {
   },
   "ec2:DescribeImages": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of the images (AMIs, AKIs, and ARIs) available to you.",
@@ -3165,7 +3476,9 @@ ACTIONS = {
   },
   "ec2:DescribeImportImageTasks": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Displays details about an import virtual machine or import snapshot tasks that are already created.",
@@ -3173,16 +3486,18 @@ ACTIONS = {
   },
   "ec2:DescribeImportSnapshotTasks": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes your import snapshot tasks.",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImportSnapshotTasks.html"
   },
   "ec2:DescribeInstanceAttribute": {
-    "Access": "Read",
+    "Access": "List",
     "Affects": [
-      "AWS::Ec2::Instance"
+      "Info"
     ],
     "Condition Keys": [],
     "Dependent Actions": [],
@@ -3191,7 +3506,9 @@ ACTIONS = {
   },
   "ec2:DescribeInstanceCreditSpecifications": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the credit option for CPU usage of one or more of your instances.",
@@ -3199,7 +3516,9 @@ ACTIONS = {
   },
   "ec2:DescribeInstanceStatus": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the status of one or more instances.",
@@ -3207,7 +3526,9 @@ ACTIONS = {
   },
   "ec2:DescribeInstanceTypes": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes all instance types offered in an AWS Region.",
@@ -3215,7 +3536,9 @@ ACTIONS = {
   },
   "ec2:DescribeInstances": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your instances.",
@@ -3223,7 +3546,9 @@ ACTIONS = {
   },
   "ec2:DescribeInternetGateways": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your Internet gateways.",
@@ -3231,7 +3556,9 @@ ACTIONS = {
   },
   "ec2:DescribeKeyPairs": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your key pairs.",
@@ -3239,7 +3566,9 @@ ACTIONS = {
   },
   "ec2:DescribeLaunchTemplateVersions": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your launch template versions.",
@@ -3247,7 +3576,9 @@ ACTIONS = {
   },
   "ec2:DescribeLaunchTemplates": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your launch templates.",
@@ -3255,7 +3586,9 @@ ACTIONS = {
   },
   "ec2:DescribeMovingAddresses": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes your Elastic IP addresses that are being moved to the EC2-VPC platform, or that are being restored to the EC2-Classic platform.",
@@ -3263,7 +3596,9 @@ ACTIONS = {
   },
   "ec2:DescribeNatGateways": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of the your NAT gateways.",
@@ -3271,7 +3606,9 @@ ACTIONS = {
   },
   "ec2:DescribeNetworkAcls": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your network ACLs.",
@@ -3279,7 +3616,9 @@ ACTIONS = {
   },
   "ec2:DescribeNetworkInterfaceAttribute": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes a network interface attribute. You can specify only one attribute at a time.",
@@ -3287,7 +3626,9 @@ ACTIONS = {
   },
   "ec2:DescribeNetworkInterfacePermissions": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the permissions associated with a network interface.",
@@ -3295,7 +3636,9 @@ ACTIONS = {
   },
   "ec2:DescribeNetworkInterfaces": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your network interfaces.",
@@ -3303,7 +3646,9 @@ ACTIONS = {
   },
   "ec2:DescribePlacementGroups": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your placement groups.",
@@ -3311,7 +3656,9 @@ ACTIONS = {
   },
   "ec2:DescribePrefixLists": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes available AWS services in a prefix list format, which includes the prefix list name and prefix list ID of the service and the IP address range for the service.",
@@ -3319,7 +3666,9 @@ ACTIONS = {
   },
   "ec2:DescribePrincipalIdFormat": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the ID format settings for the root user and all IAM roles and IAM users that have explicitly specified a longer ID (17-character ID) preference.",
@@ -3327,7 +3676,9 @@ ACTIONS = {
   },
   "ec2:DescribePublicIpv4Pools": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the specified IPv4 address pools.",
@@ -3335,7 +3686,9 @@ ACTIONS = {
   },
   "ec2:DescribeRegions": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more regions that are currently available to you.",
@@ -3343,7 +3696,9 @@ ACTIONS = {
   },
   "ec2:DescribeReservedInstances": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of the Reserved Instances that you purchased.",
@@ -3351,7 +3706,9 @@ ACTIONS = {
   },
   "ec2:DescribeReservedInstancesListings": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes your account's Reserved Instance listings in the Reserved Instance Marketplace.",
@@ -3359,7 +3716,9 @@ ACTIONS = {
   },
   "ec2:DescribeReservedInstancesModifications": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the modifications made to your Reserved Instances.",
@@ -3367,7 +3726,9 @@ ACTIONS = {
   },
   "ec2:DescribeReservedInstancesOfferings": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes Reserved Instance offerings that are available for purchase.",
@@ -3375,7 +3736,9 @@ ACTIONS = {
   },
   "ec2:DescribeRouteTables": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your route tables.",
@@ -3383,7 +3746,9 @@ ACTIONS = {
   },
   "ec2:DescribeScheduledInstanceAvailability": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Finds available schedules that meet the specified criteria.",
@@ -3391,7 +3756,9 @@ ACTIONS = {
   },
   "ec2:DescribeScheduledInstances": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your Scheduled Instances.",
@@ -3399,7 +3766,9 @@ ACTIONS = {
   },
   "ec2:DescribeSecurityGroupReferences": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "[EC2-VPC only] Describes the VPCs on the other side of a VPC peering connection that are referencing the security groups you've specified in this request.",
@@ -3407,7 +3776,9 @@ ACTIONS = {
   },
   "ec2:DescribeSecurityGroups": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your security groups.",
@@ -3415,7 +3786,9 @@ ACTIONS = {
   },
   "ec2:DescribeSnapshotAttribute": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the specified attribute of the specified snapshot.",
@@ -3423,7 +3796,9 @@ ACTIONS = {
   },
   "ec2:DescribeSnapshots": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of the EBS snapshots available to you.",
@@ -3431,7 +3806,9 @@ ACTIONS = {
   },
   "ec2:DescribeSpotDatafeedSubscription": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the data feed for Spot instances.",
@@ -3439,7 +3816,9 @@ ACTIONS = {
   },
   "ec2:DescribeSpotFleetInstances": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the running instances for the specified Spot fleet.",
@@ -3447,7 +3826,9 @@ ACTIONS = {
   },
   "ec2:DescribeSpotFleetRequestHistory": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the events for the specified Spot fleet request during the specified time.",
@@ -3455,7 +3836,9 @@ ACTIONS = {
   },
   "ec2:DescribeSpotFleetRequests": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes your Spot fleet requests.",
@@ -3463,7 +3846,9 @@ ACTIONS = {
   },
   "ec2:DescribeSpotInstanceRequests": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the Spot instance requests that belong to your account.",
@@ -3471,7 +3856,9 @@ ACTIONS = {
   },
   "ec2:DescribeSpotPriceHistory": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the Spot price history.",
@@ -3479,7 +3866,9 @@ ACTIONS = {
   },
   "ec2:DescribeStaleSecurityGroups": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "[EC2-VPC only] Describes the stale security group rules for security groups in a specified VPC.",
@@ -3487,7 +3876,9 @@ ACTIONS = {
   },
   "ec2:DescribeSubnets": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your subnets.",
@@ -3495,7 +3886,9 @@ ACTIONS = {
   },
   "ec2:DescribeTags": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of the tags for your EC2 resources.",
@@ -3503,7 +3896,9 @@ ACTIONS = {
   },
   "ec2:DescribeTrafficMirrorFilters": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more Traffic Mirror filters.",
@@ -3511,7 +3906,9 @@ ACTIONS = {
   },
   "ec2:DescribeTrafficMirrorSessions": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more Traffic Mirror sessions.",
@@ -3519,7 +3916,9 @@ ACTIONS = {
   },
   "ec2:DescribeTrafficMirrorTargets": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more Traffic Mirror targets.",
@@ -3527,7 +3926,9 @@ ACTIONS = {
   },
   "ec2:DescribeTransitGatewayAttachments": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more attachments between resources and transit gateways.",
@@ -3535,7 +3936,9 @@ ACTIONS = {
   },
   "ec2:DescribeTransitGatewayRouteTables": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more transit gateway route tables.",
@@ -3543,7 +3946,9 @@ ACTIONS = {
   },
   "ec2:DescribeTransitGatewayVpcAttachments": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more VPC attachments.",
@@ -3551,7 +3956,9 @@ ACTIONS = {
   },
   "ec2:DescribeTransitGateways": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more transit gateways.",
@@ -3559,7 +3966,9 @@ ACTIONS = {
   },
   "ec2:DescribeVolumeAttribute": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the specified attribute of the specified volume.",
@@ -3567,7 +3976,9 @@ ACTIONS = {
   },
   "ec2:DescribeVolumeStatus": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the status of the specified volumes.",
@@ -3575,7 +3986,9 @@ ACTIONS = {
   },
   "ec2:DescribeVolumes": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the specified EBS volumes.",
@@ -3583,7 +3996,9 @@ ACTIONS = {
   },
   "ec2:DescribeVolumesModifications": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Reports the current modification status of EBS volumes.",
@@ -3591,7 +4006,9 @@ ACTIONS = {
   },
   "ec2:DescribeVpcAttribute": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the specified attribute of the specified VPC.",
@@ -3599,7 +4016,9 @@ ACTIONS = {
   },
   "ec2:DescribeVpcClassicLink": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the ClassicLink status of one or more VPCs.",
@@ -3607,7 +4026,9 @@ ACTIONS = {
   },
   "ec2:DescribeVpcClassicLinkDnsSupport": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the ClassicLink DNS support status of one or more VPCs.",
@@ -3615,7 +4036,9 @@ ACTIONS = {
   },
   "ec2:DescribeVpcEndpointConnectionNotifications": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the connection notifications for VPC endpoints and VPC endpoint services.",
@@ -3623,7 +4046,9 @@ ACTIONS = {
   },
   "ec2:DescribeVpcEndpointConnections": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the VPC endpoint connections to your VPC endpoint services, including any endpoints that are pending your acceptance.",
@@ -3631,7 +4056,9 @@ ACTIONS = {
   },
   "ec2:DescribeVpcEndpointServiceConfigurations": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the VPC endpoint service configurations in your account (your services).",
@@ -3639,7 +4066,9 @@ ACTIONS = {
   },
   "ec2:DescribeVpcEndpointServicePermissions": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes the principals (service consumers) that are permitted to discover your VPC endpoint service.",
@@ -3647,7 +4076,9 @@ ACTIONS = {
   },
   "ec2:DescribeVpcEndpointServices": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes all supported AWS services that can be specified when creating a VPC endpoint.",
@@ -3655,7 +4086,9 @@ ACTIONS = {
   },
   "ec2:DescribeVpcEndpoints": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your VPC endpoints.",
@@ -3663,7 +4096,9 @@ ACTIONS = {
   },
   "ec2:DescribeVpcPeeringConnections": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your VPC peering connections.",
@@ -3671,7 +4106,9 @@ ACTIONS = {
   },
   "ec2:DescribeVpcs": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your VPCs.",
@@ -3679,7 +4116,9 @@ ACTIONS = {
   },
   "ec2:DescribeVpnConnections": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your VPN connections.",
@@ -3687,7 +4126,9 @@ ACTIONS = {
   },
   "ec2:DescribeVpnGateways": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes one or more of your virtual private gateways.",
@@ -3696,20 +4137,20 @@ ACTIONS = {
   "ec2:DetachClassicLinkVpc": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::VpcPeeringConnection",
       "AWS::Ec2::Vpc",
-      "AWS::Ec2::Instance"
+      "AWS::Ec2::Instance",
+      "AWS::Ec2::VpcPeeringConnection"
     ],
     "Condition Keys": [
-      "ec2:Region",
-      "ec2:InstanceType",
       "ec2:Tenancy",
-      "ec2:InstanceProfile",
-      "ec2:AvailabilityZone",
+      "ec2:RootDeviceType",
       "ec2:ResourceTag/${TagKey}",
-      "ec2:EbsOptimized",
+      "ec2:Region",
       "ec2:PlacementGroup",
-      "ec2:RootDeviceType"
+      "ec2:AvailabilityZone",
+      "ec2:InstanceProfile",
+      "ec2:InstanceType",
+      "ec2:EbsOptimized"
     ],
     "Dependent Actions": [],
     "Description": "Unlinks (detaches) a linked EC2-Classic instance from a VPC.",
@@ -3717,7 +4158,9 @@ ACTIONS = {
   },
   "ec2:DetachInternetGateway": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Detaches an Internet gateway from a VPC, disabling connectivity between the Internet and the VPC.",
@@ -3725,7 +4168,9 @@ ACTIONS = {
   },
   "ec2:DetachNetworkInterface": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Detaches a network interface from an instance.",
@@ -3738,20 +4183,20 @@ ACTIONS = {
       "AWS::Ec2::Instance"
     ],
     "Condition Keys": [
+      "ec2:Tenancy",
+      "ec2:RootDeviceType",
+      "ec2:ParentSnapshot",
+      "ec2:VolumeSize",
+      "ec2:ResourceTag/${TagKey}",
       "ec2:Region",
       "ec2:Encrypted",
-      "ec2:InstanceType",
-      "ec2:ParentSnapshot",
-      "ec2:Tenancy",
-      "ec2:InstanceProfile",
-      "ec2:VolumeSize",
-      "ec2:AvailabilityZone",
-      "ec2:ResourceTag/${TagKey}",
-      "ec2:VolumeIops",
-      "ec2:EbsOptimized",
       "ec2:PlacementGroup",
+      "ec2:AvailabilityZone",
+      "ec2:InstanceProfile",
       "ec2:VolumeType",
-      "ec2:RootDeviceType"
+      "ec2:InstanceType",
+      "ec2:EbsOptimized",
+      "ec2:VolumeIops"
     ],
     "Dependent Actions": [],
     "Description": "Detaches an EBS volume from an instance.",
@@ -3759,7 +4204,9 @@ ACTIONS = {
   },
   "ec2:DetachVpnGateway": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Detaches a virtual private gateway from a VPC.",
@@ -3767,7 +4214,9 @@ ACTIONS = {
   },
   "ec2:DisableEbsEncryptionByDefault": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Disable the default EBS encryption by enabled for your account in the current region",
@@ -3795,8 +4244,8 @@ ACTIONS = {
   "ec2:DisableTransitGatewayRouteTablePropagation": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TransitGatewayRouteTable",
-      "AWS::Ec2::TransitGatewayAttachment"
+      "AWS::Ec2::TransitGatewayAttachment",
+      "AWS::Ec2::TransitGatewayRouteTable"
     ],
     "Condition Keys": [
       "ec2:Region",
@@ -3808,7 +4257,9 @@ ACTIONS = {
   },
   "ec2:DisableVgwRoutePropagation": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Disables a virtual private gateway (VGW) from propagating routes to a specified route table of a VPC.",
@@ -3817,8 +4268,8 @@ ACTIONS = {
   "ec2:DisableVpcClassicLink": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::VpcPeeringConnection",
-      "AWS::Ec2::Vpc"
+      "AWS::Ec2::Vpc",
+      "AWS::Ec2::VpcPeeringConnection"
     ],
     "Condition Keys": [
       "ec2:Region",
@@ -3831,7 +4282,9 @@ ACTIONS = {
   },
   "ec2:DisableVpcClassicLinkDnsSupport": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Disables ClassicLink DNS support for a VPC.",
@@ -3839,7 +4292,9 @@ ACTIONS = {
   },
   "ec2:DisassociateAddress": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Disassociates an Elastic IP address from the instance or network interface it's associated with.",
@@ -3880,7 +4335,9 @@ ACTIONS = {
   },
   "ec2:DisassociateRouteTable": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Disassociates a subnet from a route table.",
@@ -3888,7 +4345,9 @@ ACTIONS = {
   },
   "ec2:DisassociateSubnetCidrBlock": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Disassociates a CIDR block from a subnet.",
@@ -3897,8 +4356,8 @@ ACTIONS = {
   "ec2:DisassociateTransitGatewayRouteTable": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TransitGatewayRouteTable",
-      "AWS::Ec2::TransitGatewayAttachment"
+      "AWS::Ec2::TransitGatewayAttachment",
+      "AWS::Ec2::TransitGatewayRouteTable"
     ],
     "Condition Keys": [
       "ec2:Region",
@@ -3910,7 +4369,9 @@ ACTIONS = {
   },
   "ec2:DisassociateVpcCidrBlock": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Disassociates a CIDR block from a VPC.",
@@ -3918,7 +4379,9 @@ ACTIONS = {
   },
   "ec2:EnableEbsEncryptionByDefault": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Enables EBS encryption by default for your account in the current Region",
@@ -3946,8 +4409,8 @@ ACTIONS = {
   "ec2:EnableTransitGatewayRouteTablePropagation": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TransitGatewayRouteTable",
-      "AWS::Ec2::TransitGatewayAttachment"
+      "AWS::Ec2::TransitGatewayAttachment",
+      "AWS::Ec2::TransitGatewayRouteTable"
     ],
     "Condition Keys": [
       "ec2:Region",
@@ -3959,7 +4422,9 @@ ACTIONS = {
   },
   "ec2:EnableVgwRoutePropagation": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Enables a virtual private gateway (VGW) to propagate routes to the specified route table of a VPC.",
@@ -3967,7 +4432,9 @@ ACTIONS = {
   },
   "ec2:EnableVolumeIO": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Enables I/O operations for a volume that had I/O operations disabled because the data on the volume was potentially inconsistent.",
@@ -3976,8 +4443,8 @@ ACTIONS = {
   "ec2:EnableVpcClassicLink": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::VpcPeeringConnection",
-      "AWS::Ec2::Vpc"
+      "AWS::Ec2::Vpc",
+      "AWS::Ec2::VpcPeeringConnection"
     ],
     "Condition Keys": [
       "ec2:Region",
@@ -3990,7 +4457,9 @@ ACTIONS = {
   },
   "ec2:EnableVpcClassicLinkDnsSupport": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Enables a VPC to support DNS hostname resolution for ClassicLink.",
@@ -3998,7 +4467,9 @@ ACTIONS = {
   },
   "ec2:ExportClientVpnClientCertificateRevocationList": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Downloads the client certificate revocation list for the specified Client VPN endpoint.",
@@ -4006,7 +4477,9 @@ ACTIONS = {
   },
   "ec2:ExportClientVpnClientConfiguration": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Downloads the contents of the Client VPN endpoint configuration file for the specified Client VPN endpoint.",
@@ -4014,7 +4487,9 @@ ACTIONS = {
   },
   "ec2:ExportImage": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Exports an Amazon Machine Image (AMI) to a VM file.",
@@ -4022,7 +4497,9 @@ ACTIONS = {
   },
   "ec2:ExportTransitGatewayRoutes": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Exports routes from the specified transit gateway route table to the specified S3 bucket.",
@@ -4030,7 +4507,9 @@ ACTIONS = {
   },
   "ec2:GetCapacityReservationUsage": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Gets usage information about a Capacity Reservation.",
@@ -4038,7 +4517,9 @@ ACTIONS = {
   },
   "ec2:GetConsoleOutput": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Gets the console output for the specified instance.",
@@ -4066,7 +4547,9 @@ ACTIONS = {
   },
   "ec2:GetEbsDefaultKmsKeyId": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Get EBS Default Kms Key Id",
@@ -4074,7 +4557,9 @@ ACTIONS = {
   },
   "ec2:GetEbsEncryptionByDefault": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes whether EBS encryption by default is enabled for your account in the current Region",
@@ -4082,7 +4567,9 @@ ACTIONS = {
   },
   "ec2:GetHostReservationPurchasePreview": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Preview a reservation purchase with configurations that match those of your Dedicated Host.",
@@ -4090,7 +4577,9 @@ ACTIONS = {
   },
   "ec2:GetLaunchTemplateData": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Retrieves the configuration data of the specified instance.",
@@ -4098,7 +4587,9 @@ ACTIONS = {
   },
   "ec2:GetPasswordData": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Retrieves the encrypted administrator password for an instance running Windows.",
@@ -4106,7 +4597,9 @@ ACTIONS = {
   },
   "ec2:GetReservedInstancesExchangeQuote": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns details about the values and term of your specified Convertible Reserved Instances.",
@@ -4114,7 +4607,9 @@ ACTIONS = {
   },
   "ec2:GetTransitGatewayAttachmentPropagations": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Lists the route tables to which the specified resource attachment propagates routes.",
@@ -4122,7 +4617,9 @@ ACTIONS = {
   },
   "ec2:GetTransitGatewayRouteTableAssociations": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Gets information about the associations for the specified transit gateway route table.",
@@ -4130,7 +4627,9 @@ ACTIONS = {
   },
   "ec2:GetTransitGatewayRouteTablePropagations": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Gets information about the route table propagations for the specified transit gateway route table.",
@@ -4151,7 +4650,9 @@ ACTIONS = {
   },
   "ec2:ImportImage": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Import single or multi-volume disk images or EBS snapshots into an Amazon Machine Image (AMI).",
@@ -4159,7 +4660,9 @@ ACTIONS = {
   },
   "ec2:ImportInstance": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates an import instance task using metadata from the specified disk image.",
@@ -4167,7 +4670,9 @@ ACTIONS = {
   },
   "ec2:ImportKeyPair": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Imports the public key from an RSA key pair that you created with a third-party tool.",
@@ -4175,7 +4680,9 @@ ACTIONS = {
   },
   "ec2:ImportSnapshot": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Imports a disk into an EBS snapshot.",
@@ -4183,7 +4690,9 @@ ACTIONS = {
   },
   "ec2:ImportVolume": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates an import volume task using metadata from the specified disk image.",
@@ -4217,7 +4726,9 @@ ACTIONS = {
   },
   "ec2:ModifyEbsDefaultKmsKeyId": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Changes the default customer master key (CMK) for EBS encryption by default for your account in this Region",
@@ -4225,7 +4736,9 @@ ACTIONS = {
   },
   "ec2:ModifyFleet": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the specified EC2 Fleet.",
@@ -4233,7 +4746,9 @@ ACTIONS = {
   },
   "ec2:ModifyFpgaImageAttribute": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the specified attribute of the specified Amazon FPGA Image (AFI).",
@@ -4241,7 +4756,9 @@ ACTIONS = {
   },
   "ec2:ModifyHosts": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modify the auto-placement setting of a Dedicated Host.",
@@ -4249,7 +4766,9 @@ ACTIONS = {
   },
   "ec2:ModifyIdFormat": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the ID format for the specified resource on a per-region basis.",
@@ -4257,7 +4776,9 @@ ACTIONS = {
   },
   "ec2:ModifyIdentityIdFormat": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the ID format of a resource for a specified IAM user, IAM role, or the root user for an account; or all IAM users, IAM roles, and the root user for an account.",
@@ -4265,7 +4786,9 @@ ACTIONS = {
   },
   "ec2:ModifyImageAttribute": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the specified attribute of the specified AMI.",
@@ -4273,7 +4796,9 @@ ACTIONS = {
   },
   "ec2:ModifyInstanceAttribute": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the specified attribute of the specified instance.",
@@ -4281,7 +4806,9 @@ ACTIONS = {
   },
   "ec2:ModifyInstanceCapacityReservationAttributes": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the Capacity Reservation settings for a stopped instance.",
@@ -4289,7 +4816,9 @@ ACTIONS = {
   },
   "ec2:ModifyInstanceCreditSpecification": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the credit option for CPU usage on an instance.",
@@ -4309,7 +4838,9 @@ ACTIONS = {
   },
   "ec2:ModifyInstanceMetadataOptions": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the metadata options for an instance.",
@@ -4317,7 +4848,9 @@ ACTIONS = {
   },
   "ec2:ModifyInstancePlacement": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Set the instance affinity value for a specific stopped instance and modify the instance tenancy setting.",
@@ -4338,7 +4871,9 @@ ACTIONS = {
   },
   "ec2:ModifyNetworkInterfaceAttribute": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the specified network interface attribute. You can specify only one attribute at a time.",
@@ -4346,7 +4881,9 @@ ACTIONS = {
   },
   "ec2:ModifyReservedInstances": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the Availability Zone, instance count, instance type, or network platform (EC2-Classic or EC2-VPC) of your Standard Reserved Instances.",
@@ -4371,7 +4908,9 @@ ACTIONS = {
   },
   "ec2:ModifySpotFleetRequest": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the specified Spot fleet request.",
@@ -4379,7 +4918,9 @@ ACTIONS = {
   },
   "ec2:ModifySubnetAttribute": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies a subnet attribute.",
@@ -4416,8 +4957,8 @@ ACTIONS = {
   "ec2:ModifyTrafficMirrorSession": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::TrafficMirrorSession",
       "AWS::Ec2::TrafficMirrorFilter",
+      "AWS::Ec2::TrafficMirrorSession",
       "AWS::Ec2::TrafficMirrorTarget"
     ],
     "Condition Keys": [
@@ -4444,7 +4985,9 @@ ACTIONS = {
   },
   "ec2:ModifyVolume": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "You can modify several parameters of an existing EBS volume, including volume size, volume type, and IOPS capacity.",
@@ -4452,7 +4995,9 @@ ACTIONS = {
   },
   "ec2:ModifyVolumeAttribute": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies a volume attribute.",
@@ -4460,7 +5005,9 @@ ACTIONS = {
   },
   "ec2:ModifyVpcAttribute": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the specified attribute of the specified VPC.",
@@ -4468,7 +5015,9 @@ ACTIONS = {
   },
   "ec2:ModifyVpcEndpoint": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies attributes of a specified VPC endpoint.",
@@ -4476,7 +5025,9 @@ ACTIONS = {
   },
   "ec2:ModifyVpcEndpointConnectionNotification": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies a connection notification for VPC endpoint or VPC endpoint service.",
@@ -4484,7 +5035,9 @@ ACTIONS = {
   },
   "ec2:ModifyVpcEndpointServiceConfiguration": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the attributes of your VPC endpoint service configuration.",
@@ -4492,7 +5045,9 @@ ACTIONS = {
   },
   "ec2:ModifyVpcEndpointServicePermissions": {
     "Access": "Permissions Management",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the permissions for your VPC endpoint service.",
@@ -4500,7 +5055,9 @@ ACTIONS = {
   },
   "ec2:ModifyVpcPeeringConnectionOptions": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the VPC peering connection options on one side of a VPC peering connection.",
@@ -4508,7 +5065,9 @@ ACTIONS = {
   },
   "ec2:ModifyVpcTenancy": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the instance tenancy attribute of the specified VPC.",
@@ -4530,7 +5089,9 @@ ACTIONS = {
   },
   "ec2:ModifyVpnTunnelCertificate": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Modifies the certificate for an AWS Site-to-Site VPN connection.",
@@ -4567,7 +5128,9 @@ ACTIONS = {
   },
   "ec2:MonitorInstances": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Enables detailed monitoring for a running instance.",
@@ -4575,7 +5138,9 @@ ACTIONS = {
   },
   "ec2:MoveAddressToVpc": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Moves an Elastic IP address from the EC2-Classic platform to the EC2-VPC platform.",
@@ -4583,7 +5148,9 @@ ACTIONS = {
   },
   "ec2:ProvisionByoipCidr": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Provisions an address range for use with your AWS resources through bring your own IP addresses (BYOIP) and creates a corresponding address pool.",
@@ -4591,7 +5158,9 @@ ACTIONS = {
   },
   "ec2:PurchaseHostReservation": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Purchase a reservation with configurations that match those of your Dedicated Host.",
@@ -4599,7 +5168,9 @@ ACTIONS = {
   },
   "ec2:PurchaseReservedInstancesOffering": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Purchases a Reserved Instance for use with your account.",
@@ -4607,7 +5178,9 @@ ACTIONS = {
   },
   "ec2:PurchaseScheduledInstances": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Purchases one or more Scheduled Instances with the specified schedule.",
@@ -4635,7 +5208,9 @@ ACTIONS = {
   },
   "ec2:RegisterImage": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Registers an AMI.",
@@ -4656,7 +5231,9 @@ ACTIONS = {
   },
   "ec2:RejectVpcEndpointConnections": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Rejects one or more VPC endpoint connection requests to your VPC endpoint service.",
@@ -4679,7 +5256,9 @@ ACTIONS = {
   },
   "ec2:ReleaseAddress": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Releases the specified Elastic IP address.",
@@ -4687,7 +5266,9 @@ ACTIONS = {
   },
   "ec2:ReleaseHosts": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "When you no longer want to use an On-Demand Dedicated Host it can be released",
@@ -4717,7 +5298,9 @@ ACTIONS = {
   },
   "ec2:ReplaceNetworkAclAssociation": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Changes which network ACL a subnet is associated with.",
@@ -4725,7 +5308,9 @@ ACTIONS = {
   },
   "ec2:ReplaceNetworkAclEntry": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Replaces an entry (rule) in a network ACL.",
@@ -4747,7 +5332,9 @@ ACTIONS = {
   },
   "ec2:ReplaceRouteTableAssociation": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Changes the route table associated with a given subnet in a VPC.",
@@ -4769,7 +5356,9 @@ ACTIONS = {
   },
   "ec2:ReportInstanceStatus": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Submits feedback about the status of an instance",
@@ -4777,7 +5366,9 @@ ACTIONS = {
   },
   "ec2:RequestSpotFleet": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a Spot fleet request",
@@ -4785,7 +5376,9 @@ ACTIONS = {
   },
   "ec2:RequestSpotInstances": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a Spot instance request",
@@ -4793,7 +5386,9 @@ ACTIONS = {
   },
   "ec2:ResetEbsDefaultKmsKeyId": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Resets the default customer master key (CMK) for EBS encryption for your account in this Region to the AWS managed CMK for EBS",
@@ -4801,7 +5396,9 @@ ACTIONS = {
   },
   "ec2:ResetFpgaImageAttribute": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Resets an attribute of an Amazon FPGA Image (AFI) to its default value.",
@@ -4809,7 +5406,9 @@ ACTIONS = {
   },
   "ec2:ResetImageAttribute": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Resets an attribute of an AMI to its default value",
@@ -4817,7 +5416,9 @@ ACTIONS = {
   },
   "ec2:ResetInstanceAttribute": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Resets an attribute of an instance to its default value",
@@ -4825,7 +5426,9 @@ ACTIONS = {
   },
   "ec2:ResetNetworkInterfaceAttribute": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Resets a network interface attribute. You can specify only one attribute at a time.",
@@ -4833,7 +5436,9 @@ ACTIONS = {
   },
   "ec2:ResetSnapshotAttribute": {
     "Access": "Permissions Management",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Resets permission settings for the specified snapshot.",
@@ -4841,7 +5446,9 @@ ACTIONS = {
   },
   "ec2:RestoreAddressToClassic": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Restores an Elastic IP address that was previously moved to the EC2-VPC platform back to the EC2-Classic platform.",
@@ -4891,48 +5498,48 @@ ACTIONS = {
   "ec2:RunInstances": {
     "Access": "Write",
     "Affects": [
-      "AWS::Ec2::Volume",
-      "AWS::Ec2::Snapshot",
       "AWS::Ec2::SecurityGroup",
-      "AWS::Ec2::NetworkInterface",
-      "AWS::Ec2::Subnet",
       "AWS::Ec2::KeyPair",
       "AWS::Ec2::LaunchTemplate",
-      "AWS::Ec2::Image",
+      "AWS::Ec2::Volume",
+      "AWS::Ec2::Instance",
+      "AWS::Ec2::NetworkInterface",
       "AWS::Ec2::PlacementGroup",
-      "AWS::Ec2::Instance"
+      "AWS::Ec2::Snapshot",
+      "AWS::Ec2::Subnet",
+      "AWS::Ec2::Image"
     ],
     "Condition Keys": [
-      "ec2:Vpc",
-      "ec2:Public",
-      "ec2:InstanceType",
-      "ec2:Tenancy",
-      "ec2:AvailabilityZone",
-      "ec2:ImageType",
-      "ec2:ResourceTag/",
-      "ec2:MetadataHttpTokens",
-      "ec2:PlacementGroup",
-      "ec2:VolumeType",
       "ec2:Region",
+      "ec2:Owner",
+      "ec2:Tenancy",
+      "ec2:RootDeviceType",
+      "ec2:MetadataHttpEndpoint",
       "ec2:ParentSnapshot",
       "ec2:VolumeSize",
-      "ec2:Subnet",
-      "aws:TagKeys",
-      "ec2:MetadataHttpPutResponseHopLimit",
-      "ec2:MetadataHttpEndpoint",
-      "ec2:EbsOptimized",
-      "ec2:RootDeviceType",
-      "ec2:Encrypted",
-      "ec2:PlacementGroupStrategy",
-      "ec2:SnapshotTime",
-      "ec2:InstanceProfile",
-      "ec2:Owner",
-      "aws:RequestTag/${TagKey}",
-      "ec2:ResourceTag/${TagKey}",
       "ec2:LaunchTemplate",
-      "ec2:ParentVolume",
+      "ec2:Encrypted",
+      "ec2:PlacementGroup",
+      "ec2:AvailabilityZone",
+      "ec2:SnapshotTime",
+      "ec2:ResourceTag/",
+      "ec2:InstanceProfile",
+      "aws:TagKeys",
+      "ec2:ImageType",
+      "ec2:InstanceType",
+      "ec2:Subnet",
+      "ec2:EbsOptimized",
       "ec2:VolumeIops",
-      "ec2:IsLaunchTemplateResource"
+      "ec2:ParentVolume",
+      "ec2:Vpc",
+      "ec2:PlacementGroupStrategy",
+      "ec2:ResourceTag/${TagKey}",
+      "ec2:Public",
+      "ec2:MetadataHttpTokens",
+      "ec2:IsLaunchTemplateResource",
+      "ec2:VolumeType",
+      "aws:RequestTag/${TagKey}",
+      "ec2:MetadataHttpPutResponseHopLimit"
     ],
     "Dependent Actions": [],
     "Description": "SCENARIO: EC2-VPC-InstanceStore-Subnet",
@@ -4940,7 +5547,9 @@ ACTIONS = {
   },
   "ec2:RunScheduledInstances": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Launches the specified Scheduled Instances.",
@@ -4948,7 +5557,9 @@ ACTIONS = {
   },
   "ec2:SearchTransitGatewayRoutes": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Searches for routes in the specified transit gateway route table.",
@@ -5049,7 +5660,9 @@ ACTIONS = {
   },
   "ec2:UnassignIpv6Addresses": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Unassigns one or more IPv6 addresses from the specified network interface.",
@@ -5057,7 +5670,9 @@ ACTIONS = {
   },
   "ec2:UnassignPrivateIpAddresses": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Unassigns one or more secondary private IP addresses from a network interface.",
@@ -5065,7 +5680,9 @@ ACTIONS = {
   },
   "ec2:UnmonitorInstances": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Disables detailed monitoring for a running instance.",
@@ -5101,7 +5718,9 @@ ACTIONS = {
   },
   "ec2:WithdrawByoipCidr": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Stops advertising an IPv4 address range that is provisioned as an address pool.",
@@ -5170,6 +5789,7 @@ ACTIONS = {
   "glacier:DeleteArchive": {
     "Access": "Write",
     "Affects": [
+      "Info",
       "AWS::Glacier::Vault"
     ],
     "Condition Keys": [
@@ -5231,7 +5851,9 @@ ACTIONS = {
   },
   "glacier:GetDataRetrievalPolicy": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns the current data retrieval policy for the account and region specified in the GET request",
@@ -5280,6 +5902,7 @@ ACTIONS = {
   "glacier:InitiateJob": {
     "Access": "Write",
     "Affects": [
+      "Info",
       "AWS::Glacier::Vault"
     ],
     "Condition Keys": [
@@ -5341,7 +5964,9 @@ ACTIONS = {
   },
   "glacier:ListProvisionedCapacity": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "This operation lists the provisioned capacity for the specified AWS account.",
@@ -5359,7 +5984,9 @@ ACTIONS = {
   },
   "glacier:ListVaults": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Lists all vaults",
@@ -5367,7 +5994,9 @@ ACTIONS = {
   },
   "glacier:PurchaseProvisionedCapacity": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "This operation purchases a provisioned capacity unit for an AWS account.",
@@ -5385,7 +6014,9 @@ ACTIONS = {
   },
   "glacier:SetDataRetrievalPolicy": {
     "Access": "Permissions Management",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Sets and then enacts a data retrieval policy in the region specified in the PUT request",
@@ -5464,7 +6095,8 @@ ACTIONS = {
   "iam:AttachGroupPolicy": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Iam::Group"
+      "AWS::Iam::Group",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PolicyARN"
@@ -5476,7 +6108,8 @@ ACTIONS = {
   "iam:AttachRolePolicy": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Iam::Role"
+      "AWS::Iam::Role",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PermissionsBoundary",
@@ -5489,7 +6122,8 @@ ACTIONS = {
   "iam:AttachUserPolicy": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Iam::User"
+      "AWS::Iam::User",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PermissionsBoundary",
@@ -5521,7 +6155,9 @@ ACTIONS = {
   },
   "iam:CreateAccountAlias": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to create an alias for your AWS account",
@@ -5590,7 +6226,8 @@ ACTIONS = {
   "iam:CreateRole": {
     "Access": "Write",
     "Affects": [
-      "AWS::Iam::Role"
+      "AWS::Iam::Role",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PermissionsBoundary"
@@ -5612,7 +6249,8 @@ ACTIONS = {
   "iam:CreateServiceLinkedRole": {
     "Access": "Write",
     "Affects": [
-      "AWS::Iam::Role"
+      "AWS::Iam::Role",
+      "Info"
     ],
     "Condition Keys": [
       "iam:AWSServiceName"
@@ -5634,7 +6272,8 @@ ACTIONS = {
   "iam:CreateUser": {
     "Access": "Write",
     "Affects": [
-      "AWS::Iam::User"
+      "AWS::Iam::User",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PermissionsBoundary"
@@ -5675,7 +6314,9 @@ ACTIONS = {
   },
   "iam:DeleteAccountAlias": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to delete the specified AWS account alias",
@@ -5683,7 +6324,9 @@ ACTIONS = {
   },
   "iam:DeleteAccountPasswordPolicy": {
     "Access": "Permissions Management",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to delete the password policy for the AWS account",
@@ -5772,7 +6415,8 @@ ACTIONS = {
   "iam:DeleteRolePermissionsBoundary": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Iam::Role"
+      "AWS::Iam::Role",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PermissionsBoundary"
@@ -5784,7 +6428,8 @@ ACTIONS = {
   "iam:DeleteRolePolicy": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Iam::Role"
+      "AWS::Iam::Role",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PermissionsBoundary"
@@ -5866,7 +6511,8 @@ ACTIONS = {
   "iam:DeleteUserPermissionsBoundary": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Iam::User"
+      "AWS::Iam::User",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PermissionsBoundary"
@@ -5878,7 +6524,8 @@ ACTIONS = {
   "iam:DeleteUserPolicy": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Iam::User"
+      "AWS::Iam::User",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PermissionsBoundary"
@@ -5901,7 +6548,8 @@ ACTIONS = {
   "iam:DetachGroupPolicy": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Iam::Group"
+      "AWS::Iam::Group",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PolicyARN"
@@ -5913,7 +6561,8 @@ ACTIONS = {
   "iam:DetachRolePolicy": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Iam::Role"
+      "AWS::Iam::Role",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PermissionsBoundary",
@@ -5926,7 +6575,8 @@ ACTIONS = {
   "iam:DetachUserPolicy": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Iam::User"
+      "AWS::Iam::User",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PermissionsBoundary",
@@ -5948,7 +6598,9 @@ ACTIONS = {
   },
   "iam:GenerateCredentialReport": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to generate a credential report for the AWS account",
@@ -5957,6 +6609,7 @@ ACTIONS = {
   "iam:GenerateOrganizationsAccessReport": {
     "Access": "Read",
     "Affects": [
+      "Info",
       "AWS::Iam::AccessReport"
     ],
     "Condition Keys": [
@@ -5964,18 +6617,20 @@ ACTIONS = {
     ],
     "Dependent Actions": [
       "organizations:ListParents",
-      "organizations:ListPoliciesForTarget",
-      "organizations:ListTargetsForPolicy",
-      "organizations:ListRoots",
       "organizations:ListChildren",
-      "organizations:DescribePolicy"
+      "organizations:ListRoots",
+      "organizations:DescribePolicy",
+      "organizations:ListPoliciesForTarget",
+      "organizations:ListTargetsForPolicy"
     ],
     "Description": "Grants permission to generate an access report for an AWS Organizations entity",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_GenerateOrganizationsAccessReport.html"
   },
   "iam:GenerateServiceLastAccessedDetails": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to generate a service last accessed data report for an IAM resource",
@@ -5993,7 +6648,9 @@ ACTIONS = {
   },
   "iam:GetAccountAuthorizationDetails": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to retrieve information about all IAM users, groups, roles, and policies in your AWS account, including their relationships to one another",
@@ -6001,7 +6658,9 @@ ACTIONS = {
   },
   "iam:GetAccountPasswordPolicy": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to retrieve the password policy for the AWS account",
@@ -6009,7 +6668,9 @@ ACTIONS = {
   },
   "iam:GetAccountSummary": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to retrieve information about IAM entity usage and IAM quotas in the AWS account",
@@ -6017,7 +6678,9 @@ ACTIONS = {
   },
   "iam:GetContextKeysForCustomPolicy": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to retrieve a list of all of the context keys that are referenced in the specified policy",
@@ -6037,7 +6700,9 @@ ACTIONS = {
   },
   "iam:GetCredentialReport": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to retrieve a credential report for the AWS account",
@@ -6095,7 +6760,9 @@ ACTIONS = {
   },
   "iam:GetOrganizationsAccessReport": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to retrieve an AWS Organizations access report",
@@ -6173,7 +6840,9 @@ ACTIONS = {
   },
   "iam:GetServiceLastAccessedDetails": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to retrieve information about the service last accessed data report",
@@ -6181,7 +6850,9 @@ ACTIONS = {
   },
   "iam:GetServiceLastAccessedDetailsWithEntities": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to retrieve information about the entities from the service last accessed data report",
@@ -6229,7 +6900,9 @@ ACTIONS = {
   },
   "iam:ListAccountAliases": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to list the account alias that is associated with the AWS account",
@@ -6287,7 +6960,9 @@ ACTIONS = {
   },
   "iam:ListGroups": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to list the IAM groups that have the specified path prefix",
@@ -6335,7 +7010,9 @@ ACTIONS = {
   },
   "iam:ListOpenIDConnectProviders": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to list information about the IAM OpenID Connect (OIDC) provider resource objects that are defined in the AWS account",
@@ -6343,7 +7020,9 @@ ACTIONS = {
   },
   "iam:ListPolicies": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to list all managed policies",
@@ -6351,7 +7030,9 @@ ACTIONS = {
   },
   "iam:ListPoliciesGrantingServiceAccess": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to list information about the policies that grant an entity access to a specific service",
@@ -6389,7 +7070,9 @@ ACTIONS = {
   },
   "iam:ListRoles": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to list the IAM roles that have the specified path prefix",
@@ -6397,7 +7080,9 @@ ACTIONS = {
   },
   "iam:ListSAMLProviders": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to list the SAML provider resources in IAM",
@@ -6415,7 +7100,9 @@ ACTIONS = {
   },
   "iam:ListServerCertificates": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to list the server certificates that have the specified path prefix",
@@ -6463,7 +7150,9 @@ ACTIONS = {
   },
   "iam:ListUsers": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to list the IAM users that have the specified path prefix",
@@ -6471,7 +7160,9 @@ ACTIONS = {
   },
   "iam:ListVirtualMFADevices": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to list virtual MFA devices by assignment status",
@@ -6480,7 +7171,8 @@ ACTIONS = {
   "iam:PassRole": {
     "Access": "Write",
     "Affects": [
-      "AWS::Iam::Role"
+      "AWS::Iam::Role",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PassedToService"
@@ -6502,7 +7194,8 @@ ACTIONS = {
   "iam:PutRolePermissionsBoundary": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Iam::Role"
+      "AWS::Iam::Role",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PermissionsBoundary"
@@ -6514,7 +7207,8 @@ ACTIONS = {
   "iam:PutRolePolicy": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Iam::Role"
+      "AWS::Iam::Role",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PermissionsBoundary"
@@ -6526,7 +7220,8 @@ ACTIONS = {
   "iam:PutUserPermissionsBoundary": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Iam::User"
+      "AWS::Iam::User",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PermissionsBoundary"
@@ -6538,7 +7233,8 @@ ACTIONS = {
   "iam:PutUserPolicy": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Iam::User"
+      "AWS::Iam::User",
+      "Info"
     ],
     "Condition Keys": [
       "iam:PermissionsBoundary"
@@ -6609,7 +7305,9 @@ ACTIONS = {
   },
   "iam:SetSecurityTokenServicePreferences": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to set the STS global endpoint token version",
@@ -6617,7 +7315,9 @@ ACTIONS = {
   },
   "iam:SimulateCustomPolicy": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to simulate whether an identity-based policy or resource-based policy provides permissions for specific API operations and resources",
@@ -6687,7 +7387,9 @@ ACTIONS = {
   },
   "iam:UpdateAccountPasswordPolicy": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Grants permission to update the password policy settings for the AWS account",
@@ -6856,7 +7558,8 @@ ACTIONS = {
   "lambda:AddPermission": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Lambda::Function"
+      "AWS::Lambda::Function",
+      "Info"
     ],
     "Condition Keys": [
       "lambda:Principal"
@@ -6877,7 +7580,9 @@ ACTIONS = {
   },
   "lambda:CreateEventSourceMapping": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
       "lambda:FunctionArn"
     ],
@@ -6888,7 +7593,8 @@ ACTIONS = {
   "lambda:CreateFunction": {
     "Access": "Write",
     "Affects": [
-      "AWS::Lambda::Function"
+      "AWS::Lambda::Function",
+      "Info"
     ],
     "Condition Keys": [
       "lambda:Layer"
@@ -6910,7 +7616,8 @@ ACTIONS = {
   "lambda:DeleteEventSourceMapping": {
     "Access": "Write",
     "Affects": [
-      "AWS::Lambda::EventSourceMapping"
+      "AWS::Lambda::EventSourceMapping",
+      "Info"
     ],
     "Condition Keys": [
       "lambda:FunctionArn"
@@ -6971,7 +7678,9 @@ ACTIONS = {
   },
   "lambda:GetAccountSettings": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns account limits and usage statistics, such as concurrency and code storage.",
@@ -6990,7 +7699,8 @@ ACTIONS = {
   "lambda:GetEventSourceMapping": {
     "Access": "Read",
     "Affects": [
-      "AWS::Lambda::EventSourceMapping"
+      "AWS::Lambda::EventSourceMapping",
+      "Info"
     ],
     "Condition Keys": [
       "lambda:FunctionArn"
@@ -7081,7 +7791,9 @@ ACTIONS = {
   },
   "lambda:ListEventSourceMappings": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns a list of event source mappings you created using the CreateEventSourceMapping.",
@@ -7089,7 +7801,9 @@ ACTIONS = {
   },
   "lambda:ListFunctions": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns a list of your Lambda functions.",
@@ -7097,7 +7811,9 @@ ACTIONS = {
   },
   "lambda:ListLayerVersions": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns a list of your Lambda layer versions.",
@@ -7105,7 +7821,9 @@ ACTIONS = {
   },
   "lambda:ListLayers": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Lists function layers and shows information about the latest version of each.",
@@ -7134,8 +7852,8 @@ ACTIONS = {
   "lambda:PublishLayerVersion": {
     "Access": "Write",
     "Affects": [
-      "AWS::Lambda::Layer",
-      "AWS::Lambda::LayerVersion"
+      "AWS::Lambda::LayerVersion",
+      "AWS::Lambda::Layer"
     ],
     "Condition Keys": [],
     "Dependent Actions": [],
@@ -7175,7 +7893,8 @@ ACTIONS = {
   "lambda:RemovePermission": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::Lambda::Function"
+      "AWS::Lambda::Function",
+      "Info"
     ],
     "Condition Keys": [
       "lambda:Principal"
@@ -7217,7 +7936,8 @@ ACTIONS = {
   "lambda:UpdateEventSourceMapping": {
     "Access": "Write",
     "Affects": [
-      "AWS::Lambda::EventSourceMapping"
+      "AWS::Lambda::EventSourceMapping",
+      "Info"
     ],
     "Condition Keys": [
       "lambda:FunctionArn"
@@ -7239,7 +7959,8 @@ ACTIONS = {
   "lambda:UpdateFunctionConfiguration": {
     "Access": "Write",
     "Affects": [
-      "AWS::Lambda::Function"
+      "AWS::Lambda::Function",
+      "Info"
     ],
     "Condition Keys": [
       "lambda:Layer"
@@ -7340,7 +8061,9 @@ ACTIONS = {
   },
   "opsworks:CreateStack": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a new stack",
@@ -7348,7 +8071,9 @@ ACTIONS = {
   },
   "opsworks:CreateUserProfile": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a new user profile",
@@ -7396,7 +8121,9 @@ ACTIONS = {
   },
   "opsworks:DeleteUserProfile": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes a user profile",
@@ -7554,7 +8281,9 @@ ACTIONS = {
   },
   "opsworks:DescribeMyUserProfile": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describes a user's SSH information",
@@ -7642,7 +8371,9 @@ ACTIONS = {
   },
   "opsworks:DescribeUserProfiles": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Describe specified users",
@@ -7920,7 +8651,9 @@ ACTIONS = {
   },
   "opsworks:UpdateMyUserProfile": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Updates a user's SSH public key",
@@ -7948,7 +8681,9 @@ ACTIONS = {
   },
   "opsworks:UpdateUserProfile": {
     "Access": "Permissions Management",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Updates a specified user profile",
@@ -7967,16 +8702,17 @@ ACTIONS = {
   "s3:AbortMultipartUpload": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Aborts a multipart upload.",
@@ -7985,34 +8721,35 @@ ACTIONS = {
   "s3:BypassGovernanceRetention": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:object-lock-legal-hold",
-      "s3:object-lock-remaining-retention-days",
-      "s3:DataAccessPointArn",
-      "s3:signatureversion",
-      "s3:x-amz-grant-read-acp",
-      "s3:x-amz-grant-read",
-      "s3:x-amz-website-redirect-location",
-      "s3:x-amz-copy-source",
       "s3:DataAccessPointAccount",
-      "s3:RequestObjectTag/<key>",
-      "s3:x-amz-metadata-directive",
       "s3:AccessPointNetworkOrigin",
-      "s3:object-lock-mode",
       "s3:x-amz-storage-class",
+      "s3:object-lock-legal-hold",
+      "s3:x-amz-grant-read",
+      "s3:x-amz-copy-source",
+      "s3:signatureversion",
+      "s3:RequestObjectTagKeys",
+      "s3:object-lock-mode",
+      "s3:object-lock-retain-until-date",
+      "s3:x-amz-server-side-encryption-aws-kms-key-id",
+      "s3:x-amz-grant-write-acp",
+      "s3:object-lock-remaining-retention-days",
+      "s3:RequestObjectTag/<key>",
+      "s3:x-amz-acl",
+      "s3:x-amz-grant-read-acp",
+      "s3:x-amz-server-side-encryption",
+      "s3:signatureage",
+      "s3:DataAccessPointArn",
+      "s3:x-amz-metadata-directive",
       "s3:x-amz-content-sha256",
       "s3:x-amz-grant-full-control",
-      "s3:x-amz-grant-write-acp",
-      "s3:x-amz-server-side-encryption-aws-kms-key-id",
       "s3:x-amz-grant-write",
-      "s3:authtype",
-      "s3:signatureage",
-      "s3:RequestObjectTagKeys",
-      "s3:x-amz-server-side-encryption",
-      "s3:object-lock-retain-until-date",
-      "s3:x-amz-acl"
+      "s3:x-amz-website-redirect-location",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Allows circumvention of governance-mode object retention settings",
@@ -8020,17 +8757,19 @@ ACTIONS = {
   },
   "s3:CreateAccessPoint": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
-      "s3:authtype",
+      "s3:DataAccessPointArn",
+      "s3:x-amz-acl",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
       "s3:locationconstraint",
       "s3:AccessPointNetworkOrigin",
       "s3:signatureage",
-      "s3:x-amz-content-sha256",
-      "s3:DataAccessPointArn",
-      "s3:signatureversion",
-      "s3:DataAccessPointAccount",
-      "s3:x-amz-acl"
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Creates a new access point.",
@@ -8039,20 +8778,21 @@ ACTIONS = {
   "s3:CreateBucket": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:x-amz-grant-read-acp",
-      "s3:locationconstraint",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
-      "s3:x-amz-grant-full-control",
-      "s3:x-amz-grant-read",
       "s3:x-amz-grant-write-acp",
-      "s3:signatureversion",
+      "s3:x-amz-grant-read",
       "s3:x-amz-acl",
-      "s3:x-amz-grant-write"
+      "s3:x-amz-grant-read-acp",
+      "s3:signatureversion",
+      "s3:x-amz-content-sha256",
+      "s3:locationconstraint",
+      "s3:x-amz-grant-full-control",
+      "s3:signatureage",
+      "s3:x-amz-grant-write",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Creates a new bucket.",
@@ -8060,7 +8800,9 @@ ACTIONS = {
   },
   "s3:CreateJob": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
       "s3:authtype",
       "s3:signatureage",
@@ -8075,15 +8817,17 @@ ACTIONS = {
   },
   "s3:DeleteAccessPoint": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Deletes the access point named in the URI",
@@ -8091,15 +8835,17 @@ ACTIONS = {
   },
   "s3:DeleteAccessPointPolicy": {
     "Access": "Permissions Management",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Delete the policy on a specified access point",
@@ -8108,13 +8854,14 @@ ACTIONS = {
   "s3:DeleteBucket": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Deletes the bucket named in the URI",
@@ -8123,13 +8870,14 @@ ACTIONS = {
   "s3:DeleteBucketPolicy": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Delete the policy on a specified bucket",
@@ -8138,13 +8886,14 @@ ACTIONS = {
   "s3:DeleteBucketWebsite": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Removes the website configuration for a bucket.",
@@ -8153,16 +8902,17 @@ ACTIONS = {
   "s3:DeleteObject": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Removes the null version (if there is one) of an object and inserts a delete marker, which becomes the current version of the object.",
@@ -8171,17 +8921,18 @@ ACTIONS = {
   "s3:DeleteObjectTagging": {
     "Access": "Tagging",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
       "s3:AccessPointNetworkOrigin",
       "s3:ExistingObjectTag/<key>",
       "s3:signatureage",
-      "s3:x-amz-content-sha256",
-      "s3:DataAccessPointArn",
-      "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the DELETE operation uses the tagging subresource to remove the entire tag set from the specified object.",
@@ -8190,17 +8941,18 @@ ACTIONS = {
   "s3:DeleteObjectVersion": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:versionid",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:versionid",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "To remove a specific version of a object, you must be the bucket owner and you must use the versionId subresource.",
@@ -8209,18 +8961,19 @@ ACTIONS = {
   "s3:DeleteObjectVersionTagging": {
     "Access": "Tagging",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:versionid",
-      "s3:ExistingObjectTag/<key>",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:versionid",
+      "s3:AccessPointNetworkOrigin",
+      "s3:ExistingObjectTag/<key>",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "DELETE Object tagging (for a Specific Version of the Object)",
@@ -8229,13 +8982,14 @@ ACTIONS = {
   "s3:DescribeJob": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Job"
+      "AWS::S3::Job",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Retrieves the configuration parameters and status for an Amazon S3 batch operations job.",
@@ -8244,13 +8998,14 @@ ACTIONS = {
   "s3:GetAccelerateConfiguration": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the GET operation uses the accelerate subresource to return the Transfer Acceleration state of a bucket, which is either Enabled or Suspended.",
@@ -8258,7 +9013,9 @@ ACTIONS = {
   },
   "s3:GetAccessPoint": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
       "s3:DataAccessPointAccount",
       "s3:DataAccessPointArn",
@@ -8274,15 +9031,17 @@ ACTIONS = {
   },
   "s3:GetAccessPointPolicy": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Return the policy of a specified access point.",
@@ -8290,15 +9049,17 @@ ACTIONS = {
   },
   "s3:GetAccessPointPolicyStatus": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Retrieve the policy status for an specific access point's policy",
@@ -8306,7 +9067,9 @@ ACTIONS = {
   },
   "s3:GetAccountPublicAccessBlock": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
       "s3:authtype",
       "s3:signatureage",
@@ -8320,13 +9083,14 @@ ACTIONS = {
   "s3:GetAnalyticsConfiguration": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the GET operation returns an analytics configuration (identified by the analytics configuration ID) from the bucket.",
@@ -8335,13 +9099,14 @@ ACTIONS = {
   "s3:GetBucketAcl": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Return the access control list (ACL) of a bucket.",
@@ -8350,13 +9115,14 @@ ACTIONS = {
   "s3:GetBucketCORS": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Returns the CORS configuration information set for the bucket.",
@@ -8375,13 +9141,14 @@ ACTIONS = {
   "s3:GetBucketLogging": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Return the logging status of a bucket and the permissions users have to view and modify that status.",
@@ -8390,13 +9157,14 @@ ACTIONS = {
   "s3:GetBucketNotification": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Return the notification configuration of a bucket.",
@@ -8405,12 +9173,13 @@ ACTIONS = {
   "s3:GetBucketObjectLockConfiguration": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
+      "s3:signatureversion",
       "s3:authtype",
-      "s3:signatureage",
-      "s3:signatureversion"
+      "s3:signatureage"
     ],
     "Dependent Actions": [],
     "Description": "GET Object Lock configuration for a specific bucket",
@@ -8419,13 +9188,14 @@ ACTIONS = {
   "s3:GetBucketPolicy": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Return the policy of a specified bucket.",
@@ -8434,13 +9204,14 @@ ACTIONS = {
   "s3:GetBucketPolicyStatus": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Retrieve the policy status for an specific S3 bucket, indicating whether the bucket is public.",
@@ -8449,13 +9220,14 @@ ACTIONS = {
   "s3:GetBucketPublicAccessBlock": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Retrieve the PublicAccessBlock configuration for a specific S3 bucket.",
@@ -8464,13 +9236,14 @@ ACTIONS = {
   "s3:GetBucketRequestPayment": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Return the request payment configuration of a bucket.",
@@ -8479,13 +9252,14 @@ ACTIONS = {
   "s3:GetBucketTagging": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Return the tag set associated with the bucket.",
@@ -8494,13 +9268,14 @@ ACTIONS = {
   "s3:GetBucketVersioning": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Return the versioning state of a bucket.",
@@ -8509,13 +9284,14 @@ ACTIONS = {
   "s3:GetBucketWebsite": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Returns the website configuration associated with a bucket.",
@@ -8524,13 +9300,14 @@ ACTIONS = {
   "s3:GetEncryptionConfiguration": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Returns the encryption configuration information set on the bucket.",
@@ -8539,13 +9316,14 @@ ACTIONS = {
   "s3:GetInventoryConfiguration": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the GET operation returns an inventory configuration (identified by the inventory configuration ID) from the bucket.",
@@ -8554,13 +9332,14 @@ ACTIONS = {
   "s3:GetLifecycleConfiguration": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Returns the lifecycle configuration information set on the bucket.",
@@ -8569,13 +9348,14 @@ ACTIONS = {
   "s3:GetMetricsConfiguration": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Gets a metrics configuration for the CloudWatch request metrics (specified by the metrics configuration ID) from the bucket. Note that this doesn't include the daily storage metrics.",
@@ -8584,17 +9364,18 @@ ACTIONS = {
   "s3:GetObject": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
       "s3:AccessPointNetworkOrigin",
       "s3:ExistingObjectTag/<key>",
       "s3:signatureage",
-      "s3:x-amz-content-sha256",
-      "s3:DataAccessPointArn",
-      "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Retrieves objects from Amazon S3.",
@@ -8603,17 +9384,18 @@ ACTIONS = {
   "s3:GetObjectAcl": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
       "s3:AccessPointNetworkOrigin",
       "s3:ExistingObjectTag/<key>",
       "s3:signatureage",
-      "s3:x-amz-content-sha256",
-      "s3:DataAccessPointArn",
-      "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Return the access control list (ACL) of an object.",
@@ -8622,16 +9404,17 @@ ACTIONS = {
   "s3:GetObjectLegalHold": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "GET Object Legal Hold for a specific object",
@@ -8640,16 +9423,17 @@ ACTIONS = {
   "s3:GetObjectRetention": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "GET Object Legal Hold for a specific object",
@@ -8658,17 +9442,18 @@ ACTIONS = {
   "s3:GetObjectTagging": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
+      "s3:DataAccessPointArn",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
       "s3:AccessPointNetworkOrigin",
       "s3:ExistingObjectTag/<key>",
       "s3:signatureage",
-      "s3:x-amz-content-sha256",
-      "s3:DataAccessPointArn",
-      "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the GET operation returns the tags associated with an object. You send the GET request against the tagging subresource associated with the object.",
@@ -8677,13 +9462,14 @@ ACTIONS = {
   "s3:GetObjectTorrent": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "return torrent files from a bucket.",
@@ -8692,18 +9478,19 @@ ACTIONS = {
   "s3:GetObjectVersion": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:versionid",
-      "s3:ExistingObjectTag/<key>",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:versionid",
+      "s3:AccessPointNetworkOrigin",
+      "s3:ExistingObjectTag/<key>",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "To return a different version, use the versionId subresource.",
@@ -8712,18 +9499,19 @@ ACTIONS = {
   "s3:GetObjectVersionAcl": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:versionid",
-      "s3:ExistingObjectTag/<key>",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:versionid",
+      "s3:AccessPointNetworkOrigin",
+      "s3:ExistingObjectTag/<key>",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "To return ACL information about a different version, use the versionId subresource.",
@@ -8732,13 +9520,14 @@ ACTIONS = {
   "s3:GetObjectVersionForReplication": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Permission exercised by S3 replication",
@@ -8747,18 +9536,19 @@ ACTIONS = {
   "s3:GetObjectVersionTagging": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:versionid",
-      "s3:ExistingObjectTag/<key>",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:versionid",
+      "s3:AccessPointNetworkOrigin",
+      "s3:ExistingObjectTag/<key>",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "GET Object tagging (for a Specific Version of the Object)",
@@ -8767,14 +9557,15 @@ ACTIONS = {
   "s3:GetObjectVersionTorrent": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:versionid",
+      "s3:signatureversion",
       "s3:x-amz-content-sha256",
+      "s3:versionid",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "To return Torrent files about a different version, use the versionId subresource.",
@@ -8783,13 +9574,14 @@ ACTIONS = {
   "s3:GetReplicationConfiguration": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Returns the replication configuration information set on the bucket.",
@@ -8797,7 +9589,9 @@ ACTIONS = {
   },
   "s3:ListAccessPoints": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
       "s3:authtype",
       "s3:signatureage",
@@ -8810,7 +9604,9 @@ ACTIONS = {
   },
   "s3:ListAllMyBuckets": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
       "s3:authtype",
       "s3:signatureage",
@@ -8824,19 +9620,20 @@ ACTIONS = {
   "s3:ListBucket": {
     "Access": "List",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:max-keys",
-      "s3:AccessPointNetworkOrigin",
-      "s3:delimiter",
-      "s3:signatureage",
-      "s3:prefix",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
+      "s3:prefix",
+      "s3:max-keys",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:delimiter",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Returns some or all (up to 1000) of the objects in a bucket.",
@@ -8845,16 +9642,17 @@ ACTIONS = {
   "s3:ListBucketMultipartUploads": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Lists in-progress multipart uploads.",
@@ -8863,19 +9661,20 @@ ACTIONS = {
   "s3:ListBucketVersions": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:max-keys",
-      "s3:AccessPointNetworkOrigin",
-      "s3:delimiter",
-      "s3:signatureage",
-      "s3:prefix",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
+      "s3:prefix",
+      "s3:max-keys",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:delimiter",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Use the versions subresource to list metadata about all of the versions of objects in a bucket.",
@@ -8883,7 +9682,9 @@ ACTIONS = {
   },
   "s3:ListJobs": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
       "s3:authtype",
       "s3:signatureage",
@@ -8897,16 +9698,17 @@ ACTIONS = {
   "s3:ListMultipartUploadParts": {
     "Access": "Read",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Lists the parts that have been uploaded for a specific multipart upload.",
@@ -8915,13 +9717,14 @@ ACTIONS = {
   "s3:ObjectOwnerOverrideToBucketOwner": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Permission exercised by S3 replication",
@@ -8930,13 +9733,14 @@ ACTIONS = {
   "s3:PutAccelerateConfiguration": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the PUT operation uses the accelerate subresource to set the Transfer Acceleration state of an existing bucket.",
@@ -8944,15 +9748,17 @@ ACTIONS = {
   },
   "s3:PutAccessPointPolicy": {
     "Access": "Permissions Management",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Add to or replace a data policy on a access point.",
@@ -8960,7 +9766,9 @@ ACTIONS = {
   },
   "s3:PutAccountPublicAccessBlock": {
     "Access": "Permissions Management",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [
       "s3:authtype",
       "s3:signatureage",
@@ -8974,13 +9782,14 @@ ACTIONS = {
   "s3:PutAnalyticsConfiguration": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the PUT operation adds an analytics configuration (identified by the analytics ID) to the bucket. You can have up to 1,000 analytics configurations per bucket.",
@@ -8989,19 +9798,20 @@ ACTIONS = {
   "s3:PutBucketAcl": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:x-amz-grant-read-acp",
-      "s3:x-amz-content-sha256",
-      "s3:signatureage",
-      "s3:x-amz-grant-full-control",
-      "s3:x-amz-grant-read",
       "s3:x-amz-grant-write-acp",
-      "s3:signatureversion",
+      "s3:x-amz-grant-read",
       "s3:x-amz-acl",
-      "s3:x-amz-grant-write"
+      "s3:x-amz-grant-read-acp",
+      "s3:signatureversion",
+      "s3:x-amz-content-sha256",
+      "s3:x-amz-grant-full-control",
+      "s3:signatureage",
+      "s3:x-amz-grant-write",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Set the permissions on an existing bucket using access control lists (ACL).",
@@ -9010,13 +9820,14 @@ ACTIONS = {
   "s3:PutBucketCORS": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Sets the CORS configuration for your bucket.",
@@ -9025,13 +9836,14 @@ ACTIONS = {
   "s3:PutBucketLogging": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Set the logging parameters for a bucket.",
@@ -9040,13 +9852,14 @@ ACTIONS = {
   "s3:PutBucketNotification": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Enables you to receive notifications when certain events happen in your bucket.",
@@ -9055,12 +9868,13 @@ ACTIONS = {
   "s3:PutBucketObjectLockConfiguration": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
+      "s3:signatureversion",
       "s3:authtype",
-      "s3:signatureage",
-      "s3:signatureversion"
+      "s3:signatureage"
     ],
     "Dependent Actions": [],
     "Description": "PUT Object Lock configuration on a specific bucket",
@@ -9069,13 +9883,14 @@ ACTIONS = {
   "s3:PutBucketPolicy": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Add to or replace a policy on a bucket.",
@@ -9084,13 +9899,14 @@ ACTIONS = {
   "s3:PutBucketPublicAccessBlock": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Create or modify the PublicAccessBlock configuration for an specific S3 bucket.",
@@ -9099,13 +9915,14 @@ ACTIONS = {
   "s3:PutBucketRequestPayment": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Set the request payment configuration of a bucket.",
@@ -9114,13 +9931,14 @@ ACTIONS = {
   "s3:PutBucketTagging": {
     "Access": "Tagging",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Add a set of tags to an existing bucket.",
@@ -9129,13 +9947,14 @@ ACTIONS = {
   "s3:PutBucketVersioning": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Set the versioning state of an existing bucket.",
@@ -9144,13 +9963,14 @@ ACTIONS = {
   "s3:PutBucketWebsite": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Sets the configuration of the website that is specified in the website subresource.",
@@ -9159,13 +9979,14 @@ ACTIONS = {
   "s3:PutEncryptionConfiguration": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Sets the encryption configuration for the bucket.",
@@ -9174,13 +9995,14 @@ ACTIONS = {
   "s3:PutInventoryConfiguration": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the PUT operation adds an inventory configuration (identified by the inventory ID) to the bucket. You can have up to 1,000 inventory configurations per bucket.",
@@ -9189,13 +10011,14 @@ ACTIONS = {
   "s3:PutLifecycleConfiguration": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Creates a new lifecycle configuration for the bucket or replaces an existing lifecycle configuration.",
@@ -9204,13 +10027,14 @@ ACTIONS = {
   "s3:PutMetricsConfiguration": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Sets or updates a metrics configuration for the CloudWatch request metrics (specified by the metrics configuration ID) from the bucket.",
@@ -9219,34 +10043,35 @@ ACTIONS = {
   "s3:PutObject": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:object-lock-legal-hold",
-      "s3:object-lock-remaining-retention-days",
-      "s3:DataAccessPointArn",
-      "s3:signatureversion",
-      "s3:x-amz-grant-read-acp",
-      "s3:x-amz-grant-read",
-      "s3:x-amz-website-redirect-location",
-      "s3:x-amz-copy-source",
       "s3:DataAccessPointAccount",
-      "s3:RequestObjectTag/<key>",
-      "s3:x-amz-metadata-directive",
       "s3:AccessPointNetworkOrigin",
-      "s3:object-lock-mode",
       "s3:x-amz-storage-class",
+      "s3:object-lock-legal-hold",
+      "s3:x-amz-grant-read",
+      "s3:x-amz-copy-source",
+      "s3:signatureversion",
+      "s3:RequestObjectTagKeys",
+      "s3:object-lock-mode",
+      "s3:object-lock-retain-until-date",
+      "s3:x-amz-server-side-encryption-aws-kms-key-id",
+      "s3:x-amz-grant-write-acp",
+      "s3:object-lock-remaining-retention-days",
+      "s3:RequestObjectTag/<key>",
+      "s3:x-amz-acl",
+      "s3:x-amz-grant-read-acp",
+      "s3:x-amz-server-side-encryption",
+      "s3:signatureage",
+      "s3:DataAccessPointArn",
+      "s3:x-amz-metadata-directive",
       "s3:x-amz-content-sha256",
       "s3:x-amz-grant-full-control",
-      "s3:x-amz-grant-write-acp",
-      "s3:x-amz-server-side-encryption-aws-kms-key-id",
       "s3:x-amz-grant-write",
-      "s3:authtype",
-      "s3:signatureage",
-      "s3:RequestObjectTagKeys",
-      "s3:x-amz-server-side-encryption",
-      "s3:object-lock-retain-until-date",
-      "s3:x-amz-acl"
+      "s3:x-amz-website-redirect-location",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Adds an object to a bucket.",
@@ -9255,24 +10080,25 @@ ACTIONS = {
   "s3:PutObjectAcl": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:x-amz-grant-read-acp",
-      "s3:AccessPointNetworkOrigin",
-      "s3:x-amz-storage-class",
-      "s3:ExistingObjectTag/<key>",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
-      "s3:x-amz-grant-full-control",
+      "s3:x-amz-grant-write-acp",
       "s3:DataAccessPointArn",
       "s3:x-amz-grant-read",
-      "s3:x-amz-grant-write-acp",
+      "s3:x-amz-acl",
+      "s3:x-amz-grant-read-acp",
       "s3:signatureversion",
       "s3:DataAccessPointAccount",
-      "s3:x-amz-acl",
-      "s3:x-amz-grant-write"
+      "s3:x-amz-content-sha256",
+      "s3:x-amz-grant-full-control",
+      "s3:AccessPointNetworkOrigin",
+      "s3:ExistingObjectTag/<key>",
+      "s3:signatureage",
+      "s3:x-amz-grant-write",
+      "s3:x-amz-storage-class",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Set the access control list (ACL) permissions for an object that already exists in a bucket.",
@@ -9281,17 +10107,18 @@ ACTIONS = {
   "s3:PutObjectLegalHold": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:object-lock-legal-hold",
-      "s3:AccessPointNetworkOrigin",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:object-lock-legal-hold",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "PUT Object Legal Hold on a specific object",
@@ -9300,19 +10127,20 @@ ACTIONS = {
   "s3:PutObjectRetention": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
+      "s3:DataAccessPointArn",
       "s3:object-lock-remaining-retention-days",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
       "s3:object-lock-mode",
       "s3:signatureage",
-      "s3:x-amz-content-sha256",
-      "s3:DataAccessPointArn",
-      "s3:signatureversion",
       "s3:object-lock-retain-until-date",
-      "s3:DataAccessPointAccount"
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "PUT Object Retention on a specific object",
@@ -9321,19 +10149,20 @@ ACTIONS = {
   "s3:PutObjectTagging": {
     "Access": "Tagging",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
+      "s3:DataAccessPointArn",
       "s3:RequestObjectTag/<key>",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:RequestObjectTagKeys",
       "s3:AccessPointNetworkOrigin",
       "s3:ExistingObjectTag/<key>",
       "s3:signatureage",
-      "s3:x-amz-content-sha256",
-      "s3:DataAccessPointArn",
-      "s3:RequestObjectTagKeys",
-      "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "This implementation of the PUT operation uses the tagging subresource to add a set of tags to an existing object.",
@@ -9342,25 +10171,26 @@ ACTIONS = {
   "s3:PutObjectVersionAcl": {
     "Access": "Permissions Management",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:x-amz-grant-read-acp",
-      "s3:AccessPointNetworkOrigin",
-      "s3:versionid",
-      "s3:x-amz-storage-class",
-      "s3:ExistingObjectTag/<key>",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
-      "s3:x-amz-grant-full-control",
+      "s3:x-amz-grant-write-acp",
       "s3:DataAccessPointArn",
       "s3:x-amz-grant-read",
-      "s3:x-amz-grant-write-acp",
+      "s3:x-amz-acl",
+      "s3:x-amz-grant-read-acp",
       "s3:signatureversion",
       "s3:DataAccessPointAccount",
-      "s3:x-amz-acl",
-      "s3:x-amz-grant-write"
+      "s3:x-amz-content-sha256",
+      "s3:versionid",
+      "s3:AccessPointNetworkOrigin",
+      "s3:ExistingObjectTag/<key>",
+      "s3:x-amz-grant-full-control",
+      "s3:signatureage",
+      "s3:x-amz-grant-write",
+      "s3:x-amz-storage-class",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "The ACL of an object is set at the object version level.",
@@ -9369,20 +10199,21 @@ ACTIONS = {
   "s3:PutObjectVersionTagging": {
     "Access": "Tagging",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
+      "s3:DataAccessPointArn",
       "s3:RequestObjectTag/<key>",
-      "s3:AccessPointNetworkOrigin",
+      "s3:signatureversion",
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:RequestObjectTagKeys",
       "s3:versionid",
+      "s3:AccessPointNetworkOrigin",
       "s3:ExistingObjectTag/<key>",
       "s3:signatureage",
-      "s3:x-amz-content-sha256",
-      "s3:DataAccessPointArn",
-      "s3:RequestObjectTagKeys",
-      "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "PUT Object tagging (for a Specific Version of the Object)",
@@ -9391,13 +10222,14 @@ ACTIONS = {
   "s3:PutReplicationConfiguration": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Bucket"
+      "AWS::S3::Bucket",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "In a versioning-enabled bucket, this operation creates a new replication configuration (or replaces an existing one, if present).",
@@ -9406,13 +10238,14 @@ ACTIONS = {
   "s3:ReplicateDelete": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Permission exercised by S3 replication",
@@ -9421,15 +10254,16 @@ ACTIONS = {
   "s3:ReplicateObject": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:x-amz-content-sha256",
-      "s3:signatureage",
       "s3:x-amz-server-side-encryption",
       "s3:signatureversion",
-      "s3:x-amz-server-side-encryption-aws-kms-key-id"
+      "s3:x-amz-content-sha256",
+      "s3:signatureage",
+      "s3:x-amz-server-side-encryption-aws-kms-key-id",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Permission exercised by S3 replication",
@@ -9438,13 +10272,14 @@ ACTIONS = {
   "s3:ReplicateTags": {
     "Access": "Tagging",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:x-amz-content-sha256",
+      "s3:signatureversion",
       "s3:authtype",
       "s3:signatureage",
-      "s3:signatureversion"
+      "s3:x-amz-content-sha256"
     ],
     "Dependent Actions": [],
     "Description": "Permission exercised by S3 replication",
@@ -9453,16 +10288,17 @@ ACTIONS = {
   "s3:RestoreObject": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Object"
+      "AWS::S3::Object",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:AccessPointNetworkOrigin",
-      "s3:signatureage",
-      "s3:x-amz-content-sha256",
       "s3:DataAccessPointArn",
       "s3:signatureversion",
-      "s3:DataAccessPointAccount"
+      "s3:DataAccessPointAccount",
+      "s3:x-amz-content-sha256",
+      "s3:AccessPointNetworkOrigin",
+      "s3:signatureage",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Restores a temporary copy of an archived object.",
@@ -9471,16 +10307,17 @@ ACTIONS = {
   "s3:UpdateJobPriority": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Job"
+      "AWS::S3::Job",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:RequestJobPriority",
-      "s3:ExistingJobPriority",
-      "s3:x-amz-content-sha256",
-      "s3:signatureage",
       "s3:signatureversion",
-      "s3:ExistingJobOperation"
+      "s3:x-amz-content-sha256",
+      "s3:ExistingJobPriority",
+      "s3:RequestJobPriority",
+      "s3:signatureage",
+      "s3:ExistingJobOperation",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Updates an existing job's priority.",
@@ -9489,16 +10326,17 @@ ACTIONS = {
   "s3:UpdateJobStatus": {
     "Access": "Write",
     "Affects": [
-      "AWS::S3::Job"
+      "AWS::S3::Job",
+      "Info"
     ],
     "Condition Keys": [
-      "s3:authtype",
-      "s3:ExistingJobPriority",
-      "s3:x-amz-content-sha256",
-      "s3:signatureage",
       "s3:JobSuspendedCause",
       "s3:signatureversion",
-      "s3:ExistingJobOperation"
+      "s3:x-amz-content-sha256",
+      "s3:ExistingJobPriority",
+      "s3:signatureage",
+      "s3:ExistingJobOperation",
+      "s3:authtype"
     ],
     "Dependent Actions": [],
     "Description": "Updates the status for the specified job.",
@@ -9516,7 +10354,9 @@ ACTIONS = {
   },
   "sns:CheckIfPhoneNumberIsOptedOut": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Accepts a phone number and indicates whether the phone holder has opted out of receiving SMS messages from your account.",
@@ -9534,7 +10374,9 @@ ACTIONS = {
   },
   "sns:CreatePlatformApplication": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates a platform application object for one of the supported push notification services, such as APNS and GCM, to which devices and mobile apps may register.",
@@ -9542,7 +10384,9 @@ ACTIONS = {
   },
   "sns:CreatePlatformEndpoint": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Creates an endpoint for a device and mobile app on one of the supported push notification services, such as GCM and APNS.",
@@ -9560,7 +10404,9 @@ ACTIONS = {
   },
   "sns:DeleteEndpoint": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes the endpoint for a device and mobile app from Amazon SNS.",
@@ -9568,7 +10414,9 @@ ACTIONS = {
   },
   "sns:DeletePlatformApplication": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes a platform application object for one of the supported push notification services, such as APNS and GCM.",
@@ -9586,7 +10434,9 @@ ACTIONS = {
   },
   "sns:GetEndpointAttributes": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Retrieves the endpoint attributes for a device on one of the supported push notification services, such as GCM and APNS.",
@@ -9594,7 +10444,9 @@ ACTIONS = {
   },
   "sns:GetPlatformApplicationAttributes": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Retrieves the attributes of the platform application object for the supported push notification services, such as APNS and GCM.",
@@ -9602,7 +10454,9 @@ ACTIONS = {
   },
   "sns:GetSMSAttributes": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns the settings for sending SMS messages from your account.",
@@ -9610,7 +10464,9 @@ ACTIONS = {
   },
   "sns:GetSubscriptionAttributes": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns all of the properties of a subscription.",
@@ -9628,7 +10484,9 @@ ACTIONS = {
   },
   "sns:ListEndpointsByPlatformApplication": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Lists the endpoints and endpoint attributes for devices in a supported push notification service, such as GCM and APNS.",
@@ -9636,7 +10494,9 @@ ACTIONS = {
   },
   "sns:ListPhoneNumbersOptedOut": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns a list of phone numbers that are opted out, meaning you cannot send SMS messages to them.",
@@ -9644,7 +10504,9 @@ ACTIONS = {
   },
   "sns:ListPlatformApplications": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Lists the platform application objects for the supported push notification services, such as APNS and GCM.",
@@ -9652,7 +10514,9 @@ ACTIONS = {
   },
   "sns:ListSubscriptions": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns a list of the requester's subscriptions.",
@@ -9680,7 +10544,9 @@ ACTIONS = {
   },
   "sns:ListTopics": {
     "Access": "List",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns a list of the requester's topics. Each call returns a limited list of topics, up to 100.",
@@ -9688,7 +10554,9 @@ ACTIONS = {
   },
   "sns:OptInPhoneNumber": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Opts in a phone number that is currently opted out, which enables you to resume sending SMS messages to the number.",
@@ -9716,7 +10584,9 @@ ACTIONS = {
   },
   "sns:SetEndpointAttributes": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Sets the attributes for an endpoint for a device on one of the supported push notification services, such as GCM and APNS.",
@@ -9724,7 +10594,9 @@ ACTIONS = {
   },
   "sns:SetPlatformApplicationAttributes": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Sets the attributes of the platform application object for the supported push notification services, such as APNS and GCM.",
@@ -9732,7 +10604,9 @@ ACTIONS = {
   },
   "sns:SetSubscriptionAttributes": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Allows a subscription owner to set an attribute of the topic to a new value.",
@@ -9751,11 +10625,12 @@ ACTIONS = {
   "sns:Subscribe": {
     "Access": "Write",
     "Affects": [
-      "AWS::Sns::Topic"
+      "AWS::Sns::Topic",
+      "Info"
     ],
     "Condition Keys": [
-      "sns:Protocol",
-      "sns:Endpoint"
+      "sns:Endpoint",
+      "sns:Protocol"
     ],
     "Dependent Actions": [],
     "Description": "Prepares to subscribe an endpoint by sending the endpoint a confirmation message.",
@@ -9764,11 +10639,12 @@ ACTIONS = {
   "sns:TagResource": {
     "Access": "Tagging",
     "Affects": [
-      "AWS::Sns::Topic"
+      "AWS::Sns::Topic",
+      "Info"
     ],
     "Condition Keys": [
-      "aws:RequestTag/${TagKey}",
-      "aws:TagKeys"
+      "aws:TagKeys",
+      "aws:RequestTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Add tags to the specified Amazon SNS topic.",
@@ -9776,7 +10652,9 @@ ACTIONS = {
   },
   "sns:Unsubscribe": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Deletes a subscription. If the subscription requires authentication for deletion, only the owner of the subscription or the topic's owner can unsubscribe, and an AWS signature is required.",
@@ -9785,11 +10663,12 @@ ACTIONS = {
   "sns:UntagResource": {
     "Access": "Tagging",
     "Affects": [
-      "AWS::Sns::Topic"
+      "AWS::Sns::Topic",
+      "Info"
     ],
     "Condition Keys": [
-      "aws:RequestTag/${TagKey}",
-      "aws:TagKeys"
+      "aws:TagKeys",
+      "aws:RequestTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Remove tags from the specified Amazon SNS topic.",
@@ -9798,13 +10677,14 @@ ACTIONS = {
   "sts:AssumeRole": {
     "Access": "Write",
     "Affects": [
-      "AWS::Iam::Role"
+      "AWS::Iam::Role",
+      "Info"
     ],
     "Condition Keys": [
+      "aws:TagKeys",
       "sts:TransitiveTagKeys",
       "aws:PrincipalTag/${TagKey}",
-      "aws:RequestTag/${TagKey}",
-      "aws:TagKeys"
+      "aws:RequestTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Returns a set of temporary security credentials that you can use to access AWS resources that you might not normally have access to",
@@ -9813,45 +10693,46 @@ ACTIONS = {
   "sts:AssumeRoleWithSAML": {
     "Access": "Write",
     "Affects": [
-      "AWS::Iam::Role"
+      "AWS::Iam::Role",
+      "Info"
     ],
     "Condition Keys": [
-      "sts:TransitiveTagKeys",
-      "saml:sub",
-      "aws:PrincipalTag/${TagKey}",
-      "saml:eduorgsuperioruri",
-      "saml:surname",
       "saml:primaryGroupSID",
-      "saml:givenName",
-      "saml:x500UniqueIdentifier",
-      "saml:edupersonassurance",
-      "saml:eduorgwhitepagesuri",
-      "saml:eduorgidentityauthnpolicyuri",
-      "saml:edupersonscopedaffiliation",
-      "saml:mail",
-      "saml:cn",
-      "saml:sub_type",
-      "saml:iss",
-      "saml:aud",
-      "saml:name",
-      "saml:edupersonprimaryaffiliation",
-      "saml:edupersontargetedid",
-      "saml:edupersonorgunitdn",
-      "aws:TagKeys",
-      "saml:edupersonaffiliation",
-      "saml:commonName",
       "saml:edupersonprimaryorgunitdn",
-      "saml:edupersonprincipalname",
-      "saml:edupersonnickname",
-      "saml:edupersonentitlement",
-      "saml:organizationStatus",
-      "saml:eduorghomepageuri",
-      "aws:RequestTag/${TagKey}",
-      "saml:uid",
-      "saml:edupersonorgdn",
+      "saml:cn",
       "saml:eduorglegalname",
-      "saml:doc",
-      "saml:namequalifier"
+      "saml:name",
+      "saml:mail",
+      "saml:iss",
+      "saml:eduorgsuperioruri",
+      "saml:edupersonassurance",
+      "saml:uid",
+      "saml:edupersonorgunitdn",
+      "saml:commonName",
+      "saml:edupersonaffiliation",
+      "saml:givenName",
+      "saml:eduorgwhitepagesuri",
+      "saml:eduorghomepageuri",
+      "saml:organizationStatus",
+      "saml:aud",
+      "aws:TagKeys",
+      "saml:surname",
+      "saml:edupersonscopedaffiliation",
+      "saml:edupersonprimaryaffiliation",
+      "saml:namequalifier",
+      "saml:edupersonnickname",
+      "saml:sub_type",
+      "aws:PrincipalTag/${TagKey}",
+      "sts:TransitiveTagKeys",
+      "saml:edupersonprincipalname",
+      "saml:sub",
+      "saml:eduorgidentityauthnpolicyuri",
+      "saml:x500UniqueIdentifier",
+      "saml:edupersonorgdn",
+      "saml:edupersonentitlement",
+      "saml:edupersontargetedid",
+      "aws:RequestTag/${TagKey}",
+      "saml:doc"
     ],
     "Dependent Actions": [],
     "Description": "Returns a set of temporary security credentials for users who have been authenticated via a SAML authentication response",
@@ -9860,23 +10741,24 @@ ACTIONS = {
   "sts:AssumeRoleWithWebIdentity": {
     "Access": "Write",
     "Affects": [
-      "AWS::Iam::Role"
+      "AWS::Iam::Role",
+      "Info"
     ],
     "Condition Keys": [
-      "sts:TransitiveTagKeys",
-      "accounts.google.com:sub",
-      "cognito-identity.amazonaws.com:aud",
+      "aws:PrincipalTag/${TagKey}",
       "www.amazon.com:user_id",
-      "www.amazon.com:app_id",
+      "graph.facebook.com:app_id",
+      "accounts.google.com:oaud",
+      "accounts.google.com:sub",
+      "cognito-identity.amazonaws.com:sub",
+      "cognito-identity.amazonaws.com:aud",
       "cognito-identity.amazonaws.com:amr",
+      "www.amazon.com:app_id",
       "graph.facebook.com:id",
       "aws:TagKeys",
-      "graph.facebook.com:app_id",
-      "cognito-identity.amazonaws.com:sub",
+      "sts:TransitiveTagKeys",
       "aws:RequestTag/${TagKey}",
-      "accounts.google.com:aud",
-      "aws:PrincipalTag/${TagKey}",
-      "accounts.google.com:oaud"
+      "accounts.google.com:aud"
     ],
     "Dependent Actions": [],
     "Description": "Returns a set of temporary security credentials for users who have been authenticated in a mobile or web application with a web identity provider",
@@ -9884,7 +10766,9 @@ ACTIONS = {
   },
   "sts:DecodeAuthorizationMessage": {
     "Access": "Write",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Decodes additional information about the authorization status of a request from an encoded message returned in response to an AWS request",
@@ -9892,7 +10776,9 @@ ACTIONS = {
   },
   "sts:GetAccessKeyInfo": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns details about the access key id passed as a parameter to the request.",
@@ -9900,7 +10786,9 @@ ACTIONS = {
   },
   "sts:GetCallerIdentity": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns details about the IAM identity whose credentials are used to call the API",
@@ -9909,12 +10797,13 @@ ACTIONS = {
   "sts:GetFederationToken": {
     "Access": "Read",
     "Affects": [
-      "AWS::Iam::User"
+      "AWS::Iam::User",
+      "Info"
     ],
     "Condition Keys": [
+      "aws:TagKeys",
       "aws:PrincipalTag/${TagKey}",
-      "aws:RequestTag/${TagKey}",
-      "aws:TagKeys"
+      "aws:RequestTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Returns a set of temporary security credentials (consisting of an access key ID, a secret access key, and a security token) for a federated user",
@@ -9922,7 +10811,9 @@ ACTIONS = {
   },
   "sts:GetSessionToken": {
     "Access": "Read",
-    "Affects": [],
+    "Affects": [
+      "Info"
+    ],
     "Condition Keys": [],
     "Dependent Actions": [],
     "Description": "Returns a set of temporary security credentials (consisting of an access key ID, a secret access key, and a security token) for an AWS account or IAM user",
@@ -9932,13 +10823,14 @@ ACTIONS = {
     "Access": "Tagging",
     "Affects": [
       "AWS::Iam::Role",
-      "AWS::Iam::User"
+      "AWS::Iam::User",
+      "Info"
     ],
     "Condition Keys": [
+      "aws:TagKeys",
       "sts:TransitiveTagKeys",
       "aws:PrincipalTag/${TagKey}",
-      "aws:RequestTag/${TagKey}",
-      "aws:TagKeys"
+      "aws:RequestTag/${TagKey}"
     ],
     "Dependent Actions": [],
     "Description": "Grants permission to add tags to a STS session",

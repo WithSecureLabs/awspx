@@ -121,6 +121,12 @@ export default {
             }
         },
         {
+            selector: 'node.Info',
+            style: {
+                'background-image': icons.Info,
+            }
+        },
+        {
             selector: 'node.Internet.Domain',
             style: {
                 'background-image': icons.Internet.Domain,

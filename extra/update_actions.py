@@ -179,6 +179,10 @@ for service, values in Services.items():
             if url == '':
                 Errors.update([f"Reference: Couldn't find a URL for {action}"])
 
+            # direct action to info node
+            if list(resources) == []:
+                resources = ["Info"]
+
             data = {
                 "Affects": list(resources),
                 "Access": access,
