@@ -16,98 +16,40 @@
         </div>
       </v-card>
 
-      <!-- Autocomplete -->
+      <!-- Search -->
       <v-expand-transition>
-        <div :style="{display: show ? '' : 'none'}" class="mb-5">
-          <v-card>
-            <v-autocomplete
-              :filter="filter"
-              :items="(view == 0) ? resources : actions"
-              :loading="loading"
-              :cache-items="false"
-              :aria-autocomplete="false"
-              @input="search=null"
-              :search-input.sync="search"
-              v-model="selected"
-              attach="#search"
-              item-text="name"
-              item-value="id"
-              return-object
-              hide-details
-              hide-no-data
-              clearable
-              autofocus
-              multiple
-              :menu-props="{top: true, nudgeTop: 10}"
-            >
-              <template #append>
-                <v-tooltip top z-index="10">
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      x-small
-                      fab
-                      :color="(view === 1) ? 'none' : colors.Allow"
-                      @click="view = (view + 1 ) % 2"
-                      v-on="on"
-                      class="mt-n3 ml-n10"
-                    >
-                      <v-img
-                        width="25"
-                        :src="(view == 1) ? icons.AWS.Resource :  icons.AWS.Action"
-                      />
-                    </v-btn>
-                  </template>
-                  <span style="z-index: 1" v-if="view === 0">
-                    Switch to
-                    <b>Actions</b>
-                  </span>
-                  <span style="z-index: 1" v-else-if="view === 1">
-                    Switch to
-                    <b>Resources</b>
-                  </span>
-                </v-tooltip>
-              </template>
+        <v-card v-if="mode === 'basic'" style="bottom: 10px; width: 70vw" v-show="show">
+          <TemplateAutocomplete
+            :resources="resources"
+            :search="search"
+            @add="graph_add"
+            @clear="graph_clear"
+            width="65vw"
+          >
+            <template #append>
+              <v-btn text class="my-n2" small fab @click="mode = 'advanced'">
+                <v-icon>mdi-cogs</v-icon>
+              </v-btn>
+            </template>
+          </TemplateAutocomplete>
+        </v-card>
 
-              <!-- Autocomplete selection -->
-              <template #selection="data">
-                <v-chip
-                  v-on="data.on"
-                  close
-                  outlined
-                  @click="data.select"
-                  @click:close="selected = selected.filter(s => s.id !== data.item.id)"
-                >
-                  <v-avatar outlined :color="(view === 1) ? colors[data.item.access] : 'white'">
-                    <v-img :src="icon(data.item)" />
-                  </v-avatar>
-                  <span class="ml-2" style="font-size: 11px">{{ data.item.name }}</span>
-                </v-chip>
-              </template>
-
-              <!-- Autocomplete items -->
-              <template #item="data">
-                <template v-on="data.on">
-                  <v-list-item-avatar
-                    size="50"
-                    style="border: 1px solid #ccc; padding: 30px;"
-                    :color="(view === 1) ? colors[data.item.access] : 'none'"
-                  >
-                    <img height="50" width="50" :src="icon(data.item)" />
-                  </v-list-item-avatar>
-                  <v-list-item-content style="text-align: center">
-                    <v-list-item-title v-html="highlight(data.item.name)"></v-list-item-title>
-                    <v-list-item-subtitle v-if="view === 0" v-html="data.item.id"></v-list-item-subtitle>
-                    <v-list-item-subtitle v-else-if="view === 1" v-html="data.item.description"></v-list-item-subtitle>
-                  </v-list-item-content>
-                </template>
-              </template>
-            </v-autocomplete>
-          </v-card>
-        </div>
+        <SearchAdvanced
+          v-else
+          v-show="show"
+          style="width: 70vw; bottom: 10px"
+          :resources="resources"
+          :actions="actions"
+          @back="mode = 'basic'"
+          @close="show = false"
+          @add="graph_add"
+          @clear="graph_clear"
+        />
       </v-expand-transition>
     </div>
+
     <!-- Empty database helper -->
-    <v-stepper v-else style="width: 50vw;" class="mx-auto" value="2">
+    <v-stepper v-else-if="!db_error" style="width: 50vw;" class="mx-auto" value="2">
       <v-stepper-header>
         <v-stepper-step step="1" complete>Install awspx</v-stepper-step>
         <v-divider></v-divider>
@@ -159,84 +101,54 @@
 <script>
 import icons from "@/icons.js";
 import { access } from "@/config.js";
+import TemplateAutocomplete from "@/components/TemplateAutocomplete";
+import SearchAdvanced from "@/components/SearchAdvanced";
 
 export default {
   name: "Search",
+  components: {
+    SearchAdvanced,
+    TemplateAutocomplete
+  },
   props: {
     hide: {
       type: Boolean,
       default: false
-    },
-    alt: false
+    }
   },
 
   data: function() {
     return {
-      search: "",
-      hover: false,
-      loading: true,
-      items: [],
-      view: 0,
-      selected: [],
+      mode: "basic",
       actions: [],
       resources: [],
-      icons: icons,
-      colors: access
+      search: {
+        label: "",
+        input: "",
+        value: []
+      },
+      hover: false,
+      loading: true,
+      db_error: false
     };
   },
 
   watch: {
-    selected(n, o) {
+    "search.value"(n, o) {
       if (n.length === o.length) {
         return;
-      } else if (n.length > o.length) {
-        const elements = n.filter(e => !o.includes(e));
-        if (this.view === 0) this.add(elements.map(e => e.element));
-        else if (this.view === 1)
-          this.$emit(
-            "find_actions",
-            elements.map(e => e.name)
-          );
-      }
-    },
-
-    alt(value) {
-      this.view = value ? 1 : 0;
+      } else if (n.length > o.length)
+        this.graph_add(n.filter(e => !o.includes(e)).map(e => e.element));
     }
   },
 
   methods: {
-    filter(item, search, text) {
-      return (
-        item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.id.toLowerCase().includes(search.toLowerCase())
-      );
-    },
-
-    highlight(value) {
-      const re = new RegExp(this.search, "gi");
-      let v = value.replace("<b>", "").replace("</b>");
-
-      Array.from(new Set(v.match(re))).map(
-        m => (v = v.replace(m, `<b>${m}</b>`))
-      );
-
-      return v;
-    },
-
-    icon(item) {
-      return this.view === 0
-        ? item.type
-            .split("::")
-            .reduce(
-              (o, i) => (i in o ? o[i] : this.icons.AWS.Resource),
-              this.icons
-            )
-        : this.icons.AWS.Action;
-    },
-
-    add(elements) {
+    graph_add(elements) {
       this.$emit("add", elements);
+    },
+
+    graph_clear() {
+      this.$emit("clear");
     },
 
     load() {
@@ -247,20 +159,12 @@ export default {
         this.neo4j
           .run(
             "MATCH ()-[action:ACTION]->() " +
-              "WITH DISTINCT action.Name AS name, " +
-              "action.Description AS description, " +
-              "action.Access AS access " +
-              "RETURN name, description, access ORDER BY name"
+              "RETURN action ORDER BY action.Name"
           )
           .then(actions => {
-            this.actions = actions.Text.map(a => {
-              return {
-                name: a.name,
-                id: a.name,
-                description: a.description,
-                access: a.access
-              };
-            }).sort((a, b) => (a.name > b.name ? 1 : -1));
+            this.actions = actions.Text.map(result => {
+              return JSON.parse(result["action"]);
+            });
           }),
         this.neo4j
           .run("MATCH (r) WHERE NOT (r:Pattern OR r:`AWS::Domain`) RETURN r")
@@ -289,9 +193,10 @@ export default {
               else return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1;
               return c;
             });
-            this.items = this.resources;
           })
       ]).finally(() => {
+        this.db_error = Object.keys(this.neo4j.error).length > 0;
+        this.search.label = `Search ${this.resources.length} Resources`;
         this.loading = false;
       });
     }
@@ -308,6 +213,53 @@ export default {
     },
     populated: function() {
       return this.resources.length + this.actions.length > 0;
+    },
+
+    advanced_query: function() {
+      const from = this.modes.advanced.search.From.value.map(v =>
+        v.element.data.id.replace("n", "")
+      );
+      const to = this.modes.advanced.search.To.value.map(v =>
+        v.element.data.id.replace("n", "")
+      );
+      const filters = this.modes.advanced.filters.map(f => f.text);
+
+      const hops =
+        typeof this.modes.advanced.hops === "number"
+          ? this.modes.advanced.hops.toString()
+          : "";
+      const limit =
+        typeof this.modes.advanced.limit === "number"
+          ? this.modes.advanced.limit.toString()
+          : "";
+
+      const edges = this.modes.advanced.effective
+        ? `TRANSITIVE|ATTACK*0..${hops}`
+        : `TRANSITIVE*0..${hops}`;
+
+      let query = [
+        "MATCH",
+        this.modes.advanced.actions
+          ? `Path=(Source)-[:${edges}]->()-[Action:ACTION]->(Target)`
+          : `Path=(Source)-[:${edges}]->(Target)`
+      ];
+
+      const where = [
+        from.length > 0 ? [`ID(Source) IN [${from}]`] : [],
+        to.length > 0 ? [`ID(Target) IN [${to}]]`] : [],
+        filters
+      ]
+        .flat()
+        .join(" AND ");
+
+      if (where.length > 0) query.push("WHERE", where);
+
+      query = query.concat("RETURN Path");
+
+      if (limit !== "") query.push(`LIMIT ${limit}`);
+
+      query = query.join(" ");
+      return query;
     }
   },
   mounted() {
@@ -317,13 +269,11 @@ export default {
 </script>
 
 <style>
-#search,
-#search > .v-list {
+#search {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transform: translateX(-50%);
   position: absolute;
-  width: calc(75vw);
   margin: auto;
   bottom: 0px;
   left: 50%;

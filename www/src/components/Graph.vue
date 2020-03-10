@@ -6,6 +6,7 @@
       v-model="notification.visible"
       :timeout="1000"
       color="success"
+      class="notice"
       top
     >
       <span class="mx-auto" v-html="notification.text"></span>
@@ -15,7 +16,7 @@
     <v-alert
       v-else-if="notification.status === 1"
       v-model="notification.visible"
-      class="mx-auto notification"
+      class="mx-auto notification notice"
       type="error"
       dismissible
     >
@@ -23,7 +24,7 @@
     </v-alert>
 
     <!-- Confirmation dialog -->
-    <v-dialog max-width="550" modal v-model="dialog.enabled">
+    <v-dialog class="notice" max-width="550" modal v-model="dialog.enabled">
       <v-card>
         <v-card-title class="headline py-5">Hold up</v-card-title>
 
@@ -46,12 +47,13 @@
       </v-card>
     </v-dialog>
 
+    <!-- Progress overlay -->
+    <v-overlay :value="busy" class="notice">
+      <v-progress-circular :size="200" :width="8" indeterminate color="primary"></v-progress-circular>
+    </v-overlay>
+
     <!-- Graph -->
-    <v-card flat tile append :disabled="busy" class="graph" id="graph">
-      <v-overlay :value="busy">
-        <v-progress-circular :size="200" :width="8" indeterminate color="primary"></v-progress-circular>
-      </v-overlay>
-    </v-card>
+    <v-card flat tile append :disabled="busy" class="graph" id="graph" />
 
     <!-- Node context menu -->
     <v-fab-transition
@@ -88,10 +90,12 @@
     <Search
       v-if="search.enabled"
       @add="add"
+      @clear="clear"
       @toggle="search.hidden = $event"
       @find_actions="find_actions"
       :alt="events.keys.alt"
       :hide="search.hidden"
+      :editor="search.editor"
     ></Search>
   </div>
 </template>
@@ -650,6 +654,10 @@ export default {
       });
     },
 
+    clear() {
+      return cy.elements().remove();
+    },
+
     register_listeners() {
       // Keyboard events
       window.addEventListener("keydown", event => {
@@ -704,10 +712,10 @@ export default {
           case "Delete":
             this.remove(cy.elements(".selected"));
             break;
-          case "Escape":
-            this.properties.value = null;
-            this.search.hidden = true;
-            break;
+          // case "Escape":
+          //   this.properties.value = null;
+          //   this.search.hidden = true;
+          //   break;
           case "Enter":
             if (event.altKey) {
               cy.elements()
@@ -935,6 +943,10 @@ export default {
 
 .graph canvas {
   left: 0px !important;
+}
+
+.notice div {
+  z-index: 10 !important;
 }
 
 .notification {
