@@ -2,6 +2,7 @@
 
 import argparse
 import csv
+import git
 import os
 import sys
 from configparser import ConfigParser
@@ -26,6 +27,20 @@ PATH = os.path.dirname(__file__)
 AWS_DIR = os.environ['HOME'] + '/.aws/'
 CONFIG_FILE = os.environ['HOME'] + '/.aws/config'
 CREDENTIALS_FILE = os.environ['HOME'] + '/.aws/credentials'
+
+
+def handle_update(args):
+    repo = git.Repo("/opt/awspx")
+    head = repo.head.commit
+    repo.remotes.origin.set_url("https://github.com/FSecureLABS/awspx.git")
+    repo.remotes.origin.pull()
+
+    if head == repo.head.commit:
+        print("[+] Already up to date")
+        return
+
+    print(f"[*] Updating to {repo.head.commit}")
+    os.system("cd /opt/awspx/www && npm install")
 
 
 def handle_profile(args):
@@ -302,6 +317,13 @@ def main():
                      "effective access and resource relationships in AWS environments."))
 
     subparsers = parser.add_subparsers(title="commands")
+
+    #
+    # awspx update
+    #
+    update_parser = subparsers.add_parser(
+        "update", help="Update awspx to the latest version.")
+    update_parser.set_defaults(func=handle_update)
 
     #
     # awspx profile

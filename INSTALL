@@ -16,9 +16,9 @@ function install(){
 
     SOURCE="$(dirname $(realpath $0))"
 
-    APT_DEPS=("nodejs" "npm" "python3-pip" "procps")
+    APT_DEPS=("nodejs" "npm" "python3-pip" "procps" "git")
     PY_DEPS=("argparse" "awscli-local" "boto3" "neo4j"
-             "configparser") 
+             "configparser" "git-python") 
 
     # Ensure dependencies are met 
     for dep in ${DEPS[*]}; do
@@ -42,7 +42,7 @@ function install(){
 
     # Update 
     mkdir -p $MOUNT/data
-    rsync -avrt $SOURCE/* ${MOUNT}/. >/dev/null
+    rsync -avrt $SOURCE/ ${MOUNT}/. >/dev/null
     rsync -avrt $0 /usr/local/bin/awspx >/dev/null
     echo "" 
     set -e 
