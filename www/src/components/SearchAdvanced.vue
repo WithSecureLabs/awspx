@@ -17,7 +17,7 @@
               <TemplateAutocomplete
                 :resources="resources"
                 :actions="actions"
-                :search="visual.search.To"
+                :search="visual.search.From"
                 :disabled="!visual.enabled"
                 :placeholder="true"
                 width="50vw"
@@ -25,13 +25,13 @@
               <!-- Swap 'From' and 'To' around -->
               <div class="ma-n5 px-n5 text-center">
                 <v-btn :disabled="!visual.enabled" @click="visual_swap" x-small icon fab>
-                  <v-icon size="16">mdi-swap-vertical</v-icon>
+                  <v-icon size="16">mdi-cached</v-icon>
                 </v-btn>
               </div>
               <TemplateAutocomplete
                 :resources="resources"
                 :actions="actions"
-                :search="visual.search.From"
+                :search="visual.search.To"
                 :disabled="!visual.enabled"
                 :placeholder="true"
                 width="50vw"
@@ -42,7 +42,7 @@
             <v-col class="pl-5" cols="1" style="min-width: 80px">
               <v-card outlined width="100px" class="mx-auto">
                 <v-row class="text-center">
-                  <v-tooltip right>
+                  <v-tooltip top>
                     <template v-slot:activator="{ on }">
                       <v-btn
                         :color="visual.actions ? 'primary' : 'rgba(0, 0, 0, 0.54)'"
@@ -61,14 +61,14 @@
                     </template>
                     <span width="300px">
                       <b>{{ `Actions-based search (${visual.actions ? 'enabled' : 'disabled'})` }}</b>
-                      <br />
-                      <i>{{ `Query ${visual.actions ? 'what can do what to what' : 'what can get to what' }` }}</i>
+                      <br />Searching for
+                      <i>{{ `${visual.actions ? 'what can do what to what' : 'what can get to what' }` }}</i>
                     </span>
                   </v-tooltip>
                 </v-row>
 
                 <v-row class="text-center">
-                  <v-tooltip right>
+                  <v-tooltip top>
                     <template v-slot:activator="{ on }">
                       <v-btn
                         :color="visual.effective ? 'primary' : 'rgba(0, 0, 0, 0.54)'"
@@ -86,11 +86,12 @@
                       </v-btn>
                     </template>
                     <span>
-                      <b>{{ `Attack paths (${visual.effective ? 'enabled' : 'disabled'})` }}</b>
+                      <b>{{ `Include attack paths (${visual.effective ? 'enabled' : 'disabled'})` }}</b>
                       <br />
                       <i>
-                        {{ `${visual.effective ? 'Include' : 'Exclude'}` }} relationships arising
-                        <br />from effective access
+                        Paths that incorporate attacks
+                        {{ `${visual.effective ? 'will also' : 'won\'t'}` }}
+                        <br />be matched
                       </i>
                     </span>
                   </v-tooltip>
@@ -290,10 +291,7 @@
                 <v-icon>mdi-arrow-left</v-icon>
               </v-btn>
             </template>
-            <span>
-              Back to
-              <b>Basic Search</b>
-            </span>
+            <b>Back</b>
           </v-tooltip>
         </v-col>
 
@@ -713,9 +711,3 @@ export default {
   opacity: 0.7;
 }
 </style>
-
-// class="v-input mx-5 mt-n2 overline  theme--light v-text-field v-text-field--is-booted v-select  v-autocomplete primary--text"
-
-// v-input--is-focused
-// v-select--is-menu-active
-
