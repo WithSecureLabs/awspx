@@ -9,15 +9,15 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
+    "codemirror": "^5.52.2",
     "core-js": "^3.6.4",
-    "cytoscape": "^3.13.0",
+    "cytoscape": "^3.14.1",
     "cytoscape-dagre": "^2.2.2",
-    "neo4j-driver": "^4.0.1",
-    "codemirror": "^5.52.0",
+    "neo4j-driver": "^4.0.2",
     "vue": "^2.6.11",
     "vue-router": "^3.1.5",
     "vue-template-compiler": "^2.6.11",
-    "vuetify": "^2.2.4",
+    "vuetify": "^2.2.19",
     "vuex": "^3.1.2"
   },
   "devDependencies": {

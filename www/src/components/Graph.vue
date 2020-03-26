@@ -52,8 +52,67 @@
       <v-progress-circular :size="200" :width="8" indeterminate color="primary"></v-progress-circular>
     </v-overlay>
 
+    <!-- Empty database helper -->
+    <v-overlay v-show="!populated" class="notice" color="white" opacity="1">
+      <v-stepper light style="width: 50vw;" class="mx-auto" value="2">
+        <v-stepper-header>
+          <v-stepper-step step="1" complete>Install awspx</v-stepper-step>
+          <v-divider></v-divider>
+          <v-stepper-step step="2">Populate database</v-stepper-step>
+          <v-card></v-card>
+          <v-divider></v-divider>
+          <v-stepper-step step="3">Explore</v-stepper-step>
+        </v-stepper-header>
+
+        <v-stepper-content step="2">
+          <v-card color="grey lighten-5" class="mb-5 pa-10">
+            <v-card-title>You may have jumped the gun...</v-card-title>
+            <v-card-subtitle class="mb-5">We couldn't find any data to work with</v-card-subtitle>
+            <v-card-text>
+              <div class="mb-2">
+                <b>Either</b> run the ingestor to load an account of your own:
+              </div>
+              <v-card style="font-size: 11px; border: 1px solid whitesmoke;" class="pa-2">
+                [root@localhost ~]#
+                <b>awspx ingest</b>
+                <br />[-] The profile 'default' was not found. Would you like to create it? (y/n) y
+                <br />AWS Access Key ID [None]: ****9XY7
+                <br />AWS Secret Access Key [None]: ****ks91
+                <br />Default region name [None]: eu-west-1
+                <br />Default output format [None]: json
+                <br />
+              </v-card>
+              <div class="mt-10 mb-2">
+                <b>OR</b> load an existing database (e.g. the provided sample):
+              </div>
+              <v-card style="font-size: 11px; border: 1px solid whitesmoke;" class="pa-2">
+                <br />[root@localhost ~]#
+                <b>awspx db --load-zip sample.zip</b>
+                <br />[*] Importing records from /opt/awspx/data/sample.zip
+                <br />
+                <br />[root@localhost ~]#
+                <b>awspx attacks</b>
+                <br />[*] Searching database for attack patterns
+                <br />
+              </v-card>
+            </v-card-text>
+          </v-card>
+          <v-btn color="primary" class="my-auto" :loading="false" @click="$refs.search.init()">Check again</v-btn>
+        </v-stepper-content>
+      </v-stepper>
+    </v-overlay>
+
     <!-- Graph -->
     <v-card flat tile append :disabled="busy" class="graph" id="graph" />
+
+    <!-- Navigation drawer (Right hand side) -->
+    <Menu
+      @redact="menu_redact"
+      @screenshot="menu_screenshot"
+      @load="menu_load_saved_queries"
+      @update_layout="menu_update_layout"
+      @clear="clear"
+    ></Menu>
 
     <!-- Node context menu -->
     <v-fab-transition
@@ -89,10 +148,14 @@
     <!-- Search bar (bottom) -->
     <Search
       v-show="search.enabled"
+      ref="search"
       @add="add"
       @clear="clear"
       @show="search.visible = $event"
       @advanced="search.advanced = $event"
+      @populated="populated = $event"
+      @visual_queries_active="search.visual_queries_active = $event"
+      :visual_queries_active="search.visual_queries_active"
       :alt="events.keys.alt"
       :show="search.visible"
       :advanced="search.advanced"
@@ -103,6 +166,7 @@
 <script>
 import Properties from "@/components/Properties";
 import Search from "@/components/Search";
+import Menu from "@/components/Menu";
 
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
@@ -112,7 +176,7 @@ let cy = null;
 
 export default {
   name: "Graph",
-  components: { Properties, Search },
+  components: { Properties, Search, Menu },
 
   data: function() {
     return {
@@ -129,10 +193,12 @@ export default {
         value: null,
         enabled: true
       },
+      populated: true,
       search: {
         visible: true,
         enabled: true,
-        advanced: false
+        advanced: false,
+        visual_queries_active: false
       },
       context_menu_items: [
         {
@@ -168,6 +234,10 @@ export default {
         max_elements: 500,
         enabled: false,
         store: []
+      },
+      layout: {
+        name: "Auto",
+        value: {}
       }
     };
   },
@@ -551,51 +621,7 @@ export default {
 
       const elements = cy.add(this._add_merge_actions(collection));
 
-      const concentric = cy
-        .edges()
-        .map(e => [e.data("source"), e.data("target")])
-        .reduce((v, e, i) => {
-          if (i === 0) return e;
-          else return v.filter(x => e.includes(x));
-        }, []);
-
-      const layout =
-        cy.elements().filter("edge").length === 0
-          ? // Set 'grid' layout when there are no edges
-            {
-              name: "grid",
-              rows: Math.ceil(cy.nodes().length / 10),
-              avoidOverlap: true,
-              avoidOverlapPadding: 20,
-              nodeDimensionsIncludeLabels: true
-            }
-          : concentric.length > 0
-          ? // Set 'concentric' layout when the graph consists of
-            // one node connected to every other node
-            {
-              name: "concentric",
-              minNodeSpacing: 50,
-              concentric: n => {
-                return concentric.includes(n.data("id")) ? n.degree() : 1;
-              },
-              spacingFactor: Math.max(10 / cy.elements().nodes().length, 1),
-              startAngle: 0,
-              fit: true
-            }
-          : // Otherwise set default (dagre)
-            config.graph.layout;
-
-      cy.elements()
-        .makeLayout({
-          ...layout,
-          animate: true
-        })
-        .run()
-        .promiseOn("layoutstop", () => {});
-      this.loading.value = false;
-      this.layout = {
-        ...layout
-      };
+      this.run_layout();
       return elements;
     },
 
@@ -645,6 +671,102 @@ export default {
 
     clear() {
       return cy.elements().remove();
+    },
+
+    run_layout() {
+      let layout = this.layout.name;
+
+      // Determine best fit for 'Auto'
+      if (layout === "Auto") {
+        const concentric = cy
+          .edges()
+          .map(e => [e.data("source"), e.data("target")])
+          .reduce((v, e, i) => {
+            return i === 0 ? e : v.filter(x => e.includes(x));
+          }, []);
+
+        // Set 'Grid' layout when there are no edges
+        if (cy.elements().filter("edge").length === 0) layout = "Grid";
+        // Set 'Concentric' layout when the graph consists of
+        // one node connected to every other node
+        else if (concentric.length > 0) layout = "Concentric";
+        // Otherwise set 'Dagre'
+        else layout = "Dagre";
+      }
+
+      switch (layout) {
+        case "Concentric":
+          this.layout.value = {
+            name: "concentric",
+            minNodeSpacing: 50,
+            spacingFactor: Math.max(10 / cy.elements().nodes().length, 1),
+            startAngle: 0,
+            fit: true
+          };
+          break;
+
+        case "Grid":
+          this.layout.value = {
+            name: "grid",
+            avoidOverlap: true,
+            avoidOverlapPadding: 20,
+            nodeDimensionsIncludeLabels: true
+          };
+          break;
+
+        default:
+        case "Dagre":
+          this.layout.value = { ...config.graph.layout };
+          break;
+      }
+
+      cy.elements()
+        .makeLayout({
+          ...this.layout.value,
+          animate: true
+        })
+        .run()
+        .promiseOn("layoutstop", () => {});
+      this.loading.value = false;
+    },
+
+    menu_redact: function(value) {
+      let style = [];
+      if (value)
+        config.graph.style.map(s => {
+          if (
+            s.selector.includes("node") &&
+            Object.keys(s.style).includes("label")
+          ) {
+            style.push({
+              selector: s.selector,
+              style: { label: "" }
+            });
+          }
+        });
+      this.properties.enabled = !value;
+      this.search.enabled = !value;
+      cy.style(config.graph.style.concat(style));
+    },
+
+    menu_screenshot() {
+      const filename = `awspx_${new Date().getTime()}.png`;
+      const png = cy.png({ bg: "white" });
+      const download = document.createElement("a");
+      download.href = png;
+      download.download = filename;
+      download.click();
+    },
+
+    menu_load_saved_queries() {
+      this.search.visible = true;
+      this.search.advanced = true;
+      this.search.visual_queries_active = true;
+    },
+
+    menu_update_layout(value) {
+      this.layout.name = value;
+      this.run_layout();
     },
 
     register_listeners() {
@@ -709,7 +831,7 @@ export default {
             if (event.altKey) {
               cy.elements()
                 .makeLayout({
-                  ...this.layout
+                  ...this.layout.value
                 })
                 .run();
             }
@@ -733,7 +855,6 @@ export default {
       });
 
       cy.on("cxttap", "node", event => {
-        this.search.visible = false;
         this.context_menu_create(event.target);
       });
 
@@ -823,12 +944,10 @@ export default {
 
   mounted() {
     cytoscape.use(dagre);
-    this.layout = { ...config.graph.layout };
     cy = cytoscape({
       container: document.getElementsByClassName("graph")[0],
       elements: config.elements,
       style: config.graph.style,
-      layout: this.layout,
       wheelSensitivity: 0.1,
       maxZoom: 1.5,
       minZoom: 0.2
@@ -927,6 +1046,7 @@ export default {
   left: 0;
   right: 0;
   position: absolute;
+  padding-right: 60px;
   z-index: 0;
 }
 
@@ -935,7 +1055,7 @@ export default {
 }
 
 .notice div {
-  z-index: 10 !important;
+  z-index: 20 !important;
 }
 
 .notification {

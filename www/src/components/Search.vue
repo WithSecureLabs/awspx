@@ -17,86 +17,32 @@
       </v-card>
 
       <!-- Search -->
-      <v-card v-if="!advanced" style="bottom: 10px; width: 70vw" v-show="show">
+      <div style="bottom: 10px; width: 70vw" v-show="!advanced && show">
         <TemplateAutocomplete
           width="65vw"
-          :resources="resources"
+          :key="advanced ? 0: 1"
+          :resources="!advanced ? resources : []"
           :search="search"
+          append="mdi-tune"
           @add="$emit('add', $event)"
           @clear="$emit('clear')"
-        >
-          <template #append>
-            <v-tooltip top>
-              <template v-slot:activator="{ on }">
-                <v-btn v-on="on" text class="my-n2" small fab @click="$emit('advanced', true)">
-                  <v-icon>mdi-cogs</v-icon>
-                </v-btn>
-              </template>
-              <b>Advanced search options</b>
-            </v-tooltip>
-          </template>
-        </TemplateAutocomplete>
-      </v-card>
+          @append="$emit('advanced', true)"
+        />
+      </div>
 
       <SearchAdvanced
-        v-else
-        v-show="show"
+        v-show="advanced && show"
+        ref="advanced"
         style="width: 70vw; bottom: 10px"
         :resources="resources"
         :actions="actions"
+        :visual_queries_active="visual_queries_active"
         @back="$emit('advanced', false)"
         @add="$emit('add', $event)"
+        @visual_queries_active="$emit('visual_queries_active', $event)"
         @clear="$emit('clear')"
       />
     </div>
-
-    <!-- Empty database helper -->
-    <v-stepper v-else-if="!db_error" style="width: 50vw;" class="mx-auto" value="2">
-      <v-stepper-header>
-        <v-stepper-step step="1" complete>Install awspx</v-stepper-step>
-        <v-divider></v-divider>
-        <v-stepper-step step="2">Populate database</v-stepper-step>
-        <v-card></v-card>
-        <v-divider></v-divider>
-        <v-stepper-step step="3">Explore</v-stepper-step>
-      </v-stepper-header>
-
-      <v-stepper-content step="2">
-        <v-card color="grey lighten-5" class="mb-5 pa-10">
-          <v-card-title>You may have jumped the gun...</v-card-title>
-          <v-card-subtitle class="mb-5">We couldn't find any data to work with</v-card-subtitle>
-          <v-card-text>
-            <div class="mb-2">
-              <b>Either</b> run the ingestor to load an account of your own:
-            </div>
-            <v-card style="font-size: 11px; border: 1px solid whitesmoke;" class="pa-2">
-              [root@localhost ~]#
-              <b>awspx ingest</b>
-              <br />[-] The profile 'default' was not found. Would you like to create it? (y/n) y
-              <br />AWS Access Key ID [None]: ****9XY7
-              <br />AWS Secret Access Key [None]: ****ks91
-              <br />Default region name [None]: eu-west-1
-              <br />Default output format [None]: json
-              <br />
-            </v-card>
-            <div class="mt-10 mb-2">
-              <b>OR</b> load an existing database (e.g. the provided sample):
-            </div>
-            <v-card style="font-size: 11px; border: 1px solid whitesmoke;" class="pa-2">
-              <br />[root@localhost ~]#
-              <b>awspx db --load-zip sample.zip</b>
-              <br />[*] Importing records from /opt/awspx/data/sample.zip
-              <br />
-              <br />[root@localhost ~]#
-              <b>awspx attacks</b>
-              <br />[*] Searching database for attack patterns
-              <br />
-            </v-card>
-          </v-card-text>
-        </v-card>
-        <v-btn color="primary" class="my-auto" :loading="loading" @click="load()">Check again</v-btn>
-      </v-stepper-content>
-    </v-stepper>
   </div>
 </template>
 
@@ -120,6 +66,10 @@ export default {
     advanced: {
       type: Boolean,
       default: false
+    },
+    visual_queries_active: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -132,13 +82,73 @@ export default {
         input: "",
         value: []
       },
+      populated: true,
       hover: false,
-      loading: true,
-      db_error: false
+      loading: true
     };
   },
 
+  methods: {
+    init() {
+      const types = ["Admin", "External", "Resource", "Generic"];
+      this.loading = true;
+
+      Promise.all([
+        this.neo4j
+          .run(
+            "MATCH ()-[action:ACTION]->() " +
+              "RETURN action ORDER BY action.Name"
+          )
+          .then(actions => {
+            this.actions = actions.Text.map(result => {
+              return JSON.parse(result["action"]);
+            });
+          }),
+        this.neo4j
+          .run("MATCH (r) WHERE NOT (r:Pattern OR r:`AWS::Domain`) RETURN r")
+          .then(elements => {
+            this.resources = elements.Graph.map(r => {
+              const id =
+                typeof r.data.properties.Arn !== "undefined"
+                  ? r.data.properties.Arn
+                  : r.data.name;
+
+              const classification = r.classes
+                .filter(c => types.indexOf(c) != -1)
+                .concat("")[0];
+
+              return {
+                name: r.data.name,
+                id: id,
+                type: r.data.name === "Effective Admin" ? "Admin" : r.data.type,
+                class:
+                  r.data.name === "Effective Admin" ? "Admin" : classification,
+                element: r
+              };
+            }).sort((a, b) => {
+              let c = types.indexOf(a.class) - types.indexOf(b.class);
+              if (c !== 0) return c;
+              else return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1;
+              return c;
+            });
+          })
+      ]).finally(() => {
+        this.search.label = `Search ${this.resources.length} Resources`;
+        this.loading = false;
+      });
+    }
+  },
+
   watch: {
+    resources() {
+      this.populated = this.resources.length + this.actions.length > 0;
+    },
+    actions() {
+      this.populated = this.resources.length + this.actions.length > 0;
+    },
+    populated(value) {
+      this.$emit("populated", value);
+    },
     "search.value"(n, o) {
       if (n.length === o.length) {
         return;
@@ -151,10 +161,6 @@ export default {
   },
 
   computed: {
-    populated: function() {
-      return this.resources.length + this.actions.length > 0;
-    },
-
     advanced_query: function() {
       const from = this.modes.advanced.search.From.value.map(v =>
         v.element.data.id.replace("n", "")
@@ -204,52 +210,7 @@ export default {
   },
 
   mounted() {
-    const types = ["Admin", "External", "Resource", "Generic"];
-    this.loading = true;
-
-    Promise.all([
-      this.neo4j
-        .run(
-          "MATCH ()-[action:ACTION]->() " + "RETURN action ORDER BY action.Name"
-        )
-        .then(actions => {
-          this.actions = actions.Text.map(result => {
-            return JSON.parse(result["action"]);
-          });
-        }),
-      this.neo4j
-        .run("MATCH (r) WHERE NOT (r:Pattern OR r:`AWS::Domain`) RETURN r")
-        .then(elements => {
-          this.resources = elements.Graph.map(r => {
-            const id =
-              typeof r.data.properties.Arn !== "undefined"
-                ? r.data.properties.Arn
-                : r.data.name;
-
-            const classification = r.classes
-              .filter(c => types.indexOf(c) != -1)
-              .concat("")[0];
-
-            return {
-              name: r.data.name,
-              id: id,
-              type: r.data.name === "Effective Admin" ? "Admin" : r.data.type,
-              class:
-                r.data.name === "Effective Admin" ? "Admin" : classification,
-              element: r
-            };
-          }).sort((a, b) => {
-            let c = types.indexOf(a.class) - types.indexOf(b.class);
-            if (c !== 0) return c;
-            else return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1;
-            return c;
-          });
-        })
-    ]).finally(() => {
-      this.db_error = Object.keys(this.neo4j.error).length > 0;
-      this.search.label = `Search ${this.resources.length} Resources`;
-      this.loading = false;
-    });
+    this.init();
   }
 };
 </script>
