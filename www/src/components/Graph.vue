@@ -6,6 +6,7 @@
       v-model="notification.visible"
       :timeout="1000"
       color="success"
+      class="notice"
       top
     >
       <span class="mx-auto" v-html="notification.text"></span>
@@ -15,7 +16,7 @@
     <v-alert
       v-else-if="notification.status === 1"
       v-model="notification.visible"
-      class="mx-auto notification"
+      class="mx-auto notification notice"
       type="error"
       dismissible
     >
@@ -23,7 +24,7 @@
     </v-alert>
 
     <!-- Confirmation dialog -->
-    <v-dialog max-width="550" modal v-model="dialog.enabled">
+    <v-dialog class="notice" max-width="550" modal v-model="dialog.enabled">
       <v-card>
         <v-card-title class="headline py-5">Hold up</v-card-title>
 
@@ -46,12 +47,13 @@
       </v-card>
     </v-dialog>
 
+    <!-- Progress overlay -->
+    <v-overlay :value="busy" class="notice">
+      <v-progress-circular :size="200" :width="8" indeterminate color="primary"></v-progress-circular>
+    </v-overlay>
+
     <!-- Graph -->
-    <v-card flat tile append :disabled="busy" class="graph" id="graph">
-      <v-overlay :value="busy">
-        <v-progress-circular :size="200" :width="8" indeterminate color="primary"></v-progress-circular>
-      </v-overlay>
-    </v-card>
+    <v-card flat tile append :disabled="busy" class="graph" id="graph" />
 
     <!-- Node context menu -->
     <v-fab-transition
@@ -82,16 +84,18 @@
     </v-fab-transition>
 
     <!-- Element properties pane (left hand side) -->
-    <Properties v-if="properties.enabled" :properties="properties.value"></Properties>
+    <Properties v-show="properties.enabled" :properties="properties.value"></Properties>
 
     <!-- Search bar (bottom) -->
     <Search
-      v-if="search.enabled"
+      v-show="search.enabled"
       @add="add"
-      @toggle="search.hidden = $event"
-      @find_actions="find_actions"
+      @clear="clear"
+      @show="search.visible = $event"
+      @advanced="search.advanced = $event"
       :alt="events.keys.alt"
-      :hide="search.hidden"
+      :show="search.visible"
+      :advanced="search.advanced"
     ></Search>
   </div>
 </template>
@@ -126,9 +130,9 @@ export default {
         enabled: true
       },
       search: {
-        hidden: false,
-        editor: false,
-        enabled: true
+        visible: true,
+        enabled: true,
+        advanced: false
       },
       context_menu_items: [
         {
@@ -202,7 +206,7 @@ export default {
 
     context_menu_item(fn, target) {
       this.context_menu_destroy();
-      this.search.hidden = true;
+      this.search.visible = false;
       fn(target).then(response => {
         const elements = response.Graph;
         if (typeof elements === "undefined" || elements.length === 0) return;
@@ -269,17 +273,6 @@ export default {
           "OPTIONAL MATCH actions=(source)-[:ACTION]->(:Resource) " +
           "RETURN source, actions"
       );
-    },
-
-    find_actions(actions) {
-      this.neo4j
-        .run(
-          `WITH "${actions}" AS action ` +
-            "MATCH path=()-[:ACTION{Name:action}]->() RETURN path"
-        )
-        .then(elements => {
-          this.add(elements.Graph);
-        });
     },
 
     unbundle_actions(element) {
@@ -650,13 +643,17 @@ export default {
       });
     },
 
+    clear() {
+      return cy.elements().remove();
+    },
+
     register_listeners() {
       // Keyboard events
       window.addEventListener("keydown", event => {
         switch (event.key) {
           case "Tab":
             event.preventDefault();
-            this.search.hidden = false;
+            this.search.visible = true;
             this.events.keys.alt = !this.events.keys.alt;
 
             break;
@@ -674,7 +671,7 @@ export default {
           case "s":
             if (event.ctrlKey) {
               event.preventDefault();
-              this.search.hidden = false;
+              this.search.visible = true;
             }
             break;
           // TODO: Add panning using arrow keys
@@ -704,10 +701,10 @@ export default {
           case "Delete":
             this.remove(cy.elements(".selected"));
             break;
-          case "Escape":
-            this.properties.value = null;
-            this.search.hidden = true;
-            break;
+          // case "Escape":
+          //   this.properties.value = null;
+          //   this.search.visible = false;
+          //   break;
           case "Enter":
             if (event.altKey) {
               cy.elements()
@@ -736,7 +733,7 @@ export default {
       });
 
       cy.on("cxttap", "node", event => {
-        this.search.hidden = true;
+        this.search.visible = false;
         this.context_menu_create(event.target);
       });
 
@@ -783,7 +780,7 @@ export default {
       });
 
       cy.on("singleclick", event => {
-        this.search.hidden = true;
+        this.search.visible = false;
         this.context_menu_destroy();
 
         if (event.target.group) {
@@ -935,6 +932,10 @@ export default {
 
 .graph canvas {
   left: 0px !important;
+}
+
+.notice div {
+  z-index: 10 !important;
 }
 
 .notification {
