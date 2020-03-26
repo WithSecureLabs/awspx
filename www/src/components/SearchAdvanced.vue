@@ -151,11 +151,15 @@
             <!-- Load saved query -->
             <v-col>
               <v-autocomplete
+                ref="saved_queries"
                 :hint="visual.queries.loaded === undefined ? 'Load a saved query' : ''"
+                :menu-props="{top: true, nudgeTop: 10}"
                 item-value="description"
                 v-model="visual.queries.loaded"
                 class="mx-5 mt-n2 overline primary--text"
                 :items="visual.queries.saved"
+                @blur="$emit('visual_queries_active', false)"
+                @focus="$emit('visual_queries_active', true)"
                 :persistent-hint="true"
                 item-text="name"
                 return-object
@@ -163,7 +167,9 @@
                 clearable
               >
                 <template #label>
-                  <span :class="visual.queries.loaded === undefined ? '' : 'primary--text '">LOADED</span>
+                  <span
+                    :class="visual.queries.loaded === undefined ? '' : 'primary--text '"
+                  >{{visual.queries.loaded === undefined ? '' : 'LOADED '}}</span>
                 </template>
 
                 <template #item="data">
@@ -358,6 +364,7 @@ import "codemirror/addon/lint/lint";
 import "codemirror/addon/lint/lint.css";
 import "codemirror/addon/hint/show-hint";
 import "codemirror/addon/edit/closebrackets";
+import "codemirror/addon/display/autorefresh";
 import * as CypherCodeMirror from "@/codemirror-cypher/cypher-codemirror.min.js";
 
 import { queries } from "@/queries.js";
@@ -385,6 +392,10 @@ export default {
     actions: {
       Type: Array,
       default: []
+    },
+    visual_queries_active: {
+      Type: Boolean,
+      default: false
     }
   },
 
@@ -398,7 +409,8 @@ export default {
         },
         queries: {
           loaded: undefined,
-          saved: queries
+          saved: queries,
+          active: false
         },
         results: {
           items: [],
@@ -419,6 +431,7 @@ export default {
         button: true,
         settings: {
           value: "",
+          autoRefresh: true,
           mode: "application/x-cypher-query",
           readOnly: "nocursor",
           indentWithTabs: false,
@@ -546,6 +559,14 @@ export default {
   },
 
   watch: {
+    visual_queries_active(value) {
+      if (value) {
+        this.$refs.saved_queries.focus();
+        this.$refs.saved_queries.activateMenu();
+        this.$emit("visual_queries_active", false);
+      }
+    },
+
     visual_query(query) {
       this.$refs.visual.validate();
       this.visual_query_load(query);
@@ -582,7 +603,8 @@ export default {
     visual_valid() {
       return this.valid.form && this.valid.filters;
     },
-    visual_query: function() {
+
+    visual_query() {
       const from = this.visual.search.From.value.map(v =>
         v.element.data.id.replace("n", "")
       );

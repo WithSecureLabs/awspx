@@ -1,9 +1,11 @@
 <template >
   <v-chip
-    class="ma-0"
-    @click:close="v.value = v.value.filter(s => s.id !== data.item.id)"
+    @click:close="$emit('close')"
     v-on="data.on"
+    class="ma-0"
+    :color="close ? 'black' : ''"
     outlined
+    :close="close"
   >
     <v-avatar outlined>
       <v-img :src="img(data.item)" />
@@ -17,7 +19,11 @@ import icons from "@/icons.js";
 
 export default {
   props: {
-    data: {}
+    data: {},
+    close: {
+      type: Boolean,
+      default: false
+    }
   },
   data: function() {
     return { icons: icons };

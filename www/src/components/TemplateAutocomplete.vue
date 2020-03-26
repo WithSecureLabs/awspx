@@ -1,15 +1,18 @@
      
-<template>
+<template >
   <div id="autocomplete">
     <v-autocomplete
+      v-model="search.value"
       :placeholder="'placeholder' in search ? search.placeholder : ' '"
       :label="'label' in search ? search.label : ''"
       :menu-props="{top: true, nudgeTop: 10}"
       :search-input.sync="search.input"
+      @click:append="$emit('append')"
       @input="search.input = null"
+      background-color="white"
       :aria-autocomplete="false"
-      v-model="search.value"
       class="ma-0 pa-0 my-3"
+      :append-icon="append"
       :disabled="disabled"
       :cache-items="true"
       :class="classes()"
@@ -31,11 +34,10 @@
       </template>
 
       <template #selection="data">
-        <TemplateSelectSearch :data="data" />
-      </template>
-
-      <template #append>
-        <slot name="append" />
+        <TemplateSelectSearch
+          :data="data"
+          @close="search.value = search.value.filter(s => s.id !== data.item.id)"
+        />
       </template>
 
       <template #prepend-inner>
@@ -84,6 +86,10 @@ export default {
     width: {
       Type: String,
       default: "100%"
+    },
+    append: {
+      Type: String,
+      default: "$dropdown"
     }
   },
   data: function() {
@@ -108,11 +114,12 @@ export default {
       const classes = [];
 
       if (this.disabled) classes.push("disabled");
-      if (this.placeholder && this.search.value.length === 0) classes.push("empty");
+      if (this.placeholder && this.search.value.length === 0)
+        classes.push("empty");
 
       return classes.join(" ");
     }
-  },
+  }
 };
 </script>
 
