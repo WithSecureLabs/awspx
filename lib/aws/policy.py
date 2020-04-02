@@ -180,38 +180,36 @@ class Statement:
             node = None
             labels = []
 
-            if re.compile(
-                RESOURCES["AWS::Iam::SamlProvider"]
-            ).match(statement["Federated"]) is not None:
+            statements = statement["Federated"] if isinstance(
+                statement["Federated"], list) else [statement["Federated"]]
 
-                base = Resource if (next((a for a in self._resources if a.id().split(
-                    ':')[4] == statement["Federated"].split(':')[4]), False)) else External
-
-                node = base(
-                    key="Arn",
-                    labels=["AWS::Iam::SamlProvider"],
-                    properties={
-                        "Name": statement["Federated"].split('/')[-1],
-                        "Arn":  statement["Federated"]
-                    })
-
-            elif re.compile(
-                "^(?=.{1,253}\.?$)(?:(?!-|[^.]+_)[A-Za-z0-9-_]{1,63}(?<!-)(?:\.|$)){2,}$"
-            ).match(statement["Federated"]):
-
-                node = External(
-                    labels=["Internet::Domain"],
-                    properties={
-                        "Name": statement["Federated"]
-                    })
-
-            else:
-                node = External(
-                    properties={
-                        "Name": statement["Federated"],
-                    })
-
-            principals.add(node)
+            for federated in statements:
+                if re.compile(
+                    RESOURCES["AWS::Iam::SamlProvider"]
+                ).match(federated) is not None:
+                    base = Resource if (next((a for a in self._resources if a.id().split(
+                        ':')[4] == federated.split(':')[4]), False)) else External
+                    node = base(
+                        key="Arn",
+                        labels=["AWS::Iam::SamlProvider"],
+                        properties={
+                            "Name": federated.split('/')[-1],
+                            "Arn":  federated
+                        })
+                elif re.compile(
+                    "^(?=.{1,253}\.?$)(?:(?!-|[^.]+_)[A-Za-z0-9-_]{1,63}(?<!-)(?:\.|$)){2,}$"
+                ).match(federated):
+                    node = External(
+                        labels=["Internet::Domain"],
+                        properties={
+                            "Name": federated
+                        })
+                else:
+                    node = External(
+                        properties={
+                            "Name": federated,
+                        })
+                principals.add(node)
 
         # TODO:
         elif "CanonicalUser" in statement:
@@ -680,4 +678,3 @@ class ObjectACL(BucketACL):
             "s3:PutObjectVersionAcl",
         ],
     }
-
