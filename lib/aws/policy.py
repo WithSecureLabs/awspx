@@ -372,8 +372,18 @@ class Statement:
 
             # Rewrite
             resources = Elements()
-            for affected in ACTIONS[action]["Affects"]:
-                resources.update(Elements(self._explicit_resources.get(affected)))
+            for affected_type in ACTIONS[action]["Affects"]:
+
+                affected = self._explicit_resources.get(affected_type)
+
+                # Ignore mutable actions affecting built in policies
+
+                if affected_type == "AWS::Iam::Policy" \
+                        and ACTIONS[action]["Access"] in ["Permissions Management", "Write"]:
+                    affected = [a for a in affected if str(a).split(':')[
+                        4] != "aws"]
+
+                resources.update(Elements(affected))
 
             for resource in resources:
 
