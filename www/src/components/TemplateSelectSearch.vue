@@ -1,16 +1,18 @@
 <template >
   <v-chip
-    @click:close="$emit('close')"
     v-on="data.on"
-    class="ma-0"
-    :color="close ? 'black' : ''"
-    outlined
+    :color="close ? '#484848' : '#696969'"
+    @click:close="$emit('close')"
     :close="close"
+    class="ma-0"
+    outlined
   >
     <v-avatar outlined>
       <v-img :src="img(data.item)" />
     </v-avatar>
-    <span class="ml-2 item">{{ data.item.name }}</span>
+    <div class="ml-2">
+      <span class="item">{{ data.item.name }}</span>
+    </div>
   </v-chip>
 </template>
 
@@ -45,11 +47,11 @@ export default {
 
 <style>
 .item {
-  font-size: 11px;
+  font-size: 10px;
   max-width: 150px;
+  display: block !important;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  display: block;
 }
 </style>
