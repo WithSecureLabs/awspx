@@ -4,12 +4,13 @@
       <!-- Tab titles -->
       <v-tabs v-model="tab" class="elevation-24" color="black" grow>
         <v-tab
+          style="font-size: 12px !important"
           v-for="(tab, i) in tabs"
           :key="'title-' + i"
           :disabled="(tabs[i].content.length == 0)"
           class="text-none"
         >{{tabs[i].title}}</v-tab>
-        <v-tab v-if="notes.enabled" class="text-none">Notes</v-tab>
+        <v-tab v-if="notes.enabled" style="font-size: 12px !important" class="text-none">Notes</v-tab>
       </v-tabs>
 
       <!-- Tab content -->
@@ -31,7 +32,7 @@
                           <a v-if="'href' in item" :href="item.href" target="_blank">{{item.key}}</a>
                           <div v-else>{{item.key}}</div>
                         </v-col>
-                        <v-col cols="7" class="font-weight-light">{{item.value}}</v-col>
+                        <v-col cols="7" class="grey--text">{{item.value}}</v-col>
                       </v-row>
 
                       <!-- Codeblock (i.e. policy or action condition) -->
@@ -74,7 +75,7 @@
                       <v-card class="pt-5 ma-2" flat v-else-if="tab.style === 'attack'">
                         <v-row class="ma-2" no-gutters>
                           <v-col cols="2">Step {{i + 1}}:</v-col>
-                          <v-col cols="10" class="font-weight-light">{{item.description}}</v-col>
+                          <v-col cols="10" class="grey--text">{{item.description}}</v-col>
                           <v-row class="mx-0" align="center">
                             <v-col>
                               <v-card>
@@ -88,7 +89,7 @@
                       <!-- Standard case properties comprise of key, value pairs -->
                       <v-row class="mx-0" v-else>
                         <v-col cols="5">{{item.key}}</v-col>
-                        <v-col cols="7" class="font-weight-light">{{item.value}}</v-col>
+                        <v-col cols="7" class="grey--text">{{item.value}}</v-col>
                       </v-row>
                     </v-col>
                   </v-row>

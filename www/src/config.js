@@ -60,7 +60,7 @@ export default {
         style: [{
             selector: 'node',
             style: {
-                'font-family': 'Source Code Pro',
+                'font-family': 'Roboto Mono, monospace',
                 'font-size': '12px',
                 'height': 75,
                 'width': 75,
@@ -68,7 +68,7 @@ export default {
 
                 'background-color': 'white',
                 'border-color': 'black',
-                'border-width': 1,
+                'border-width': 0.2,
 
                 'text-halign': 'center',
                 'text-valign': 'bottom',
@@ -86,7 +86,7 @@ export default {
             selector: 'edge',
             style: {
 
-                'font-family': 'Source Code Pro',
+                'font-family': 'Roboto Mono, monospace',
                 'font-size': '6px',
 
                 'curve-style': 'bezier',
@@ -204,9 +204,10 @@ export default {
         {
             selector: '.selected',
             style: {
-                'line-color': colors.blue.base,
-                'line-gradient-stop-colors': colors.blue.base,
-                'border-color': colors.blue.base,
+                'line-color': "black",
+                'line-gradient-stop-colors': "black",
+                'border-color': "black",
+                'border-width': 1,
                 zIndex: 4,
             }
         },

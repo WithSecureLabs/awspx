@@ -97,7 +97,12 @@
               </v-card>
             </v-card-text>
           </v-card>
-          <v-btn color="primary" class="my-auto" :loading="false" @click="$refs.search.init()">Check again</v-btn>
+          <v-btn
+            color="primary"
+            class="my-auto"
+            :loading="false"
+            @click="$refs.search.init()"
+          >Check again</v-btn>
         </v-stepper-content>
       </v-stepper>
     </v-overlay>
@@ -123,14 +128,14 @@
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn
+            v-on="on"
+            @click="context_menu_item(item.fn, item.target)"
             :style="context_menu[i].styles.button"
             :height="context_menu[i].styles.size"
             :width="context_menu[i].styles.size"
-            @click="context_menu_item(item.fn, item.target)"
             absolute
-            fab
             dark
-            v-on="on"
+            fab
           >
             <v-icon
               :style="context_menu[i].styles.icon"
@@ -203,22 +208,22 @@ export default {
       context_menu_items: [
         {
           name: "Outbound <b>Paths</b>",
-          icon: "mdi-map-marker-up",
+          icon: "mdi-map-marker-outline",
           fn: this.find_paths_from
         },
         {
           name: "Outbound <b>Actions</b>",
-          icon: "mdi-file-search",
+          icon: "mdi-chevron-right-circle-outline",
           fn: this.find_actions_from
         },
         {
           name: "Inbound <b>Paths</b>",
-          icon: "mdi-map-marker-outline",
+          icon: "mdi-map-marker",
           fn: this.find_paths_to
         },
         {
           name: "Inbound <b>Actions</b>",
-          icon: "mdi-file-search-outline",
+          icon: "mdi-chevron-right-circle",
           fn: this.find_actions_to
         }
       ],
@@ -236,8 +241,7 @@ export default {
         store: []
       },
       layout: {
-        name: "Auto",
-        value: {}
+        name: "Auto"
       }
     };
   },
@@ -675,6 +679,7 @@ export default {
 
     run_layout() {
       let layout = this.layout.name;
+      let value = {};
 
       // Determine best fit for 'Auto'
       if (layout === "Auto") {
@@ -696,7 +701,7 @@ export default {
 
       switch (layout) {
         case "Concentric":
-          this.layout.value = {
+          value = {
             name: "concentric",
             minNodeSpacing: 50,
             spacingFactor: Math.max(10 / cy.elements().nodes().length, 1),
@@ -706,7 +711,7 @@ export default {
           break;
 
         case "Grid":
-          this.layout.value = {
+          value = {
             name: "grid",
             avoidOverlap: true,
             avoidOverlapPadding: 20,
@@ -716,13 +721,13 @@ export default {
 
         default:
         case "Dagre":
-          this.layout.value = { ...config.graph.layout };
+          value = { ...config.graph.layout };
           break;
       }
 
       cy.elements()
         .makeLayout({
-          ...this.layout.value,
+          ...value,
           animate: true
         })
         .run()
@@ -829,11 +834,7 @@ export default {
           //   break;
           case "Enter":
             if (event.altKey) {
-              cy.elements()
-                .makeLayout({
-                  ...this.layout.value
-                })
-                .run();
+              this.run_layout();
             }
             break;
           default:
@@ -1031,23 +1032,18 @@ export default {
 </script>
 
 <style>
-.v-application {
-  font-family: "Source Code Pro" !important;
-  font-size: 14px !important;
-}
-
 #graph {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  padding-right: 60px;
+  position: absolute;
   text-align: center;
   color: #2c3e50;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  position: absolute;
-  padding-right: 60px;
   z-index: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  top: 0;
 }
 
 .graph canvas {
