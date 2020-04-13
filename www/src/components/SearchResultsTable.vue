@@ -78,7 +78,7 @@ export default {
 
       this.items = items.map(r => {
         Object.keys(r).forEach(k => {
-          r[k] = json(r[k]);
+          r[k] = r[k] === null ? r[k] : json(r[k]);
           if (typeof r[k] !== "string") {
             r[k] = `${JSON.stringify(r[k], null, 2)}`;
           }
