@@ -11,7 +11,12 @@
             style="font-size: 12px !important; color: rgb(25, 118, 210);"
           >Advanced Search</span>
 
-          <v-row no-gutters class="mx-5 pt-2 flex-nowrap" align="center">
+          <v-row
+            v-show="!editor.fullscreen"
+            no-gutters
+            class="mx-5 pt-2 flex-nowrap"
+            align="center"
+          >
             <!-- 'To' and 'From' -->
             <v-col class="text-left">
               <TemplateAutocomplete
@@ -39,70 +44,89 @@
             </v-col>
 
             <!-- Advanced options -->
-            <v-col class="pl-5" cols="1" style="min-width: 80px">
-              <v-card outlined width="100px" class="mx-auto">
+            <v-col class="pl-5" cols="2">
+              <v-card outlined :disabled="!visual.enabled" width="170px" class="mx-auto">
                 <v-row class="text-center">
-                  <v-tooltip top>
-                    <template v-slot:activator="{ on }">
-                      <v-btn
-                        :color="visual.actions ? 'primary' : 'rgba(0, 0, 0, 0.54)'"
-                        @click="visual.actions = !visual.actions"
-                        :disabled="!visual.enabled"
-                        v-model="visual.actions"
-                        class="mx-auto my-3"
-                        outlined
-                        depressed
-                        small
-                        fab
-                        v-on="on"
-                      >
-                        <v-icon>mdi-file-search</v-icon>
-                      </v-btn>
+                  <v-switch v-model="visual.actions" class="mx-auto">
+                    <template #prepend>
+                      <v-tooltip left>
+                        <template v-slot:activator="{ on }">
+                          <v-icon
+                            v-on="on"
+                            :color="visual.actions ? '' : 'primary'"
+                            @click="visual.actions = false"
+                          >mdi-map-marker-outline</v-icon>
+                        </template>
+                        <span width="300px">
+                          <b>Paths-based search</b>
+                          <br />See what can get to what
+                        </span>
+                      </v-tooltip>
                     </template>
-                    <span width="300px">
-                      <b>{{ `Actions-based search (${visual.actions ? 'enabled' : 'disabled'})` }}</b>
-                      <br />Searching for
-                      <i>{{ `${visual.actions ? 'what can do what to what' : 'what can get to what' }` }}</i>
-                    </span>
-                  </v-tooltip>
+
+                    <template #append>
+                      <v-tooltip right>
+                        <template v-slot:activator="{ on }">
+                          <v-icon
+                            v-on="on"
+                            :value="true"
+                            :color="visual.actions ? 'primary' : ''"
+                            @click="visual.actions = true"
+                          >mdi-chevron-right-circle-outline</v-icon>
+                        </template>
+
+                        <span width="300px">
+                          <b>Actions-based search</b>
+                          <br />See what can do what to what
+                        </span>
+                      </v-tooltip>
+                    </template>
+                  </v-switch>
                 </v-row>
 
                 <v-row class="text-center">
-                  <v-tooltip top>
-                    <template v-slot:activator="{ on }">
-                      <v-btn
-                        :color="visual.effective ? 'primary' : 'rgba(0, 0, 0, 0.54)'"
-                        @click="visual.effective = !visual.effective"
-                        :disabled="!visual.enabled"
-                        v-model="visual.effective"
-                        class="mx-auto my-3"
-                        outlined
-                        depressed
-                        v-on="on"
-                        small
-                        fab
-                      >
-                        <v-icon>mdi-map-marker-distance</v-icon>
-                      </v-btn>
+                  <v-switch v-model="visual.effective" false-value class="mx-auto">
+                    <template #prepend>
+                      <v-tooltip left>
+                        <template v-slot:activator="{ on }">
+                          <v-icon
+                            v-on="on"
+                            :color="visual.effective ? '' : 'primary'"
+                            @click="visual.effective = false"
+                          >mdi-arrow-top-right</v-icon>
+                        </template>
+                        <span width="300px">
+                          <b>Direct search</b>
+                          <br />Exclude attack paths
+                        </span>
+                      </v-tooltip>
                     </template>
-                    <span>
-                      <b>{{ `Include attack paths (${visual.effective ? 'enabled' : 'disabled'})` }}</b>
-                      <br />
-                      <i>
-                        Paths that incorporate attacks
-                        {{ `${visual.effective ? 'will also' : 'won\'t'}` }}
-                        <br />be matched
-                      </i>
-                    </span>
-                  </v-tooltip>
+
+                    <template #append>
+                      <v-tooltip right>
+                        <template v-slot:activator="{ on }">
+                          <v-icon
+                            v-on="on"
+                            :color="visual.effective ? 'primary' : ''"
+                            @click.stop="visual.effective = true"
+                            value="false"
+                          >mdi-map-marker-path</v-icon>
+                        </template>
+                        <span width="300px">
+                          <b>Effective search</b>
+                          <br />Include attack paths
+                        </span>
+                      </v-tooltip>
+                    </template>
+                  </v-switch>
                 </v-row>
               </v-card>
             </v-col>
           </v-row>
 
           <!-- Add filters or limit results -->
-          <v-row no-gutters class="mb-n5" align="center">
-            <v-col>
+          <v-row no-gutters align="center" class="mb-n5">
+            <v-col v-show="!editor.fullscreen">
               <div style="width: 450px">
                 <v-row class="mx-5 mt-5" no-gutters>
                   <v-col>
@@ -125,9 +149,17 @@
                       v-model="visual.limit"
                       label="#Results"
                       color="primary"
-                      clearable
                       outlined
-                    ></v-text-field>
+                    >
+                      <template #append>
+                        <v-icon
+                          v-if="visual.limit !== ''"
+                          class="mt-n3"
+                          small
+                          @click="visual.limit = ''"
+                        >mdi-close</v-icon>
+                      </template>
+                    </v-text-field>
                   </v-col>
 
                   <v-col>
@@ -140,9 +172,17 @@
                       v-model="visual.hops"
                       color="primary"
                       label="#Hops"
-                      clearable
                       outlined
-                    ></v-text-field>
+                    >
+                      <template #append>
+                        <v-icon
+                          v-if="visual.hops !== ''"
+                          class="mt-n3"
+                          small
+                          @click="visual.hops = ''"
+                        >mdi-close</v-icon>
+                      </template>
+                    </v-text-field>
                   </v-col>
                 </v-row>
               </div>
@@ -152,24 +192,25 @@
             <v-col>
               <v-autocomplete
                 ref="saved_queries"
-                :hint="visual.queries.loaded === undefined ? 'Load a saved query' : ''"
-                :menu-props="{top: true, nudgeTop: 10}"
-                item-value="description"
-                v-model="visual.queries.loaded"
-                class="mx-5 mt-n2 overline primary--text"
-                :items="visual.queries.saved"
+                class="mx-5 saved-queries overline primary--text"
                 @blur="$emit('visual_queries_active', false)"
                 @focus="$emit('visual_queries_active', true)"
-                :persistent-hint="true"
+                :class="editor.fullscreen ? 'mt-n8' : ''"
+                :menu-props="{top: true, nudgeTop: 10}"
+                style="width: 30vw; float: right"
+                placeholder="LOAD A SAVED QUERY"
+                v-model="visual.queries.loaded"
+                :items="visual.queries.saved"
+                item-value="description"
                 item-text="name"
                 return-object
-                placeholder=" "
                 clearable
               >
-                <template #label>
-                  <span
-                    :class="visual.queries.loaded === undefined ? '' : 'primary--text '"
-                  >{{visual.queries.loaded === undefined ? '' : 'LOADED '}}</span>
+                <template #prepend-inner>
+                  <v-icon
+                    :color="visual.queries.loaded  ? 'primary' : ''"
+                    class="mx-5 pa-0"
+                  >mdi-content-save-edit</v-icon>
                 </template>
 
                 <template #item="data">
@@ -192,26 +233,26 @@
           <!-- Filters -->
           <div
             v-show="visual.filters.length > 0"
-            class="pb-1 pt-5"
             style="max-height: 170px; overflow: auto;"
+            class="pb-1"
           >
             <v-expansion-panels
-              accordion
+              :class="!visual.enabled ? 'readonly' : ''"
               :value="visual.enabled"
               class="px-5"
-              :class="!visual.enabled ? 'readonly' : ''"
+              accordion
             >
               <v-expansion-panel
                 v-for="j in Array(visual.filters.length).keys()"
-                :key="'filter-' + j"
                 :disabled="!visual.enabled"
+                :key="'filter-' + j"
               >
                 <v-expansion-panel-header class="pa-3 my-n3">
                   <template #default>
                     <v-col>
                       <v-row
-                        align="center"
                         style="color: rgba(0,0,0,0.4) !important; font-size: 13px"
+                        align="center"
                       >
                         <div v-if="visual.filters[j].valid">
                           <v-icon class="mr-5" color="primary">mdi-filter</v-icon>
@@ -228,8 +269,8 @@
                     <v-btn
                       v-if="j !== 0"
                       @click.stop="visual.filters[j].and = !visual.filters[j].and"
-                      icon
                       background-color="primary"
+                      icon
                     >
                       <span v-if="visual.filters[j].and">⋂</span>
                       <span v-if="!visual.filters[j].and">⋃</span>
@@ -241,14 +282,14 @@
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
                   <SearchAdvancedFilter
-                    :resources="resources"
-                    :actions="actions"
+                    :options="{actions: visual.actions, effective: visual.effective}"
+                    @filter_update="visual_filter_update(j, $event)"
                     :sources="visual.search.From.value"
                     :targets="visual.search.To.value"
-                    :options="{actions: visual.actions, effective: visual.effective}"
                     :and="visual.filters[j].and"
+                    :resources="resources"
+                    :actions="actions"
                     :index="j"
-                    @filter_update="visual_filter_update(j, $event)"
                   ></SearchAdvancedFilter>
                 </v-expansion-panel-content>
               </v-expansion-panel>
@@ -258,26 +299,42 @@
       </v-form>
 
       <!-- Editor (adapted from https://github.com/neo4j-contrib/cypher-editor) -->
-
       <div class="mt-n3 px-5">
-        <v-card-text
-          @input="editor.settings.value = editor.value.getValue()"
-          :class="!(editor.settings.readOnly) ? '' : 'readonly'"
-          id="editor"
-        />
-        <div style="width: 100%" class="text-center mt-n8">
+        <div style="width: 100%" class="text-right ml-n2 mb-n8">
           <v-tooltip top>
             <template v-slot:activator="{ on }">
               <v-btn
+                v-on="on"
+                @click.stop="editor.fullscreen = !editor.fullscreen"
+                style="z-index: 3; background-color: white;"
+                color="rgba(25, 118, 210, 0.7)"
+                x-small
+                icon
+              >
+                <v-icon>{{ editor.fullscreen ? 'mdi-window-restore': 'mdi-arrow-expand'}}</v-icon>
+              </v-btn>
+            </template>
+            <span>{{editor.fullscreen ? 'Restore' : 'Expand Editor' }}</span>
+          </v-tooltip>
+        </div>
+        <v-card-text
+          id="editor"
+          :class="[!editor.settings.readOnly ? '' : 'readonly', editor.fullscreen ? 'fullscreen' : '']"
+          @input="editor.settings.value = editor.value.getValue()"
+        />
+        <div style="width: 100%;" class="text-center mt-n8">
+          <v-tooltip top>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                v-on="on"
                 style="z-index: 3; background-color: white;"
                 @click.stop="editor_readonly_toggle"
                 :disabled="!editor.button"
                 color="rgba(25, 118, 210, 0.7)"
-                x-small
-                outlined
-                fab
                 depressed
-                v-on="on"
+                outlined
+                x-small
+                fab
               >
                 <v-icon>{{ editor.settings.readOnly ? 'mdi-lock-outline' : 'mdi-lock-open-variant-outline' }}</v-icon>
               </v-btn>
@@ -288,7 +345,6 @@
       </div>
 
       <!-- Buttons -->
-
       <v-row class="mx-5 flex-nowrap">
         <v-col cols="1">
           <v-tooltip top>
@@ -358,6 +414,7 @@
 </template>
 
 <script>
+import * as CypherCodeMirror from "@/codemirror-cypher/cypher-codemirror.min.js";
 import codemirror from "codemirror";
 import "codemirror/lib/codemirror.css";
 import "codemirror/addon/lint/lint";
@@ -365,15 +422,14 @@ import "codemirror/addon/lint/lint.css";
 import "codemirror/addon/hint/show-hint";
 import "codemirror/addon/edit/closebrackets";
 import "codemirror/addon/display/autorefresh";
-import * as CypherCodeMirror from "@/codemirror-cypher/cypher-codemirror.min.js";
 
 import { queries } from "@/queries.js";
 
 import SearchAdvancedFilter from "@/components/SearchAdvancedFilter";
-import SearchResultsTable from "@/components/SearchResultsTable";
 import TemplateAutocomplete from "@/components/TemplateAutocomplete";
 import TemplateSelectSearch from "@/components/TemplateSelectSearch";
 import TemplateSelectItem from "@/components/TemplateSelectItem";
+import SearchResultsTable from "@/components/SearchResultsTable";
 
 export default {
   name: "SearchAdvanced",
@@ -427,7 +483,7 @@ export default {
       editor: {
         enabled: true,
         value: {},
-        history: [],
+        fullscreen: false,
         button: true,
         settings: {
           value: "",
@@ -494,7 +550,6 @@ export default {
           else if (results.Text.length > 0) this.visual.results.enabled = true;
         })
         .finally(() => {
-          this.editor.history.push(this.editor.settings.value);
           this.loading = false;
         });
     },
@@ -632,8 +687,9 @@ export default {
       let query = [
         "MATCH",
         this.visual.actions
-          ? `Path=(Source)-[:${edges}]->()-[Action:ACTION]->(Target)`
-          : `Path=(Source)-[:${edges}]->(Target)`
+          ? `Paths=ShortestPath((Source)-[:${edges}]->(Policy)),` +
+            `\n      Actions=(Policy)-[Action:ACTION{Effect: 'Allow'}]->(Target)`
+          : `Paths=ShortestPath((Source)-[:${edges}]->(Target))`
       ];
 
       const where = [
@@ -646,7 +702,8 @@ export default {
 
       if (where.length > 0) query.push("\nWHERE", where);
 
-      query = query.concat("\nRETURN Path");
+      query.push(`\nRETURN Paths${this.visual.actions ? ", Actions" : ""}`);
+
       if (limit !== "") query.push(`LIMIT ${limit}`);
 
       return query.join(" ");
@@ -707,20 +764,23 @@ export default {
 @import "../codemirror-cypher/cypher-codemirror.css";
 
 .CodeMirror {
-  max-height: 150px;
+  max-height: 15vh;
   border: 1px solid rgba(25, 118, 210, 0.3);
   border-radius: 4px 4px;
-  overflow-y: auto;
+}
+
+.CodeMirror-vscrollbar {
+  right: 2px;
+  top: 12px;
+}
+
+.fullscreen .CodeMirror {
+  height: 15vh !important;
 }
 
 .readonly .CodeMirror {
   border: 1px solid rgba(0, 0, 0, 0.1);
   height: fit-content;
-}
-.limit .v-input__slot {
-  min-height: 0px !important;
-  height: 28px !important;
-  width: 120px;
 }
 
 .readonly .v-expansion-panel-header,
@@ -731,5 +791,16 @@ export default {
 .readonly .CodeMirror-gutters,
 .readonly .CodeMirror-linenumber {
   opacity: 0.7;
+}
+
+.limit .v-input__slot {
+  min-height: 0px !important;
+  height: 28px !important;
+  width: 120px;
+}
+
+.saved-queries input::placeholder {
+  font-family: "Roboto Mono", monospace;
+  font-size: 12px;
 }
 </style>

@@ -4,12 +4,12 @@
       <!-- Search expansion -->
       <v-card
         v-show="!show"
-        :height="(hover) ? 30: 20"
-        width="50"
-        class="mx-auto"
         @click="$emit('show', true)"
-        @mouseover="hover = true"
         @mouseleave="hover = false"
+        :height="(hover) ? 30: 20"
+        @mouseover="hover = true"
+        class="mx-auto"
+        width="50"
       >
         <div class="d-flex justify-center align-center">
           <v-icon>mdi-chevron-up</v-icon>
@@ -19,28 +19,28 @@
       <!-- Search -->
       <div style="bottom: 10px; width: 70vw" v-show="!advanced && show">
         <TemplateAutocomplete
-          width="65vw"
-          :key="advanced ? 0: 1"
+          :append="{enabled: true, icon: 'mdi-tune', description: 'Advanced Search'}"
           :resources="!advanced ? resources : []"
-          :search="search"
-          append="mdi-tune"
+          @append="$emit('advanced', true)"
           @add="$emit('add', $event)"
           @clear="$emit('clear')"
-          @append="$emit('advanced', true)"
+          :key="advanced ? 0: 1"
+          :search="search"
+          width="65vw"
         />
       </div>
 
       <SearchAdvanced
-        v-show="advanced && show"
         ref="advanced"
-        style="width: 70vw; bottom: 10px"
-        :resources="resources"
-        :actions="actions"
+        @visual_queries_active="$emit('visual_queries_active', $event)"
         :visual_queries_active="visual_queries_active"
+        style="width: 70vw; bottom: 10px"
         @back="$emit('advanced', false)"
         @add="$emit('add', $event)"
-        @visual_queries_active="$emit('visual_queries_active', $event)"
+        v-show="advanced && show"
         @clear="$emit('clear')"
+        :resources="resources"
+        :actions="actions"
       />
     </div>
   </div>
