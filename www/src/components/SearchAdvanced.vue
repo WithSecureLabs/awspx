@@ -688,7 +688,7 @@ export default {
         "MATCH",
         this.visual.actions
           ? `Paths=ShortestPath((Source)-[:${edges}]->(Policy)),` +
-            `\n      Actions=(Policy)-[Action:ACTION{Effect: 'Allow'}]->(Target)`
+            `\n      Actions=(Policy)-[Action:ACTION]->(Target)`
           : `Paths=ShortestPath((Source)-[:${edges}]->(Target))`
       ];
 
