@@ -23,7 +23,7 @@ class Ingestor(Elements):
     associates = []
 
     def __init__(self, session, account="000000000000", default=True, verbose=True,
-                 only_types=[], except_types=[], only_arns=[], except_arns=[]):
+                 only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
         self.session = session
         self.account_id = account
@@ -34,11 +34,11 @@ class Ingestor(Elements):
         if default and len(self.run) > 0:
 
             self.run = [t for t in self.run
-                        if (len(except_types) == 0 or t not in except_types)
+                        if (len(skip_types) == 0 or t not in skip_types)
                         and (len(only_types) == 0 or t in only_types)]
 
             self.only_arns = only_arns
-            self.except_arns = except_arns
+            self.skip_arns = skip_arns
 
             print("[*] Commencing {resources} ingestion\n".format(
                 ingestor=self.__class__.__name__,
@@ -61,17 +61,17 @@ class Ingestor(Elements):
                     f"{len(self.get('Resource'))} resources, ",
                     f"{len(self.get('Generic'))} generic resources were added\n")
 
-    def _resolve_arn_selection(self, only_arns=[], except_arns=[]):
+    def _resolve_arn_selection(self, only_arns=[], skip_arns=[]):
         """
         Set only/except ARNS for this ingestor.
         """
 
-        if only_arns and except_arns:
-            print("[!] Can't specify both --only-resource-arns and --except-resource-arns.")
+        if only_arns and skip_arns:
+            print("[!] Can't specify both --only-arns and --skip-arns.")
             return False
 
         self.only_arns = self._filter_arns(only_arns)
-        self.except_arns = self._filter_arns(except_arns)
+        self.skip_arns = self._filter_arns(skip_arns)
 
         return True
 
@@ -146,7 +146,7 @@ class Ingestor(Elements):
             # Include or exclude this ARN
             if self.only_arns and arn not in self.only_arns:
                 continue
-            elif self.except_arns and arn in self.except_arns:
+            elif self.skip_arns and arn in self.skip_arns:
                 continue
 
             properties["Arn"] = arn
@@ -426,7 +426,7 @@ class IAM(Ingestor):
            "AWS::Iam::Policy", "AWS::Iam::InstanceProfile"]
 
     def __init__(self, session, resources=None, db="default.db", verbose=False,
-                 only_types=[], except_types=[], only_arns=[], except_arns=[]):
+                 only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
         self._db = db
         self._verbose = verbose
@@ -442,13 +442,13 @@ class IAM(Ingestor):
 
         self.run = [r for r in self.run
                     if (len(only_types) == 0 or r in only_types)
-                    and r not in except_types]
+                    and r not in skip_types]
 
         print("[*] Commencing {resources} ingestion\n".format(
             resources=', '.join([r if (i == 0 or i % 3 > 0) else f'\n{" " * 15}{r}'
                                  for i, r in enumerate(self.run)])))
 
-        self.get_account_authorization_details(only_arns, except_arns)
+        self.get_account_authorization_details(only_arns, skip_arns)
 
         if "AWS::Iam::User" in self.run:
             self.get_login_profile()
@@ -467,7 +467,7 @@ class IAM(Ingestor):
 
         self._print_stats()
 
-    def get_account_authorization_details(self, only_arns, except_arns):
+    def get_account_authorization_details(self, only_arns, skip_arns):
 
         elements = Elements()
         edges = {
@@ -528,7 +528,7 @@ class IAM(Ingestor):
                                           for p in entry["AttachedManagedPolicies"]])
 
             if (str(f"AWS::Iam::{label}") in self.run
-                and (len(except_arns) == 0 or properties["Arn"] not in except_arns)
+                and (len(skip_arns) == 0 or properties["Arn"] not in skip_arns)
                 and (len(only_arns) == 0 or properties["Arn"] in only_arns)
                     and element not in elements):
                 self._print(f"[*] Adding {element}")
@@ -624,8 +624,8 @@ class IAM(Ingestor):
             except self.client.exceptions.NoSuchEntityException:
                 pass
 
-    def post(self, skip_actions=False):
-        if not skip_actions:
+    def post(self, skip_all_actions=False):
+        if not skip_all_actions:
             self.resolve()
         self.transitive()
         return self.save(self._db)
@@ -833,11 +833,11 @@ class EC2(Ingestor):
     ]
 
     def __init__(self, session, account="000000000000", verbose=False,
-                 only_types=[], except_types=[], only_arns=[], except_arns=[]):
+                 only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
         super().__init__(session=session, account=account, verbose=verbose,
-                         only_types=only_types, except_types=except_types,
-                         only_arns=only_arns, except_arns=except_arns)
+                         only_types=only_types, skip_types=skip_types,
+                         only_arns=only_arns, skip_arns=skip_arns)
 
         self.get_instance_user_data()
 
@@ -886,11 +886,11 @@ class S3(Ingestor):
     ]
 
     def __init__(self, session, account="000000000000", verbose=False,
-                 only_types=[], except_types=[], only_arns=[], except_arns=[]):
+                 only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
         super().__init__(session=session, account=account, verbose=verbose,
-                         only_types=only_types, except_types=except_types,
-                         only_arns=only_arns, except_arns=except_arns)
+                         only_types=only_types, skip_types=skip_types,
+                         only_arns=only_arns, skip_arns=skip_arns)
 
         self.client = self.session.client('s3')
 
@@ -969,12 +969,12 @@ class Lambda(Ingestor):
     ]
 
     def __init__(self, session, account="000000000000", verbose=False,
-                 only_types=[], except_types=[], only_arns=[], except_arns=[]):
+                 only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
         super().__init__(session=session, default=False, verbose=verbose)
 
         self.run = [t for t in self.run
-                    if (len(except_types) == 0 or t not in except_types)
+                    if (len(skip_types) == 0 or t not in skip_types)
                     and (len(only_types) == 0 or t in only_types)]
 
         if len(self.run) == 0:

@@ -144,7 +144,8 @@ def handle_ingest(args):
         except ClientError as e:
             print("\n" + str(e))
             if "MaxSessionDuration" in e.response["Error"]["Message"]:
-                print("\nTry reducing the session duration using '--assume-role-duration'.")
+                print("\nTry reducing the session duration using "
+                      "'--assume-role-duration'.")
 
             sys.exit(1)
 
@@ -171,14 +172,14 @@ def handle_ingest(args):
     # Run IAM first to try acquire an account number
     if IAM in args.services:
         graph = IAM(session, db=args.database, verbose=args.verbose,
-                    only_types=args.only_types, except_types=args.except_types,
-                    only_arns=args.only_arns, except_arns=args.except_arns)
+                    only_types=args.only_types, skip_types=args.skip_types,
+                    only_arns=args.only_arns, skip_arns=args.skip_arns)
         account = graph.account_id
 
     for service in [s for s in args.services if s != IAM]:
         resources += service(session, account=account, verbose=args.verbose,
-                             only_types=args.only_types, except_types=args.except_types,
-                             only_arns=args.only_arns, except_arns=args.except_arns)
+                             only_types=args.only_types, skip_types=args.skip_types,
+                             only_arns=args.only_arns, skip_arns=args.skip_arns)
 
     if graph is None:
         graph = IAM(session, verbose=args.verbose,
@@ -187,10 +188,10 @@ def handle_ingest(args):
     else:
         graph.update(resources)
 
-    args.load_zip = graph.post(skip_actions=args.skip_actions)
+    args.load_zip = graph.post(skip_all_actions=args.skip_all_actions)
     handle_db(args)
 
-    if not (args.skip_attacks or args.skip_actions):
+    if not (args.skip_all_attacks or args.skip_all_actions):
         handle_attacks(args)
 
 
@@ -202,7 +203,7 @@ def handle_attacks(args):
     try:
         Attacks.compute(
             max_iterations=args.max_attack_iterations,
-            except_attacks=args.except_attacks,
+            skip_attacks=args.skip_attacks,
             only_attacks=args.only_attacks,
             max_search_depth=str(args.max_attack_depth
                                  if args.max_attack_depth is not None
@@ -213,7 +214,7 @@ def handle_attacks(args):
     except Exception as attack:
         if attack in Attacks.definitions:
             print(f"[!] Attack: `{attack}` failed, to exclude this "
-                  f"attack in future append --except-attacks='{attack}'")
+                  f"attack in future append --skip-attacks='{attack}'")
         else:
             print("[-]", attack)
 
@@ -361,7 +362,8 @@ def main():
     pnr.add_argument('--env', action='store_true',
                      help="Enables the use of the Environment Variables for AWS credentials.")
     pnr.add_argument('--profile', dest='profile', default="default",
-                     help="Profile to use for ingestion (corresponds to a [section] in ~/.aws/credentials). If no profile is specified, awspx will attempt to find and use an instance profile from IMDS.")
+                     help=("Profile to use for ingestion (corresponds to a [section] in ~/.aws/credentials). "
+                           "If no profile is specified, awspx will attempt to find and use an instance profile from IMDS."))
     pnr.add_argument('--assume-role', dest='role_to_assume',
                      help="ARN of role to assume for ingestion (useful for cross-account ingestion).")
     pnr.add_argument('--assume-role-duration', dest='role_to_assume_duration', type=int, default=3600,
@@ -380,14 +382,14 @@ def main():
     type_args.add_argument('--only-types', dest='only_types', default=[], nargs="+", type=resource,
                            help=str("Resource types to include, "
                                     "all other types will be ignored."))
-    type_args.add_argument('--except-types', dest='except_types', nargs="+", default=[],
+    type_args.add_argument('--skip-types', dest='skip_types', nargs="+", default=[],
                            type=resource, help="Resources types to exclude")
 
     # ARN args
     arn_args = snr.add_mutually_exclusive_group()
     arn_args.add_argument('--only-arns', dest='only_arns', default=[], nargs="+", type=ARN,
                           help="Resources to include by ARN, no other resource types will be ingested.")
-    arn_args.add_argument('--except-arns', dest='except_arns', default=[], nargs="+", type=ARN,
+    arn_args.add_argument('--skip-arns', dest='skip_arns', default=[], nargs="+", type=ARN,
                           help="Resources to exclude by ARN.")
 
     verbosity = ingest_parser.add_argument_group("Verbosity")
@@ -395,7 +397,7 @@ def main():
                            help="Enables verbose output messages.")
 
     actions = ingest_parser.add_argument_group("Actions")
-    actions.add_argument('--skip-actions', dest='skip_actions', action='store_true', default=False,
+    actions.add_argument('--skip-all-actions', dest='skip_all_actions', action='store_true', default=False,
                          help="Skip policy resolution (actions will not be processed).")
 
     #
@@ -410,7 +412,7 @@ def main():
         ag = p.add_argument_group("Attack computation")
         g = ag.add_mutually_exclusive_group()
 
-        g.add_argument('--except-attacks', dest='except_attacks', default=[], nargs="+", type=attack,
+        g.add_argument('--skip-attacks', dest='skip_attacks', default=[], nargs="+", type=attack,
                        help="Attacks to exclude.")
         g.add_argument('--only-attacks', dest='only_attacks', default=[], nargs="+", type=attack,
                        help="Attacks to include. No others will be computed.")
@@ -422,7 +424,7 @@ def main():
                         help="Include conditional actions when computing attacks.")
 
         if p is ingest_parser:
-            ag.add_argument('--skip-attacks', dest='skip_attacks', action='store_true', default=False,
+            ag.add_argument('--skip-all-attacks', dest='skip_all_attacks', action='store_true', default=False,
                             help="Skip attack path computation (it can be run later with `awspx attacks`).")
 
     #

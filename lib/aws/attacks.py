@@ -1245,7 +1245,7 @@ class Attacks:
     @staticmethod
     def compute(
         max_iterations=5,
-        except_attacks=[],
+        skip_attacks=[],
         only_attacks=[],
         max_search_depth="",
         ignore_actions_with_conditions=True
@@ -1277,7 +1277,7 @@ class Attacks:
         # of iterations.
 
         attack_definitions = {k: v for k, v in Attacks.definitions.items()
-                              if k not in except_attacks
+                              if k not in skip_attacks
                               and (only_attacks == [] or k in only_attacks)}
 
         try:
