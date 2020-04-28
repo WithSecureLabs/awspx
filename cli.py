@@ -322,8 +322,8 @@ def main():
 
     parser = argparse.ArgumentParser(
         prog="awspx",
-        description=("Awspx is a proof-of-concept designed to support visualizing "
-                     "effective access and resource relationships in AWS environments."))
+        description=("awspx is a graph-based tool for visualizing effective "
+                     "access and resource relationships within AWS. "))
 
     subparsers = parser.add_subparsers(title="commands")
 
