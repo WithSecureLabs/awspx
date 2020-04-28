@@ -10,7 +10,7 @@ from random import randrange
 
 import boto3
 from botocore.credentials import InstanceMetadataProvider
-from botocore.exceptions import ProfileNotFound
+from botocore.exceptions import ProfileNotFound, ClientError
 from botocore.utils import InstanceMetadataFetcher
 
 from lib.aws.attacks import Attacks
@@ -135,10 +135,19 @@ def handle_ingest(args):
     print(f"[+] Database set to: {args.database}")
 
     if args.role_to_assume:
-        response = session.client('sts').assume_role(
-            RoleArn=args.role_to_assume,
-            RoleSessionName=f"awspx",
-            DurationSeconds=7200)
+        try:
+            response = session.client('sts').assume_role(
+                RoleArn=args.role_to_assume,
+                RoleSessionName=f"awspx",
+                DurationSeconds=args.role_to_assume_duration)
+
+        except ClientError as e:
+            print("\n" + str(e))
+            if "MaxSessionDuration" in e.response["Error"]["Message"]:
+                print("\nTry reducing the session duration using '--assume-role-duration'.")
+
+            sys.exit(1)
+
         if response:
             print(f"[+] Assumed role: {args.role_to_assume}")
             session = boto3.session.Session(
@@ -355,9 +364,10 @@ def main():
                      help="Profile to use for ingestion (corresponds to a [section] in ~/.aws/credentials). If no profile is specified, awspx will attempt to find and use an instance profile from IMDS.")
     pnr.add_argument('--assume-role', dest='role_to_assume',
                      help="ARN of role to assume for ingestion (useful for cross-account ingestion).")
+    pnr.add_argument('--assume-role-duration', dest='role_to_assume_duration', type=int, default=3600,
+                     help="Maximum session duration in seconds (for --assume-role.)")
     pnr.add_argument('--region', dest='region', default="eu-west-1", type=region,
                      help="Region to ingest (defaults to profile region, or eu-west-1 if not set).")
-
     pnr.add_argument('--database', dest='database', default=None, choices=DATABASES,
                      help="Name of database to use (defaults to <profile>.db).")
 
