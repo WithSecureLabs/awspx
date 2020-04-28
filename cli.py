@@ -332,47 +332,46 @@ def main():
     #
     # awspx update
     #
-    update_parser = subparsers.add_parser(
-        "update", help="Update awspx to the latest version.")
+    update_parser = subparsers.add_parser("update",
+                                          help="Update awspx to the latest version.")
     update_parser.set_defaults(func=handle_update)
 
     #
     # awspx profile
     #
-    profile_parser = subparsers.add_parser("profile", help="Manage AWS credential profiles.",
-                                           description="Create, list and delete profiles for AWS ingestion.")
+    profile_parser = subparsers.add_parser("profile",
+                                           help="Manage AWS credential profiles used for ingestion.")
     profile_parser.set_defaults(func=handle_profile)
 
     profile_group = profile_parser.add_mutually_exclusive_group(required=True)
 
     profile_group.add_argument('--create', dest='create_profile', default=None, type=profile,
-                               help="Create a new profile using aws configure.")
+                               help="Create a new profile using `aws configure`.")
     profile_group.add_argument('--list', dest='list_profiles', action='store_true',
-                               help="List profiles you have saved previously.")
+                               help="List saved profiles.")
     profile_group.add_argument('--delete', dest='delete_profile', choices=CREDENTIALS.sections(),
                                help="Delete a saved profile.")
     #
     # awspx ingest
     #
-    ingest_parser = subparsers.add_parser("ingest", help="Ingest data from an AWS account.",
-                                          description="Ingest resources from supported services.")
+    ingest_parser = subparsers.add_parser("ingest",
+                                          help="Ingest data from an AWS account.")
     ingest_parser.set_defaults(func=handle_ingest)
 
     # Profile & region args
     pnr = ingest_parser.add_argument_group("Profile and region")
     pnr.add_argument('--env', action='store_true',
-                     help="Enables the use of the Environment Variables for AWS credentials.")
+                     help="Use AWS credential environment variables.")
     pnr.add_argument('--profile', dest='profile', default="default",
-                     help=("Profile to use for ingestion (corresponds to a [section] in ~/.aws/credentials). "
-                           "If no profile is specified, awspx will attempt to find and use an instance profile from IMDS."))
+                     help="Profile to use for ingestion (corresponds to a `[section]` in `~/.aws/credentials).")
     pnr.add_argument('--assume-role', dest='role_to_assume',
-                     help="ARN of role to assume for ingestion (useful for cross-account ingestion).")
+                     help="ARN of a role to assume for ingestion (useful for cross-account ingestion).")
     pnr.add_argument('--assume-role-duration', dest='role_to_assume_duration', type=int, default=3600,
-                     help="Maximum session duration in seconds (for --assume-role.)")
+                     help="Maximum session duration in seconds (for --assume-role).")
     pnr.add_argument('--region', dest='region', default="eu-west-1", type=region,
-                     help="Region to ingest (defaults to profile region, or eu-west-1 if not set).")
+                     help="Region to ingest (defaults to profile region, or `eu-west-1` if not set).")
     pnr.add_argument('--database', dest='database', default=None, choices=DATABASES,
-                     help="Name of database to use (defaults to <profile>.db).")
+                     help="Database to store results (defaults to <profile>.db).")
 
     # Services & resources args
     snr = ingest_parser.add_argument_group("Services and resources")
@@ -381,21 +380,20 @@ def main():
 
     type_args = snr.add_mutually_exclusive_group()
     type_args.add_argument('--only-types', dest='only_types', default=[], nargs="+", type=resource,
-                           help=str("Resource types to include, "
-                                    "all other types will be ignored."))
+                           help="Resource to include by type, all other resource types will be excluded.")
     type_args.add_argument('--skip-types', dest='skip_types', nargs="+", default=[],
-                           type=resource, help="Resources types to exclude")
+                           type=resource, help="Resources to exclude by type.")
 
     # ARN args
     arn_args = snr.add_mutually_exclusive_group()
     arn_args.add_argument('--only-arns', dest='only_arns', default=[], nargs="+", type=ARN,
-                          help="Resources to include by ARN, no other resource types will be ingested.")
+                          help="Resources to include by ARN, all other resources will be excluded.")
     arn_args.add_argument('--skip-arns', dest='skip_arns', default=[], nargs="+", type=ARN,
                           help="Resources to exclude by ARN.")
 
     verbosity = ingest_parser.add_argument_group("Verbosity")
     verbosity.add_argument('--verbose', dest='verbose', action='store_true', default=False,
-                           help="Enables verbose output messages.")
+                           help="Enable verbose output.")
 
     actions = ingest_parser.add_argument_group("Actions")
     actions.add_argument('--skip-all-actions', dest='skip_all_actions', action='store_true', default=False,
@@ -404,8 +402,8 @@ def main():
     #
     # awspx attacks
     #
-    attacks_parser = subparsers.add_parser("attacks", help="Compute attacks on current awspx database.",
-                                           description="Compute attacks for current database.")
+    attacks_parser = subparsers.add_parser("attacks",
+                                           help="Compute attacks using the active database.")
     attacks_parser.set_defaults(func=handle_attacks)
 
     # add args to both
@@ -414,15 +412,15 @@ def main():
         g = ag.add_mutually_exclusive_group()
 
         g.add_argument('--skip-attacks', dest='skip_attacks', default=[], nargs="+", type=attack,
-                       help="Attacks to exclude.")
+                       help="Attacks to exclude by name.")
         g.add_argument('--only-attacks', dest='only_attacks', default=[], nargs="+", type=attack,
-                       help="Attacks to include. No others will be computed.")
+                       help="Attacks to include by name, all other attacks will be excluded.")
         ag.add_argument('--max-attack-iterations', dest='max_attack_iterations', default=5, type=int,
-                        help="Maximum number of iterations to run each attack.")
+                        help="Maximum number of iterations to run each attack (default 5).")
         ag.add_argument('--max-attack-depth', dest='max_attack_depth', default=None, type=int,
-                        help="Maximum search depth for attacks.")
+                        help="Maximum search depth for attacks (default None).")
         ag.add_argument('--include-conditional-attacks', dest='include_conditional_attacks', action='store_true', default=False,
-                        help="Include conditional actions when computing attacks.")
+                        help="Include conditional actions when computing attacks (default False).")
 
         if p is ingest_parser:
             ag.add_argument('--skip-all-attacks', dest='skip_all_attacks', action='store_true', default=False,
@@ -431,20 +429,20 @@ def main():
     #
     # awspx db
     #
-    db_parser = subparsers.add_parser("db", help="Manage awspx databases.",
-                                      description="Select the database used by the browser or populate a new databases from a zip.")
+    db_parser = subparsers.add_parser(
+        "db", help="Manage databases used for visualization, ingestion, and attack computation.")
+
     db_parser.set_defaults(func=handle_db)
 
     db_group = db_parser.add_mutually_exclusive_group(required=True)
 
     db_group.add_argument('--use', dest='use_db', choices=DATABASES,
-                          help="Use an existing database.")
+                          help="Switch to the specified database.")
     db_group.add_argument('--list', dest='list_dbs', action='store_true',
-                          help="List databases.")
+                          help="List available databases.")
     db_group.add_argument('--load-zip', dest='load_zip', choices=sorted([z for z in os.listdir("/opt/awspx/data/")
                                                                          if z.endswith(".zip")]),
-                          help=("Create a new database from a zip file located in /opt/awspx/data/ (~/bin/awspx/data on Mac)."
-                                "To include attack information `awspx attacks` must be run separately)."))
+                          help="Create/overwrite database with ZIP file content.")
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
