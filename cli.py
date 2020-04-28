@@ -55,8 +55,8 @@ def handle_profile(args):
         try:
             session = boto3.session.Session(profile_name=args.create_profile)
             identity = session.client('sts').get_caller_identity()
-            print(
-                f"[+] Profile '{args.create_profile}' created. User is {identity['Arn']}.")
+            print(f"[+] Profile '{args.create_profile}' successfully created. "
+                  f"(identity: {identity['Arn']}).\n")
         except:
             print(f"[+] Profile '{args.create_profile}' created.")
 
@@ -125,14 +125,15 @@ def handle_ingest(args):
         identity = session.client('sts').get_caller_identity()
         account = identity["Account"]
 
-        print(f"[+] User set to: {identity['Arn']}")
+        print(f"[+] Profile: {args.profile} (identity: {identity['Arn']})")
 
     except:
         print("[-] Request to establish identity (sts:GetCallerIdentity) failed.")
         sys.exit(1)
 
-    print(f"[+] Region set to: {args.region}")
-    print(f"[+] Database set to: {args.database}")
+    print(f"[+] Services:  {', '.join([s.__name__ for s in args.services])}")
+    print(f"[+] Database:  {args.database}")
+    print(f"[+] Region:    {args.region}")
 
     if args.role_to_assume:
         try:
