@@ -889,6 +889,10 @@ export default {
         }
       });
 
+      cy.on("boxstart", event => {
+        this.context_menu_destroy();
+      });
+
       cy.on("doubleclick", "node", event => {
         this.expand_collapse(event.target);
       });
