@@ -125,7 +125,7 @@ def handle_ingest(args):
         identity = session.client('sts').get_caller_identity()
         account = identity["Account"]
 
-        print(f"[+] Profile: {args.profile} (identity: {identity['Arn']})")
+        print(f"[+] Profile:   {args.profile} (identity: {identity['Arn']})")
 
     except:
         print("[-] Request to establish identity (sts:GetCallerIdentity) failed.")
