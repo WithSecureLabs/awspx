@@ -92,7 +92,7 @@ export default {
                 'curve-style': 'bezier',
                 'target-arrow-shape': 'triangle',
                 'width': '1px',
-
+                'line-color': "#999999",
                 'color': 'White',
                 'text-rotation': 'autorotate',
                 'text-background-color': 'Black',
@@ -202,15 +202,21 @@ export default {
             }
         },
         {
-            selector: '.selected',
+            selector: 'node.selected',
             style: {
-                'line-color': "black",
-                'line-gradient-stop-colors': "black",
                 'border-color': "black",
                 'border-width': 1,
-                zIndex: 4,
+                'z-index': 4,
             }
         },
+        {
+            selector: 'edge.selected',
+            style: {
+                'z-index': 4,
+                'width': '1.5px',
+            }
+        },
+
         {
             selector: '.unselected',
             style: {

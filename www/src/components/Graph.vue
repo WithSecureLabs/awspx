@@ -919,11 +919,10 @@ export default {
               collection.merge(event.target.connectedNodes());
               collection.merge(event.target);
             }
-            cy.elements().addClass("unselected");
             cy.elements(".selected").removeClass("selected");
-
-            event.target.addClass("selected");
+            cy.elements().addClass("unselected");
             collection.removeClass("unselected");
+            event.target.addClass("selected");
             this.properties.value = event.target.json();
           } else {
             event.target.removeClass("unselected");
