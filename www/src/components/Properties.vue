@@ -74,8 +74,8 @@
                       <!-- Attacks -->
                       <v-card class="pt-5 ma-2" flat v-else-if="tab.style === 'attack'">
                         <v-row class="ma-2" no-gutters>
-                          <v-col cols="2">Step {{i + 1}}:</v-col>
-                          <v-col cols="10" class="grey--text">{{item.description}}</v-col>
+                          <v-col cols="1">Step {{i + 1}}:</v-col>
+                          <v-col cols="11" class="grey--text">{{item.description}}</v-col>
                           <v-row class="mx-0" align="center">
                             <v-col>
                               <v-card>
