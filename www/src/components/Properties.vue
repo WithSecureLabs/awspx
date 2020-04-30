@@ -325,7 +325,7 @@ export default {
               effect: effect
             };
         });
-        actions = Object.keys(actions).map(k => {
+        actions = Object.keys(actions).sort().map(k => {
           return { name: k, ...actions[k] };
         });
 
