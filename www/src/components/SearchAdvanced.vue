@@ -233,7 +233,7 @@
           <!-- Filters -->
           <div
             v-show="visual.filters.length > 0"
-            style="max-height: 170px; overflow: auto;"
+            style="max-height: 25vh; overflow-y: auto;"
             class="pb-1"
           >
             <v-expansion-panels
@@ -687,8 +687,8 @@ export default {
       let query = [
         "MATCH",
         this.visual.actions
-          ? `Paths=ShortestPath((Source)-[:${edges}]->(Policy)),` +
-            `\n      Actions=(Policy)-[Action:ACTION]->(Target)`
+          ? `Paths=ShortestPath((Source)-[:${edges}]->(Entity)),` +
+            `\n      Actions=(Entity)-[Action:ACTION]->(Target)`
           : `Paths=ShortestPath((Source)-[:${edges}]->(Target))`
       ];
 
