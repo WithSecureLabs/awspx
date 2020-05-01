@@ -4,7 +4,7 @@
     :color="close ? '#484848' : '#696969'"
     @click:close="$emit('close')"
     :close="close"
-    class="ma-0"
+    class="ma-0 mr-2"
     outlined
   >
     <v-avatar outlined>
