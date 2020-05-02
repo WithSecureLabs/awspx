@@ -90,7 +90,7 @@ export default {
 
   methods: {
     init() {
-      const types = ["Admin", "External", "Resource", "Generic"];
+      const types = ["Admin", "External", "Resource", "CatchAll", "Generic"];
       this.loading = true;
 
       Promise.all([

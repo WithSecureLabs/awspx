@@ -372,7 +372,14 @@ class Statement:
         for action in self.actions():
 
             resources = Elements()
-            
+
+            # Actions that do not affect specific resource types.
+
+            if ACTIONS[action]["Affects"] == {}:
+
+                resources.update(Elements(
+                    self._explicit_resources.get("CatchAll")))
+
             for affected_type in ACTIONS[action]["Affects"].keys():
 
                 affected = self._explicit_resources.get(affected_type)

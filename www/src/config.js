@@ -121,6 +121,12 @@ export default {
             }
         },
         {
+            selector: 'node.CatchAll',
+            style: {
+                'background-image': icons.CatchAll,
+            }
+        },
+        {
             selector: 'node.Internet.Domain',
             style: {
                 'background-image': icons.Internet.Domain,

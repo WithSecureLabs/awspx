@@ -344,7 +344,8 @@ export default {
 
       return this.neo4j.run(
         `MATCH (source) WHERE ID(source) = ${id} ` +
-          "OPTIONAL MATCH actions=(source)-[:ACTION]->(:Resource) " +
+          "OPTIONAL MATCH actions=(source)-[:ACTION]->(target) " +
+          "WHERE target:Resource OR target:CatchAll " +
           "RETURN source, actions"
       );
     },

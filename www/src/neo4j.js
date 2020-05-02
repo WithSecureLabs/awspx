@@ -204,7 +204,7 @@ export default {
                     .map(e => e.split("::")).flat()
 
                 if (element.group === "nodes"
-                    && ["Resource", "Generic", "External", "Admin"]
+                    && ["Resource", "Generic", "External", "Admin", "CatchAll"]
                         .filter(c => element.classes.indexOf(c) != -1).length > 0
                 ) nodes.push(element)
 

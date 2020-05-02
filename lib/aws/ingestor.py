@@ -11,7 +11,7 @@ from botocore.exceptions import ClientError
 from lib.aws.actions import ACTIONS
 from lib.aws.policy import BucketACL, ObjectACL, IdentityBasedPolicy, ResourceBasedPolicy
 from lib.aws.resources import RESOURCES
-from lib.graph.base import Elements
+from lib.graph.base import Elements, Node
 from lib.graph.db import Neo4j
 from lib.graph.edges import Action, Associative, Transitive, Trusts
 from lib.graph.nodes import Generic, Resource
@@ -129,7 +129,7 @@ class Ingestor(Elements):
 
         except Exception as e:
             self._print(f"[!] Couldn't load {collection} of {boto_base_resource} "
-                  "-- probably due to a resource based policy or something.")
+                        "-- probably due to a resource based policy or something.")
 
         for resource in resources:
 
@@ -626,6 +626,12 @@ class IAM(Ingestor):
 
     def post(self, skip_all_actions=False):
         if not skip_all_actions:
+            self.add(Node(
+                properties={
+                    "Name": "CatchAll",
+                    "Description": "Pseudo-Endpoint for actions that don't specify an affected resource type."
+                },
+                labels=["CatchAll"]))
             self.resolve()
         self.transitive()
         return self.save(self._db)
@@ -696,7 +702,8 @@ class IAM(Ingestor):
         }
 
         (principals, actions, trusts) = (Elements(), Elements(), Elements())
-        resources = self.get("Resource") + self.get("Generic")
+        resources = self.get("Resource") + \
+            self.get("Generic")   + self.get("CatchAll")
 
         print("[*] Resolving actions and resources\n")
 
@@ -856,7 +863,8 @@ class EC2(Ingestor):
                     Attribute="userData", DryRun=True, InstanceId=name)
             except ClientError as e:
                 if 'DryRunOperation' not in str(e):
-                    self._print("[!] EC2: Not authorised to get instance user data.")
+                    self._print(
+                        "[!] EC2: Not authorised to get instance user data.")
 
             try:
                 response = client.describe_instance_attribute(Attribute="userData",
@@ -924,7 +932,8 @@ class S3(Ingestor):
                 self._print(f"[+] Updated bucket acl for {bucket}")
             except ClientError as e:
                 if "AccessDenied" in str(e):
-                    self._print(f"[!] Access denied when getting ACL for {bucket}")
+                    self._print(
+                        f"[!] Access denied when getting ACL for {bucket}")
                 else:
                     self._print("[!]", e)
 
@@ -937,11 +946,12 @@ class S3(Ingestor):
                 arn = obj.get("Arn")
                 bucket, *key = arn.split(':::')[1].split('/')
                 key = "/".join(key)
-                obj.set("ACL", sr.ObjectAcl(bucket,key).grants)
+                obj.set("ACL", sr.ObjectAcl(bucket, key).grants)
                 self._print(f"[+] Updated object acl for {obj}")
             except ClientError as e:
                 if "AccessDenied" in str(e):
-                    self._print(f"[!] Access denied when getting ACL for {obj}")
+                    self._print(
+                        f"[!] Access denied when getting ACL for {obj}")
                 else:
                     self._print("[!]", e)
 
