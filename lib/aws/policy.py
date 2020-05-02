@@ -370,9 +370,9 @@ class Statement:
 
         for action in self.actions():
 
-            # Rewrite
             resources = Elements()
-            for affected_type in ACTIONS[action]["Affects"]:
+
+            for affected_type in ACTIONS[action]["Affects"].keys():
 
                 affected = self._explicit_resources.get(affected_type)
 
@@ -399,6 +399,10 @@ class Statement:
                 condition = json.dumps(condition) \
                     if len(condition[0]) > 0 else "[]"
 
+                supplementary = next((ACTIONS[action]["Affects"][r]
+                                      for r in resource.labels(
+                ) if r in ACTIONS[action]["Affects"]), {})
+
                 for principal in self._explicit_principals:
                     actions.add(Action(
                         properties={
@@ -407,7 +411,8 @@ class Statement:
                             "Effect":       self._statement["Effect"],
                             "Access":       ACTIONS[action]["Access"],
                             "Reference":    ACTIONS[action]["Reference"],
-                            "Condition":    condition
+                            "Condition":    condition,
+                            **supplementary
                         },
                         source=principal, target=resource))
 

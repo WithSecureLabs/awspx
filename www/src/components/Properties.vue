@@ -27,12 +27,32 @@
                   <v-row no-gutters class="mx-0">
                     <v-col>
                       <!-- Action -->
-                      <v-row class="mx-0" v-if="tab.style === 'action' && item.key !== 'Condition'">
-                        <v-col cols="5">
+                      <v-row
+                        class="mx-2 my-0"
+                        v-if="tab.style === 'action' && item.key !== 'Condition'"
+                      >
+                        <v-col cols="4">
                           <a v-if="'href' in item" :href="item.href" target="_blank">{{item.key}}</a>
                           <div v-else>{{item.key}}</div>
                         </v-col>
-                        <v-col cols="7" class="grey--text">{{item.value}}</v-col>
+                        <v-col cols="8" class="grey--text">
+                          <div v-if="Array.isArray(item.value)">
+                            <div v-if="item.value.length > 0">
+                              <li v-for="k in item.value" :key="'li-' + k">{{k}}</li>
+                            </div>
+                            <div v-else>-</div>
+                            <div class="pt-1" v-if="(item.key === 'Condition Keys')">
+                              +
+                              <a
+                                href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html"
+                                target="_blank"
+                              >
+                                <i>Global Conditions</i>
+                              </a>
+                            </div>
+                          </div>
+                          <div v-else>{{item.value}}</div>
+                        </v-col>
                       </v-row>
 
                       <!-- Codeblock (i.e. policy or action condition) -->
@@ -74,8 +94,8 @@
                       <!-- Attacks -->
                       <v-card class="pt-5 ma-2" flat v-else-if="tab.style === 'attack'">
                         <v-row class="ma-2" no-gutters>
-                          <v-col cols="1">Step {{i + 1}}:</v-col>
-                          <v-col cols="11" class="grey--text">{{item.description}}</v-col>
+                          <v-col class="mr-n6" cols="2">Step {{i + 1}}:</v-col>
+                          <v-col cols="10" class="grey--text">{{item.description}}</v-col>
                           <v-row class="mx-0" align="center">
                             <v-col>
                               <v-card>
@@ -325,9 +345,11 @@ export default {
               effect: effect
             };
         });
-        actions = Object.keys(actions).sort().map(k => {
-          return { name: k, ...actions[k] };
-        });
+        actions = Object.keys(actions)
+          .sort()
+          .map(k => {
+            return { name: k, ...actions[k] };
+          });
 
         tabs.push({
           title: k,
@@ -341,25 +363,46 @@ export default {
     },
 
     view_set_action(element) {
+      const hrefs = {
+        // "Condition Keys":
+        //   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_actions-resources-contextkeys.html#context_keys_table",
+        // Global:
+        //   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html"
+      };
       let properties = Object.keys(element.data.properties)
         .sort()
         .filter(
           k =>
-            !["Name", "Condition", "Reference"].includes(k) &&
-            element.data.properties[k].length > 0
+            ![
+              "Name",
+              "Description",
+              "Condition",
+              "Reference",
+              "Condition Keys",
+              "Dependant Actions"
+            ].includes(k) && element.data.properties[k].length > 0
         )
         .map(k => {
           let item = { key: k, value: element.data.properties[k] };
-          if (
-            k === "Description" &&
-            "Reference" in element.data.properties &&
-            element.data.properties["Reference"] !== ""
-          )
-            item["href"] = element.data.properties["Reference"];
+          // if (
+          //   k === "Description" &&
+          //   "Reference" in element.data.properties &&
+          //   element.data.properties["Reference"] !== ""
+          // )
+          //   item["href"] = element.data.properties["Reference"];
           return item;
         });
 
-      // TODO:
+      ["Condition Keys", "Dependant Actions"].forEach(property => {
+        if (property in element.data.properties) {
+          properties.push({
+            key: property,
+            value: JSON.parse(element.data.properties[property]).sort()
+          });
+          if (property in hrefs) properties.slice(-1)[0].href = hrefs[property];
+        }
+      });
+
       if ("Condition" in element.data.properties) {
         properties.push({
           key: "Condition",
@@ -372,6 +415,17 @@ export default {
             .replace(/\n/g, "<br>")
         });
       }
+
+      properties.unshift({
+        key: "Description",
+        value: element.data.properties["Description"]
+      });
+
+      properties.push({
+        key: "API Reference",
+        href: element.data.properties["Reference"],
+        value: ""
+      });
 
       return {
         title: element.data.properties.Name,
