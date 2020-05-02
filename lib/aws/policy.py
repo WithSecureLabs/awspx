@@ -103,6 +103,7 @@ class Statement:
                         labels=["AWS::Account"],
                         properties={
                             "Name": "All AWS Accounts",
+                            "Description": "Pseudo-Account representing anyone who possesses an AWS account",
                             "Arn": "arn:aws:iam::{Account}:root"
                         })]
 
@@ -371,7 +372,7 @@ class Statement:
         for action in self.actions():
 
             resources = Elements()
-
+            
             for affected_type in ACTIONS[action]["Affects"].keys():
 
                 affected = self._explicit_resources.get(affected_type)

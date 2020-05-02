@@ -700,6 +700,7 @@ class Attacks:
         return (
             "MERGE (admin:Admin:`AWS::Iam::Policy`{"
             "Name: 'Effective Admin', "
+            "Description: 'Pseudo-Policy representing full and unfettered access.', "
             "Arn: 'arn:aws:iam::${Account}:policy/Admin', "
             'Document: \'[{"DefaultVersion": {"Version": "2012-10-17", '
             '"Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"'
