@@ -133,7 +133,8 @@ export default {
             });
           })
       ]).finally(() => {
-        this.search.label = `Search ${this.resources.length} Resources`;
+        const count = this.resources.filter(r => r.class === "Resource").length;
+        this.search.label = `Search ${count} Resources  (+${this.resources.length - count} others)`;
         this.loading = false;
       });
     }
