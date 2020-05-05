@@ -702,11 +702,22 @@ export default {
 
       switch (layout) {
         case "Concentric":
+          const degrees = cy.elements("node").reduce(
+            (nodes, n) => ({
+              ...nodes,
+              [n.data("id")]: n.neighborhood("node").length
+            }),
+            {}
+          );
+
           value = {
             name: "concentric",
             minNodeSpacing: 50,
-            spacingFactor: Math.max(10 / cy.elements().nodes().length, 1),
+            spacingFactor: Math.max(10 / Object.keys(degrees).length, 1),
             startAngle: 0,
+            concentric: function(node) {
+              return degrees[node.data("id")];
+            },
             fit: true
           };
           break;
