@@ -172,18 +172,18 @@ def handle_ingest(args):
 
     # Run IAM first to try acquire an account number
     if IAM in args.services:
-        graph = IAM(session, db=args.database, verbose=args.verbose,
+        graph = IAM(session, db=args.database, verbose=args.verbose, quick=args.quick,
                     only_types=args.only_types, skip_types=args.skip_types,
                     only_arns=args.only_arns, skip_arns=args.skip_arns)
         account = graph.account_id
 
     for service in [s for s in args.services if s != IAM]:
-        resources += service(session, account=account, verbose=args.verbose,
+        resources += service(session, account=account, verbose=args.verbose, quick=args.quick,
                              only_types=args.only_types, skip_types=args.skip_types,
                              only_arns=args.only_arns, skip_arns=args.skip_arns)
 
     if graph is None:
-        graph = IAM(session, verbose=args.verbose,
+        graph = IAM(session, verbose=args.verbose, quick=args.quick,
                     db=args.database,
                     resources=resources)
     else:
@@ -377,6 +377,9 @@ def main():
     snr = ingest_parser.add_argument_group("Services and resources")
     snr.add_argument('--services', dest='services', default=SERVICES, nargs="+", type=service,
                      help=(f"One or more services to ingest (eg: {' '.join([s.__name__ for s in SERVICES])})."))
+    snr.add_argument('--quick', dest='quick', action='store_true', default=False,
+                     help=("Skips supplementary ingestion functions "
+                           "(i.e. speed at the cost of infromation)."))
 
     type_args = snr.add_mutually_exclusive_group()
     type_args.add_argument('--only-types', dest='only_types', default=[], nargs="+", type=resource,

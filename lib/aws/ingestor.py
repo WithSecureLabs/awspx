@@ -22,7 +22,7 @@ class Ingestor(Elements):
     run = []
     associates = []
 
-    def __init__(self, session, account="000000000000", default=True, verbose=True,
+    def __init__(self, session, account="000000000000", default=True, verbose=True, quick=False,
                  only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
         self.session = session
@@ -425,7 +425,7 @@ class IAM(Ingestor):
     run = ["AWS::Iam::User", "AWS::Iam::Role", "AWS::Iam::Group",
            "AWS::Iam::Policy", "AWS::Iam::InstanceProfile"]
 
-    def __init__(self, session, resources=None, db="default.db", verbose=False,
+    def __init__(self, session, resources=None, db="default.db", verbose=False, quick=False,
                  only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
         self._db = db
@@ -436,7 +436,7 @@ class IAM(Ingestor):
             self += resources
             return
 
-        super().__init__(session=session, default=False, verbose=verbose)
+        super().__init__(session=session, default=False, verbose=verbose, quick=False)
 
         self.client = self.session.client("iam")
 
@@ -450,9 +450,11 @@ class IAM(Ingestor):
 
         self.get_account_authorization_details(only_arns, skip_arns)
 
-        if "AWS::Iam::User" in self.run:
-            self.get_login_profile()
-            self.list_access_keys()
+        if not quick:
+
+            if "AWS::Iam::User" in self.run:
+                self.get_login_profile()
+                self.list_access_keys()
 
         # Set IAM entities
         self.entities = (
@@ -703,7 +705,7 @@ class IAM(Ingestor):
 
         (principals, actions, trusts) = (Elements(), Elements(), Elements())
         resources = self.get("Resource") + \
-            self.get("Generic")   + self.get("CatchAll")
+            self.get("Generic") + self.get("CatchAll")
 
         print("[*] Resolving actions and resources\n")
 
@@ -839,14 +841,15 @@ class EC2(Ingestor):
         ("AWS::Ec2::Vpc", "AWS::Ec2::Subnet"),
     ]
 
-    def __init__(self, session, account="000000000000", verbose=False,
+    def __init__(self, session, account="000000000000", verbose=False, quick=False,
                  only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
-        super().__init__(session=session, account=account, verbose=verbose,
+        super().__init__(session=session, account=account, verbose=verbose, quick=quick,
                          only_types=only_types, skip_types=skip_types,
                          only_arns=only_arns, skip_arns=skip_arns)
 
-        self.get_instance_user_data()
+        if not quick:
+            self.get_instance_user_data()
 
         super()._print_stats()
 
@@ -893,19 +896,20 @@ class S3(Ingestor):
         'AWS::S3::Object',
     ]
 
-    def __init__(self, session, account="000000000000", verbose=False,
+    def __init__(self, session, account="000000000000", verbose=False, quick=False,
                  only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
-        super().__init__(session=session, account=account, verbose=verbose,
+        super().__init__(session=session, account=account, verbose=verbose, quick=quick,
                          only_types=only_types, skip_types=skip_types,
                          only_arns=only_arns, skip_arns=skip_arns)
 
         self.client = self.session.client('s3')
 
-        self.get_bucket_policies()
-        self.get_bucket_acls()
-        self.get_public_access_blocks()
-        self.get_object_acls()
+        if not quick:
+            self.get_bucket_policies()
+            self.get_bucket_acls()
+            self.get_public_access_blocks()
+            self.get_object_acls()
 
         self._print_stats()
 
@@ -978,10 +982,10 @@ class Lambda(Ingestor):
         'AWS::Lambda::Function',
     ]
 
-    def __init__(self, session, account="000000000000", verbose=False,
+    def __init__(self, session, account="000000000000", verbose=False, quick=False,
                  only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
-        super().__init__(session=session, default=False, verbose=verbose)
+        super().__init__(session=session, default=False, verbose=verbose, quick=quick)
 
         self.run = [t for t in self.run
                     if (len(skip_types) == 0 or t not in skip_types)
