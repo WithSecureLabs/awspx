@@ -42,10 +42,12 @@ cd awspx && ./INSTALL
 **awspx** consists of two main components: the [**ingestor**](Data%20Collection.md#ingestion), *which collects AWS account data*; and the [**web interface**](Data%20Exploration.md#overview), *which allows you to explore it*. 
 
 1. [Run the **ingestor**](Data%20Collection.md#ingestion) against an account of your choosing. _You will be prompted for [credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html#cli-quick-configuration)._
-```bash
-awspx ingest
-```
-    _**OR** optionally forgo this step and [load the sample dataset distributed with awspx](Data%20Collection.md#zip-files) instead._
+
+    ```bash
+    awspx ingest
+    ```
+    _**OR** optionally forgo this step and [load the sample dataset](Data%20Collection.md#zip-files) instead._
+    
     ```bash
     awspx db --load-zip sample.zip
     awspx attacks
