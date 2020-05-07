@@ -18,15 +18,15 @@
 - [Contributing](#contributing)
 - [License](#license)
 
-*For more information, checkout the [awspx Wiki](Home.md)*
+*For more information, checkout the [awspx Wiki](https://github.com/FSecureLABS/awspx/wiki)*
 
 # Getting Started
 
-*For detailed instructions, usage, and answers to frequently asked questions see: [Installation](Setup.md), [Data Collection](Data%20Collection.md), [Web Interface](Data%20Exploration.md), and [FAQs](FAQs.md).*
+*For detailed installation instructions, usage, and answers to frequently asked questions, see sections: [Setup](https://github.com/FSecureLABS/awspx/wiki/Setup); [Data Collection](https://github.com/FSecureLABS/awspx/wiki/Data-Collection) and [Exploration](https://github.com/FSecureLABS/awspx/wiki/Data-Exploration); and [FAQs](https://github.com/FSecureLABS/awspx/wiki/FAQs), respectively.*
 
 ## Installation 
 
-**awspx** can be [installed](Setup.md) on either Linux or macOS. *In each case [Docker](https://docs.docker.com/get-docker/) is required.*
+**awspx** can be [installed](https://github.com/FSecureLABS/awspx/wiki/Setup) on either Linux or macOS. *In each case [Docker](https://docs.docker.com/get-docker/) is required.*
 
 1. Clone this repo
 ```bash
@@ -36,24 +36,24 @@ git clone https://github.com/FSecureLABS/awspx.git
 ```bash
 cd awspx && ./INSTALL
 ```
-    
+
 ## Usage 
 
-**awspx** consists of two main components: the [**ingestor**](Data%20Collection.md#ingestion), *which collects AWS account data*; and the [**web interface**](Data%20Exploration.md#overview), *which allows you to explore it*. 
+**awspx** consists of two main components: the [**ingestor**](https://github.com/FSecureLABS/awspx/wiki/Data-Collection#ingestion), *which collects AWS account data*; and the [**web interface**](https://github.com/FSecureLABS/awspx/wiki/Data-Exploration#overview), *which allows you to explore it*. 
 
-1. [Run the **ingestor**](Data%20Collection.md#ingestion) against an account of your choosing. _You will be prompted for [credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html#cli-quick-configuration)._
+1. [Run the **ingestor**](https://github.com/FSecureLABS/awspx/wiki/Data-Collection#ingestion) against an account of your choosing. _You will be prompted for [credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html#cli-quick-configuration)._
 
     ```bash
     awspx ingest
     ```
-    _**OR** optionally forgo this step and [load the sample dataset](Data%20Collection.md#zip-files) instead._
+    _**OR** optionally forgo this step and [load the sample dataset](https://github.com/FSecureLABS/awspx/wiki/Data-Collection#zip-files) instead._
     
     ```bash
     awspx db --load-zip sample.zip
     awspx attacks
     ```
 
-2. Browse to the **web interface** — *<http://localhost> by default* — and [explore this environment](Data%20Exploration.md#using-the-interface). 
+2. Browse to the **web interface** — *<http://localhost> by default* — and [explore this environment](https://github.com/FSecureLABS/awspx/wiki/Data-Exploration##usage-examples). 
 
     </br>
     [[https://raw.githubusercontent.com/wiki/FSecureLABS/awspx/uploads/Awspx.gif]] 
@@ -62,7 +62,7 @@ cd awspx && ./INSTALL
 
 This project is in its early days and there's still plenty that can be done. Whether its submitting a fix, identifying bugs, suggesting enhancements, creating or updating documentation, refactoring smell code, or even extending this list — all contributions help and are more than welcome. Please feel free to use your judgement and do whatever you think would benefit the community most.
 
-*See [Contributing](Contributing.md) for more information.*
+*See [Contributing](https://github.com/FSecureLABS/awspx/wiki/Contributing) for more information.*
 
 # License 
 
