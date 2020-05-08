@@ -303,7 +303,7 @@ export default {
             padding: 40,
             spacingFactor: 1.5,
             nodeDimensionsIncludeLabels: true,
-            animate: false,
+            animate: true,
             animateFilter: function (node, i) { return true; },
             animationDuration: 250,
             animationEasing: undefined,
