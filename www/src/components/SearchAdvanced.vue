@@ -232,7 +232,7 @@
 
           <!-- Filters -->
           <div
-            v-show="visual.filters.length > 0"
+            v-show="visual.filters.length > 0 && !editor.fullscreen"
             style="max-height: 25vh; overflow-y: auto;"
             class="pb-1"
           >
