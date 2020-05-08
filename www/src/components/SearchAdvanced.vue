@@ -695,7 +695,7 @@ export default {
       const where = [
         from.length > 0 ? `ID(Source) IN [${from}]` : undefined,
         to.length > 0 ? `ID(Target) IN [${to}]` : undefined,
-        filters.length > 0 ? filters : undefined
+        filters.length > 0 ? `(${filters})` : undefined
       ]
         .filter(f => typeof f === "string")
         .join("\nAND ");
