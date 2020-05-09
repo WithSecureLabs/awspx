@@ -1,6 +1,6 @@
 <template>
   <!-- Query editor -->
-  <div>
+  <div id="search-advanced">
     <v-card :disabled="neo4j.busy">
       <!-- Visual -->
       <v-form v-model="valid.form" ref="visual">
@@ -243,7 +243,7 @@
               accordion
             >
               <v-expansion-panel
-                v-for="j in Array(visual.filters.length).keys()"
+                v-for="(_, j) in visual.filters"
                 :disabled="!visual.enabled"
                 :key="'filter-' + j"
               >
@@ -256,9 +256,10 @@
                       >
                         <div v-if="visual.filters[j].valid">
                           <v-icon class="mr-5" color="primary">mdi-filter</v-icon>
-                          <span
-                            style="color: rgba(0,0,0,0.7); font-size: 13px"
-                          >{{visual.filters[j].text}}</span>
+                          <span style="color: rgba(0,0,0,0.7); font-size: 13px">
+                            {{(j === 0 ? "": visual.filters[j].and ? "AND " : "OR ") +
+                            visual.filters[j].text}}
+                          </span>
                         </div>
                         <div v-else>
                           <v-icon class="mr-5" color="primary">mdi-filter-outline</v-icon>
@@ -283,13 +284,12 @@
                 <v-expansion-panel-content>
                   <SearchAdvancedFilter
                     :options="{actions: visual.actions, effective: visual.effective}"
-                    @filter_update="visual_filter_update(j, $event)"
                     :sources="visual.search.From.value"
                     :targets="visual.search.To.value"
-                    :and="visual.filters[j].and"
                     :resources="resources"
                     :actions="actions"
-                    :index="j"
+                    :filter="visual.filters[j]"
+                    @filter_update="visual_filter_update(j, $event)"
                   ></SearchAdvancedFilter>
                 </v-expansion-panel-content>
               </v-expansion-panel>
@@ -599,8 +599,8 @@ export default {
     },
 
     visual_filter_remove(i) {
+      const removed = this.visual.filters.splice(i, 1);
       if (this.visual.filter === i) this.visual.filter = -1;
-      this.visual.filters.splice(i, 1);
     },
 
     visual_query_load(cypher) {
@@ -668,7 +668,9 @@ export default {
       );
       const filters = this.visual.filters
         .filter(f => f.valid)
-        .map(f => f.text)
+        .map((f, i) => {
+          return i === 0 ? f.text : (f.and ? "AND " : "OR ") + f.text;
+        })
         .join("\n");
 
       const hops =
@@ -802,5 +804,9 @@ export default {
 .saved-queries input::placeholder {
   font-family: "Roboto Mono", monospace;
   font-size: 12px;
+}
+
+.search-advanced .mdi-close {
+  font-size: 14px !important;
 }
 </style>

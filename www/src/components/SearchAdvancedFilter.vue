@@ -1,8 +1,8 @@
 <template>
   <!-- Autocomplete -->
   <v-card class="search-filter" flat tile>
-    <v-form v-model="valid" ref="form">
-      <v-row>
+    <v-form v-model="valid" ref="form" spellcheck="false">
+      <v-row id="search-filter">
         <!-- Selection -->
         <v-autocomplete
           placeholder="e.g. Either"
@@ -12,8 +12,9 @@
           ref="selection"
           item-value="id"
           return-object
-          :rules="rules"
+          :rules="rules['selection']"
           class="ma-2"
+          clearable
         >
           <template #selection="data">
             <TemplateSelectSearch :data="data" />
@@ -28,10 +29,11 @@
         <v-combobox
           placeholder="e.g. Name"
           v-model="property"
-          :items="filter(properties, property)"
+          :items="items(properties, property)"
           :no-filter="true"
-          :rules="rules"
+          :rules="rules['property']"
           class="ma-2"
+          clearable
         ></v-combobox>
 
         <!-- Operator -->
@@ -41,19 +43,20 @@
           v-model="operator"
           :cache-items="false"
           :items="operators"
-          :rules="rules"
+          :rules="rules['operator']"
           class="ma-2"
         ></v-select>
 
         <!-- Value -->
         <v-combobox
+          @update:search-input="value = typeof $event === 'string' ? $event : '';"
           placeholder=" "
           :value="value"
           :no-filter="true"
-          :items="filter(values, value)"
-          :rules="rules"
+          :items="items(values, value)"
+          :rules="rules['value']"
           class="ma-2"
-          @update:search-input="value = typeof $event === 'string' ? $event : '';"
+          clearable
         ></v-combobox>
       </v-row>
     </v-form>
@@ -94,13 +97,9 @@ export default {
         default: false
       }
     },
-    and: {
-      type: Boolean,
-      default: true
-    },
-    index: {
-      type: Number,
-      default: 0
+    filter: {
+      type: Object,
+      default: {}
     }
   },
 
@@ -114,31 +113,57 @@ export default {
     };
   },
   methods: {
-    filter(options, search) {
+    items(options, search) {
+      if (typeof search === "undefined" || search === null) search = "";
       return options.filter(
         o =>
           o.length === 0 || o.toLowerCase().indexOf(search.toLowerCase()) >= 0
       );
     },
 
-    validate() {
+    validate(a, b, c) {
       this.$refs.form.validate();
     }
   },
 
   watch: {
-    selection: "validate",
-    property: "validate",
+    selection: function(selection) {
+      if (typeof selection === "undefined") {
+        this.selection = {};
+        this.property = "";
+      }
+      this.validate();
+    },
+    property: function(property) {
+      if (typeof property === "undefined" || property === null) {
+        this.property = "";
+      }
+      this.validate();
+    },
     operator: "validate",
     value: "validate",
 
-    valid: function() {
-      this.$emit("filter_update", {
-        valid: this.valid
-      });
+    filter: {
+      handler(f) {
+        Object.keys(f)
+          .filter(k => k !== "text")
+          .map(k => {
+            this[k] = f[k];
+          });
+      },
+      deep: true
     },
 
-    text: () => {}
+    text: function() {
+      this.$emit("filter_update", {
+        selection: this.selection,
+        property: this.property,
+        operator: this.operator,
+        value: this.value,
+        valid: this.valid,
+        text: this.text
+      });
+    }
   },
 
   computed: {
@@ -151,9 +176,6 @@ export default {
       ];
 
       if (this.options.actions) selections.unshift({ name: "Action" });
-
-      if (selections.filter(s => s.name == this.selection.name).length === 0)
-        this.selection = {};
 
       return selections.map((s, i) => {
         return {
@@ -232,31 +254,33 @@ export default {
     },
 
     rules() {
-      const rules = [];
+      const rules = {
+        selection: [],
+        property: [],
+        operator: [],
+        value: []
+      };
+
+      Object.keys(rules).map(k => {
+        const mandatory = v =>
+          (!!v && Object.keys(v).length > 0) || `'${k}' required`;
+        rules[k].push(mandatory);
+      });
 
       if (
-        typeof this.selection.name === "undefined" ||
-        this.property === "" ||
-        this.operator === "" ||
-        this.value === ""
+        this.property === "ID" ||
+        [">", ">=", "<=", "<"].includes(this.operator)
       ) {
-        const rule = v =>
-          (!!v && Object.keys(v).length > 0) || "field is mandatory";
-        rules.push(rule);
+        const integer = v =>
+          (new String(v).length > 0 && !isNaN(this.value)) ||
+          `invalid integer value`;
+        rules["value"].push(integer);
       }
 
-      if (this.property === "ID" && isNaN(this.value)) {
-        const rule = v =>
-          (v !== this.operator && v !== this.value) ||
-          `invalid integer value for ID`;
-        rules.push(rule);
-      }
-
-      if ([">", ">=", "<=", "<"].includes(this.operator) && isNaN(this.value)) {
-        const rule = v =>
-          (v !== this.operator && v !== this.value) ||
-          `invalid operator/value combination`;
-        rules.push(rule);
+      if (this.operator === "=" && this.values.length > 0) {
+        const selection = v =>
+          this.values.includes(v) || `invalid '${this.property}' selection`;
+        rules["value"].push(selection);
       }
 
       return rules;
@@ -312,15 +336,9 @@ export default {
         else if (this.selection.name === "Either")
           text = ["(", ...text[0]].concat("OR").concat([...text[1], ")"]);
         else text = text[0];
-
-        if (this.index > 0) text.unshift(this.and ? "AND" : "OR");
       }
 
-      this.$emit("filter_update", {
-        text: text.join(" ")
-      });
-
-      return text;
+      return text.join(" ");
     }
   }
 };
@@ -328,7 +346,10 @@ export default {
 
 <style >
 .search-filter .v-input input {
-  font-size: 12px;
-  /* font-style: italic; */
+  font-size: 13px;
+}
+
+.search-filter .mdi-close {
+  font-size: 14px !important;
 }
 </style>
