@@ -130,7 +130,7 @@
               <v-tooltip left>
                 <template v-slot:activator="{ on }">
                   <v-btn
-                    href="https://github.com/FSecureLABS/awspx/blob/master/README.md"
+                    href="https://github.com/FSecureLABS/awspx/wiki/Data-Exploration"
                     target="_blank"
                     color="white"
                     class="pa-0"
