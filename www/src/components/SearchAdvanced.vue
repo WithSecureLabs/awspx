@@ -45,85 +45,87 @@
 
             <!-- Advanced options -->
             <v-col justify="center" class="pl-10 mt-n3" cols="2">
-              <fieldset :disabled="!visual.enabled" width="170px" class="search-mode">
-                <legend class="mx-2 my-n3">
-                  <span class="px-1">Mode</span>
-                </legend>
-                <v-row class="text-center">
-                  <v-switch v-model="visual.actions" class="mx-auto">
-                    <template #prepend>
-                      <v-tooltip left>
-                        <template v-slot:activator="{ on }">
-                          <v-icon
-                            v-on="on"
-                            :color="visual.actions ? '' : 'primary'"
-                            @click="visual.actions = false"
-                          >mdi-map-marker-outline</v-icon>
-                        </template>
-                        <span width="300px">
-                          <b>Paths-based search</b>
-                          <br />See what can get to what
-                        </span>
-                      </v-tooltip>
-                    </template>
+              <v-card flat :disabled="!visual.enabled" width="170px">
+                <fieldset class="search-mode">
+                  <legend class="mx-2 my-n3">
+                    <span class="px-1">Mode</span>
+                  </legend>
+                  <v-row class="text-center">
+                    <v-switch v-model="visual.actions" class="mx-auto">
+                      <template #prepend>
+                        <v-tooltip left>
+                          <template v-slot:activator="{ on }">
+                            <v-icon
+                              v-on="on"
+                              :color="visual.actions ? '' : 'primary'"
+                              @click="visual.actions = false"
+                            >mdi-map-marker-outline</v-icon>
+                          </template>
+                          <span width="300px">
+                            <b>Paths-based search</b>
+                            <br />See what can get to what
+                          </span>
+                        </v-tooltip>
+                      </template>
 
-                    <template #append>
-                      <v-tooltip right>
-                        <template v-slot:activator="{ on }">
-                          <v-icon
-                            v-on="on"
-                            :value="true"
-                            :color="visual.actions ? 'primary' : ''"
-                            @click="visual.actions = true"
-                          >mdi-chevron-right-circle-outline</v-icon>
-                        </template>
+                      <template #append>
+                        <v-tooltip right>
+                          <template v-slot:activator="{ on }">
+                            <v-icon
+                              v-on="on"
+                              :value="true"
+                              :color="visual.actions ? 'primary' : ''"
+                              @click="visual.actions = true"
+                            >mdi-chevron-right-circle-outline</v-icon>
+                          </template>
 
-                        <span width="300px">
-                          <b>Actions-based search</b>
-                          <br />See what can do what to what
-                        </span>
-                      </v-tooltip>
-                    </template>
-                  </v-switch>
-                </v-row>
+                          <span width="300px">
+                            <b>Actions-based search</b>
+                            <br />See what can do what to what
+                          </span>
+                        </v-tooltip>
+                      </template>
+                    </v-switch>
+                  </v-row>
 
-                <v-row class="text-center">
-                  <v-switch v-model="visual.effective" false-value class="mx-auto">
-                    <template #prepend>
-                      <v-tooltip left>
-                        <template v-slot:activator="{ on }">
-                          <v-icon
-                            v-on="on"
-                            :color="visual.effective ? '' : 'primary'"
-                            @click="visual.effective = false"
-                          >mdi-arrow-top-right</v-icon>
-                        </template>
-                        <span width="300px">
-                          <b>Direct search</b>
-                          <br />Exclude attack paths
-                        </span>
-                      </v-tooltip>
-                    </template>
+                  <v-row class="text-center">
+                    <v-switch v-model="visual.effective" false-value class="mx-auto">
+                      <template #prepend>
+                        <v-tooltip left>
+                          <template v-slot:activator="{ on }">
+                            <v-icon
+                              v-on="on"
+                              :color="visual.effective ? '' : 'primary'"
+                              @click="visual.effective = false"
+                            >mdi-arrow-top-right</v-icon>
+                          </template>
+                          <span width="300px">
+                            <b>Direct search</b>
+                            <br />Exclude attack paths
+                          </span>
+                        </v-tooltip>
+                      </template>
 
-                    <template #append>
-                      <v-tooltip right>
-                        <template v-slot:activator="{ on }">
-                          <v-icon
-                            v-on="on"
-                            :color="visual.effective ? 'primary' : ''"
-                            @click.stop="visual.effective = true"
-                            value="false"
-                          >mdi-map-marker-path</v-icon>
-                        </template>
-                        <span width="300px">
-                          <b>Effective search</b>
-                          <br />Include attack paths
-                        </span>
-                      </v-tooltip>
-                    </template>
-                  </v-switch>
-                </v-row>
-              </fieldset>
+                      <template #append>
+                        <v-tooltip right>
+                          <template v-slot:activator="{ on }">
+                            <v-icon
+                              v-on="on"
+                              :color="visual.effective ? 'primary' : ''"
+                              @click.stop="visual.effective = true"
+                              value="false"
+                            >mdi-map-marker-path</v-icon>
+                          </template>
+                          <span width="300px">
+                            <b>Effective search</b>
+                            <br />Include attack paths
+                          </span>
+                        </v-tooltip>
+                      </template>
+                    </v-switch>
+                  </v-row>
+                </fieldset>
+              </v-card>
             </v-col>
           </v-row>
 
@@ -769,7 +771,7 @@ export default {
 @import "../codemirror-cypher/cypher-codemirror.css";
 
 .search-mode {
-  border: 1px solid rgba(0, 0, 0, 0.3);
+  border: 0.5px solid rgba(0, 0, 0, 0.3);
   color: rgba(0, 0, 0, 0.5);
   border-radius: 4px 4px;
 }
