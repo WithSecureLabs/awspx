@@ -28,7 +28,7 @@
                 width="50vw"
               />
               <!-- Swap 'From' and 'To' around -->
-              <div class="ma-n5 px-n5 text-center">
+              <div class="ma-n5 px-5 text-center">
                 <v-btn :disabled="!visual.enabled" @click="visual_swap" x-small icon fab>
                   <v-icon size="16">mdi-cached</v-icon>
                 </v-btn>
@@ -44,8 +44,11 @@
             </v-col>
 
             <!-- Advanced options -->
-            <v-col class="pl-5" cols="2">
-              <v-card outlined :disabled="!visual.enabled" width="170px" class="mx-auto">
+            <v-col justify="center" class="pl-10 mt-n3" cols="2">
+              <fieldset :disabled="!visual.enabled" width="170px" class="search-mode">
+                <legend class="mx-2 my-n3">
+                  <span class="px-1">Mode</span>
+                </legend>
                 <v-row class="text-center">
                   <v-switch v-model="visual.actions" class="mx-auto">
                     <template #prepend>
@@ -120,7 +123,7 @@
                     </template>
                   </v-switch>
                 </v-row>
-              </v-card>
+              </fieldset>
             </v-col>
           </v-row>
 
@@ -764,6 +767,12 @@ export default {
 
 <style>
 @import "../codemirror-cypher/cypher-codemirror.css";
+
+.search-mode {
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  color: rgba(0, 0, 0, 0.5);
+  border-radius: 4px 4px;
+}
 
 .CodeMirror {
   max-height: 15vh;
