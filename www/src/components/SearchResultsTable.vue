@@ -3,9 +3,18 @@
     <v-card>
       <!-- Resuls dialog controls -->
       <v-card-title>
-        <v-text-field v-model="search" prepend-icon="mdi-magnify" single-line hide-details></v-text-field>
-        <v-spacer></v-spacer>
-        <v-btn small depressed fab color="white" @click="$emit('close')">
+        <v-text-field
+          v-model="search"
+          prepend-icon="mdi-magnify"
+          class="results-search ma-0 mt-n3"
+          single-line
+          hide-details
+        >
+          <template #label>
+            <span style="font-size: 12px">Search results</span>
+          </template>
+        </v-text-field>
+        <v-btn small color="white" depressed @click="$emit('close')">
           <v-icon color="red">mdi-close</v-icon>
         </v-btn>
       </v-card-title>
@@ -106,6 +115,16 @@ export default {
 </script>
 
 <style >
+.results-search.v-text-field {
+  font-size: 12px;
+}
+
+.results-search.v-text-field > .v-input__control > .v-input__slot:before {
+  border-style: none;
+}
+.results-search.v-text-field > .v-input__control > .v-input__slot:after {
+  border-style: none;
+}
 .v-data-table thead {
   width: calc(100% - 1em);
 }
@@ -125,11 +144,13 @@ tbody tr {
 
 .v-data-table th {
   font-size: 13px !important;
-  background-color: whitesmoke !important;
-  color: black !important;
+  border-bottom: 0.5px solid grey !important;
+  border-top: 0.5px solid grey !important;
+  color: rgba(25, 118, 210, 1) !important;
 }
 
 .v-data-table td {
+  padding-top: 20px !important;
   vertical-align: top;
 }
 .v-data-table tr td:nth-child(odd) {
