@@ -18,12 +18,12 @@ export default {
 </script>
 
 <style>
-
 #app {
-  font-family: "Source Code Pro";
-  font-size: 16px;
+  font-family: "Roboto Mono", monospace !important;
+  font-size: 12px !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
 }
+
 </style>

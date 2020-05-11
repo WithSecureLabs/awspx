@@ -16,9 +16,9 @@ function install(){
 
     SOURCE="$(dirname $(realpath $0))"
 
-    APT_DEPS=("nodejs" "npm" "python3-pip" "procps")
+    APT_DEPS=("nodejs" "npm" "python3-pip" "procps" "git")
     PY_DEPS=("argparse" "awscli-local" "boto3" "neo4j"
-             "configparser") 
+             "configparser" "git-python") 
 
     # Ensure dependencies are met 
     for dep in ${DEPS[*]}; do
@@ -42,7 +42,7 @@ function install(){
 
     # Update 
     mkdir -p $MOUNT/data
-    rsync -avrt $SOURCE/* ${MOUNT}/. >/dev/null
+    rsync -avrt $SOURCE/ ${MOUNT}/. >/dev/null
     rsync -avrt $0 /usr/local/bin/awspx >/dev/null
     echo "" 
     set -e 
@@ -104,9 +104,35 @@ function install(){
 
     docker restart awspx >/dev/null 
 
-    echo -e "\n[+] Done! Server should soon be available at http://${HOST}:${WEBPORT}"
-    echo -e "\tThe client can be run by executing \`awspx ingest\`"
-    echo -e "\tOr you can load the sample db by running \`awspx db --load-zip sample.zip; awspx attacks\`"
+    set +e
+
+    CLI="/usr/local/bin/awspx"
+    if !(which awspx >/dev/null 2>&1) ; then 
+        read -p "[*] '/usr/local/bin' isn't in your \$PATH. Choose another location [y/n]? " response
+        if [[ "${response}" == "Y" || "${response}" == "y" ]]; then
+            select p in $(echo "${PATH}" | tr ':' '\n' | sort); do
+                case $p in
+                    /*)
+                        ln -s /usr/local/bin/awspx $p/awspx >/dev/null 2>&1
+                        CLI="awspx"
+                        break
+                    ;;
+                    *) ;;
+                esac
+            done          
+        fi
+    else
+        CLI="awspx"
+    fi
+
+    echo -e "\n\n... and you're all set!\n"
+
+    echo -e "- Run: \`${CLI} -h\` for a list of options."
+    echo -e "- The web interface (http://${HOST}:${WEBPORT}) will be available shortly..."
+    echo -e "- For additional information, see https://github.com/FSecureLABS/awspx/wiki.\n"
+
+    echo -e "[+] Done"
+
     }
 
 function awspx(){
@@ -126,7 +152,7 @@ elif [[ "$(uname)" =~ "Linux" ]]; then
     MOUNT="/opt/awspx"
     if [[ "$(whoami)" != "root" ]]; then 
         echo "[-] awspx must be run with root privileges."
-        exit 2
+        exit 1
     fi
 else 
     echo "[-] Platform: '$(uname)' is not supported"
@@ -137,7 +163,7 @@ DOCKER_RUNNING="$(docker info >/dev/null 2>&1)"
 
 if [ "${?}" -ne 0 ]; then 
     echo "[-] \"docker\" must first be started." 
-    exit 2 
+    exit 1 
 fi 
 
 case "$(basename $0)" in

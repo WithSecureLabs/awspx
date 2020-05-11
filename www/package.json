@@ -1,6 +1,6 @@
 {
   "name": "awspx",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "AWS resource, relationship, and attack path visualisation",
   "author": "craig.koorn@f-secure.com",
   "private": true,
@@ -9,19 +9,20 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "core-js": "^3.6.4",
-    "cytoscape": "^3.13.0",
+    "codemirror": "^5.53.2",
+    "core-js": "^3.6.5",
+    "cytoscape": "^3.14.2",
     "cytoscape-dagre": "^2.2.2",
-    "neo4j-driver": "^4.0.1",
+    "neo4j-driver": "^4.0.2",
     "vue": "^2.6.11",
     "vue-router": "^3.1.5",
     "vue-template-compiler": "^2.6.11",
-    "vuetify": "^2.2.4",
-    "vuex": "^3.1.2"
+    "vuetify": "^2.2.27",
+    "vuex": "^3.3.0"
   },
   "devDependencies": {
-    "@mdi/font": "^4.8.95",
-    "@vue/cli-plugin-babel": "^4.1.2",
-    "@vue/cli-service": "^4.1.2"
+    "@mdi/font": "^5.1.45",
+    "@vue/cli-plugin-babel": "^4.3.1",
+    "@vue/cli-service": "^4.3.1"
   }
 }

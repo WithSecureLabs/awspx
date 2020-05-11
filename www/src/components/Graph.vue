@@ -6,6 +6,7 @@
       v-model="notification.visible"
       :timeout="1000"
       color="success"
+      class="notice"
       top
     >
       <span class="mx-auto" v-html="notification.text"></span>
@@ -15,7 +16,7 @@
     <v-alert
       v-else-if="notification.status === 1"
       v-model="notification.visible"
-      class="mx-auto notification"
+      class="mx-auto notification notice"
       type="error"
       dismissible
     >
@@ -23,7 +24,7 @@
     </v-alert>
 
     <!-- Confirmation dialog -->
-    <v-dialog max-width="550" modal v-model="dialog.enabled">
+    <v-dialog class="notice" max-width="550" modal v-model="dialog.enabled">
       <v-card>
         <v-card-title class="headline py-5">Hold up</v-card-title>
 
@@ -46,12 +47,77 @@
       </v-card>
     </v-dialog>
 
+    <!-- Progress overlay -->
+    <v-overlay :value="busy" class="notice">
+      <v-progress-circular :size="200" :width="8" indeterminate color="primary"></v-progress-circular>
+    </v-overlay>
+
+    <!-- Empty database helper -->
+    <v-overlay v-show="!populated" class="notice" color="white" opacity="1">
+      <v-stepper light style="width: 50vw;" class="mx-auto" value="2">
+        <v-stepper-header>
+          <v-stepper-step step="1" complete>Install awspx</v-stepper-step>
+          <v-divider></v-divider>
+          <v-stepper-step step="2">Populate database</v-stepper-step>
+          <v-card></v-card>
+          <v-divider></v-divider>
+          <v-stepper-step step="3">Explore</v-stepper-step>
+        </v-stepper-header>
+
+        <v-stepper-content step="2">
+          <v-card color="grey lighten-5" class="mb-5 pa-10">
+            <v-card-title>You may have jumped the gun...</v-card-title>
+            <v-card-subtitle class="mb-5">We couldn't find any data to work with</v-card-subtitle>
+            <v-card-text>
+              <div class="mb-2">
+                <b>Either</b> run the ingestor to load an account of your own:
+              </div>
+              <v-card style="font-size: 11px; border: 1px solid whitesmoke;" class="pa-2">
+                [root@localhost ~]#
+                <b>awspx ingest</b>
+                <br />[-] The profile 'default' was not found. Would you like to create it? (y/n) y
+                <br />AWS Access Key ID [None]: ****9XY7
+                <br />AWS Secret Access Key [None]: ****ks91
+                <br />Default region name [None]: eu-west-1
+                <br />Default output format [None]: json
+                <br />
+              </v-card>
+              <div class="mt-10 mb-2">
+                <b>OR</b> load an existing database (e.g. the provided sample):
+              </div>
+              <v-card style="font-size: 11px; border: 1px solid whitesmoke;" class="pa-2">
+                <br />[root@localhost ~]#
+                <b>awspx db --load-zip sample.zip</b>
+                <br />[*] Importing records from /opt/awspx/data/sample.zip
+                <br />
+                <br />[root@localhost ~]#
+                <b>awspx attacks</b>
+                <br />[*] Searching database for attack patterns
+                <br />
+              </v-card>
+            </v-card-text>
+          </v-card>
+          <v-btn
+            color="primary"
+            class="my-auto"
+            :loading="false"
+            @click="$refs.search.init()"
+          >Check again</v-btn>
+        </v-stepper-content>
+      </v-stepper>
+    </v-overlay>
+
     <!-- Graph -->
-    <v-card flat tile append :disabled="busy" class="graph" id="graph">
-      <v-overlay :value="busy">
-        <v-progress-circular :size="200" :width="8" indeterminate color="primary"></v-progress-circular>
-      </v-overlay>
-    </v-card>
+    <v-card flat tile append :disabled="busy" class="graph" id="graph" />
+
+    <!-- Navigation drawer (Right hand side) -->
+    <Menu
+      @redact="menu_redact"
+      @screenshot="menu_screenshot"
+      @load="menu_load_saved_queries"
+      @update_layout="menu_update_layout"
+      @clear="clear"
+    ></Menu>
 
     <!-- Node context menu -->
     <v-fab-transition
@@ -62,14 +128,14 @@
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn
+            v-on="on"
+            @click="context_menu_item(item.fn, item.target)"
             :style="context_menu[i].styles.button"
             :height="context_menu[i].styles.size"
             :width="context_menu[i].styles.size"
-            @click="context_menu_item(item.fn, item.target)"
             absolute
-            fab
             dark
-            v-on="on"
+            fab
           >
             <v-icon
               :style="context_menu[i].styles.icon"
@@ -82,16 +148,22 @@
     </v-fab-transition>
 
     <!-- Element properties pane (left hand side) -->
-    <Properties v-if="properties.enabled" :properties="properties.value"></Properties>
+    <Properties v-show="properties.enabled" :properties="properties.value"></Properties>
 
     <!-- Search bar (bottom) -->
     <Search
-      v-if="search.enabled"
+      v-show="search.enabled"
+      ref="search"
       @add="add"
-      @toggle="search.hidden = $event"
-      @find_actions="find_actions"
+      @clear="clear"
+      @show="search.visible = $event"
+      @advanced="search.advanced = $event"
+      @populated="populated = $event"
+      @visual_queries_active="search.visual_queries_active = $event"
+      :visual_queries_active="search.visual_queries_active"
       :alt="events.keys.alt"
-      :hide="search.hidden"
+      :show="search.visible"
+      :advanced="search.advanced"
     ></Search>
   </div>
 </template>
@@ -99,6 +171,7 @@
 <script>
 import Properties from "@/components/Properties";
 import Search from "@/components/Search";
+import Menu from "@/components/Menu";
 
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
@@ -108,7 +181,7 @@ let cy = null;
 
 export default {
   name: "Graph",
-  components: { Properties, Search },
+  components: { Properties, Search, Menu },
 
   data: function() {
     return {
@@ -125,30 +198,32 @@ export default {
         value: null,
         enabled: true
       },
+      populated: true,
       search: {
-        hidden: false,
-        editor: false,
-        enabled: true
+        visible: true,
+        enabled: true,
+        advanced: false,
+        visual_queries_active: false
       },
       context_menu_items: [
         {
           name: "Outbound <b>Paths</b>",
-          icon: "mdi-map-marker-up",
+          icon: "mdi-map-marker-outline",
           fn: this.find_paths_from
         },
         {
           name: "Outbound <b>Actions</b>",
-          icon: "mdi-file-search",
+          icon: "mdi-chevron-right-circle-outline",
           fn: this.find_actions_from
         },
         {
           name: "Inbound <b>Paths</b>",
-          icon: "mdi-map-marker-outline",
+          icon: "mdi-map-marker",
           fn: this.find_paths_to
         },
         {
           name: "Inbound <b>Actions</b>",
-          icon: "mdi-file-search-outline",
+          icon: "mdi-chevron-right-circle",
           fn: this.find_actions_to
         }
       ],
@@ -164,6 +239,9 @@ export default {
         max_elements: 500,
         enabled: false,
         store: []
+      },
+      layout: {
+        name: "Auto"
       }
     };
   },
@@ -202,7 +280,7 @@ export default {
 
     context_menu_item(fn, target) {
       this.context_menu_destroy();
-      this.search.hidden = true;
+      this.search.visible = false;
       fn(target).then(response => {
         const elements = response.Graph;
         if (typeof elements === "undefined" || elements.length === 0) return;
@@ -266,20 +344,10 @@ export default {
 
       return this.neo4j.run(
         `MATCH (source) WHERE ID(source) = ${id} ` +
-          "OPTIONAL MATCH actions=(source)-[:ACTION]->(:Resource) " +
+          "OPTIONAL MATCH actions=(source)-[:ACTION]->(target) " +
+          "WHERE target:Resource OR target:CatchAll " +
           "RETURN source, actions"
       );
-    },
-
-    find_actions(actions) {
-      this.neo4j
-        .run(
-          `WITH "${actions}" AS action ` +
-            "MATCH path=()-[:ACTION{Name:action}]->() RETURN path"
-        )
-        .then(elements => {
-          this.add(elements.Graph);
-        });
     },
 
     unbundle_actions(element) {
@@ -558,51 +626,7 @@ export default {
 
       const elements = cy.add(this._add_merge_actions(collection));
 
-      const concentric = cy
-        .edges()
-        .map(e => [e.data("source"), e.data("target")])
-        .reduce((v, e, i) => {
-          if (i === 0) return e;
-          else return v.filter(x => e.includes(x));
-        }, []);
-
-      const layout =
-        cy.elements().filter("edge").length === 0
-          ? // Set 'grid' layout when there are no edges
-            {
-              name: "grid",
-              rows: Math.ceil(cy.nodes().length / 10),
-              avoidOverlap: true,
-              avoidOverlapPadding: 20,
-              nodeDimensionsIncludeLabels: true
-            }
-          : concentric.length > 0
-          ? // Set 'concentric' layout when the graph consists of
-            // one node connected to every other node
-            {
-              name: "concentric",
-              minNodeSpacing: 50,
-              concentric: n => {
-                return concentric.includes(n.data("id")) ? n.degree() : 1;
-              },
-              spacingFactor: Math.max(10 / cy.elements().nodes().length, 1),
-              startAngle: 0,
-              fit: true
-            }
-          : // Otherwise set default (dagre)
-            config.graph.layout;
-
-      cy.elements()
-        .makeLayout({
-          ...layout,
-          animate: true
-        })
-        .run()
-        .promiseOn("layoutstop", () => {});
-      this.loading.value = false;
-      this.layout = {
-        ...layout
-      };
+      this.run_layout();
       return elements;
     },
 
@@ -650,13 +674,126 @@ export default {
       });
     },
 
+    clear() {
+      return cy.elements().remove();
+    },
+
+    run_layout() {
+      let layout = this.layout.name;
+      let value = {};
+
+      // Determine best fit for 'Auto'
+      if (layout === "Auto") {
+        const concentric = cy
+          .edges()
+          .map(e => [e.data("source"), e.data("target")])
+          .reduce((v, e, i) => {
+            return i === 0 ? e : v.filter(x => e.includes(x));
+          }, []);
+
+        // Set 'Grid' layout when there are no edges
+        if (cy.elements().filter("edge").length === 0) layout = "Grid";
+        // Set 'Concentric' layout when the graph consists of
+        // one node connected to every other node
+        else if (concentric.length > 0) layout = "Concentric";
+        // Otherwise set 'Dagre'
+        else layout = "Dagre";
+      }
+
+      switch (layout) {
+        case "Concentric":
+          // const degrees = cy.elements("node").reduce(
+          //   (nodes, n) => ({
+          //     ...nodes,
+          //     [n.data("id")]: n.neighborhood("node").length
+          //   }),
+          //   {}
+          // );
+
+          value = {
+            name: "concentric",
+            minNodeSpacing: 50,
+            boundingBox: undefined,
+            spacingFactor: Math.max(20 / cy.elements("node").length, 1),
+            startAngle: 0,
+            // concentric: function(node) {
+            //   return degrees[node.data("id")];
+            // },
+            fit: true
+          };
+          break;
+
+        case "Grid":
+          value = {
+            name: "grid",
+            avoidOverlap: true,
+            avoidOverlapPadding: 20,
+            nodeDimensionsIncludeLabels: true
+          };
+          break;
+
+        default:
+        case "Dagre":
+          value = { ...config.graph.layout };
+          break;
+      }
+
+      cy.elements()
+        .makeLayout({
+          ...value,
+          animate: true
+        })
+        .run()
+        .promiseOn("layoutstop", () => {});
+      this.loading.value = false;
+    },
+
+    menu_redact: function(value) {
+      let style = [];
+      if (value)
+        config.graph.style.map(s => {
+          if (
+            s.selector.includes("node") &&
+            Object.keys(s.style).includes("label")
+          ) {
+            style.push({
+              selector: s.selector,
+              style: { label: "" }
+            });
+          }
+        });
+      this.properties.enabled = !value;
+      this.search.enabled = !value;
+      cy.style(config.graph.style.concat(style));
+    },
+
+    menu_screenshot() {
+      const filename = `awspx_${new Date().getTime()}.png`;
+      const png = cy.png({ bg: "white" });
+      const download = document.createElement("a");
+      download.href = png;
+      download.download = filename;
+      download.click();
+    },
+
+    menu_load_saved_queries() {
+      this.search.visible = true;
+      this.search.advanced = true;
+      this.search.visual_queries_active = true;
+    },
+
+    menu_update_layout(value) {
+      this.layout.name = value;
+      this.run_layout();
+    },
+
     register_listeners() {
       // Keyboard events
       window.addEventListener("keydown", event => {
         switch (event.key) {
           case "Tab":
             event.preventDefault();
-            this.search.hidden = false;
+            this.search.visible = true;
             this.events.keys.alt = !this.events.keys.alt;
 
             break;
@@ -674,7 +811,7 @@ export default {
           case "s":
             if (event.ctrlKey) {
               event.preventDefault();
-              this.search.hidden = false;
+              this.search.visible = true;
             }
             break;
           // TODO: Add panning using arrow keys
@@ -704,17 +841,13 @@ export default {
           case "Delete":
             this.remove(cy.elements(".selected"));
             break;
-          case "Escape":
-            this.properties.value = null;
-            this.search.hidden = true;
-            break;
+          // case "Escape":
+          //   this.properties.value = null;
+          //   this.search.visible = false;
+          //   break;
           case "Enter":
             if (event.altKey) {
-              cy.elements()
-                .makeLayout({
-                  ...this.layout
-                })
-                .run();
+              this.run_layout();
             }
             break;
           default:
@@ -736,7 +869,6 @@ export default {
       });
 
       cy.on("cxttap", "node", event => {
-        this.search.hidden = true;
         this.context_menu_create(event.target);
       });
 
@@ -770,6 +902,10 @@ export default {
         }
       });
 
+      cy.on("boxstart", event => {
+        this.context_menu_destroy();
+      });
+
       cy.on("doubleclick", "node", event => {
         this.expand_collapse(event.target);
       });
@@ -783,7 +919,7 @@ export default {
       });
 
       cy.on("singleclick", event => {
-        this.search.hidden = true;
+        this.search.visible = false;
         this.context_menu_destroy();
 
         if (event.target.group) {
@@ -800,11 +936,10 @@ export default {
               collection.merge(event.target.connectedNodes());
               collection.merge(event.target);
             }
-            cy.elements().addClass("unselected");
             cy.elements(".selected").removeClass("selected");
-
-            event.target.addClass("selected");
+            cy.elements().addClass("unselected");
             collection.removeClass("unselected");
+            event.target.addClass("selected");
             this.properties.value = event.target.json();
           } else {
             event.target.removeClass("unselected");
@@ -826,12 +961,10 @@ export default {
 
   mounted() {
     cytoscape.use(dagre);
-    this.layout = { ...config.graph.layout };
     cy = cytoscape({
       container: document.getElementsByClassName("graph")[0],
       elements: config.elements,
       style: config.graph.style,
-      layout: this.layout,
       wheelSensitivity: 0.1,
       maxZoom: 1.5,
       minZoom: 0.2
@@ -915,26 +1048,26 @@ export default {
 </script>
 
 <style>
-.v-application {
-  font-family: "Source Code Pro" !important;
-  font-size: 14px !important;
-}
-
 #graph {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  padding-right: 60px;
+  position: absolute;
   text-align: center;
   color: #2c3e50;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  position: absolute;
   z-index: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  top: 0;
 }
 
 .graph canvas {
   left: 0px !important;
+}
+
+.notice div {
+  z-index: 20 !important;
 }
 
 .notification {

@@ -103,6 +103,7 @@ class Statement:
                         labels=["AWS::Account"],
                         properties={
                             "Name": "All AWS Accounts",
+                            "Description": "Pseudo-Account representing anyone who possesses an AWS account",
                             "Arn": "arn:aws:iam::{Account}:root"
                         })]
 
@@ -180,38 +181,36 @@ class Statement:
             node = None
             labels = []
 
-            if re.compile(
-                RESOURCES["AWS::Iam::SamlProvider"]
-            ).match(statement["Federated"]) is not None:
+            statements = statement["Federated"] if isinstance(
+                statement["Federated"], list) else [statement["Federated"]]
 
-                base = Resource if (next((a for a in self._resources if a.id().split(
-                    ':')[4] == statement["Federated"].split(':')[4]), False)) else External
-
-                node = base(
-                    key="Arn",
-                    labels=["AWS::Iam::SamlProvider"],
-                    properties={
-                        "Name": statement["Federated"].split('/')[-1],
-                        "Arn":  statement["Federated"]
-                    })
-
-            elif re.compile(
-                "^(?=.{1,253}\.?$)(?:(?!-|[^.]+_)[A-Za-z0-9-_]{1,63}(?<!-)(?:\.|$)){2,}$"
-            ).match(statement["Federated"]):
-
-                node = External(
-                    labels=["Internet::Domain"],
-                    properties={
-                        "Name": statement["Federated"]
-                    })
-
-            else:
-                node = External(
-                    properties={
-                        "Name": statement["Federated"],
-                    })
-
-            principals.add(node)
+            for federated in statements:
+                if re.compile(
+                    RESOURCES["AWS::Iam::SamlProvider"]
+                ).match(federated) is not None:
+                    base = Resource if (next((a for a in self._resources if a.id().split(
+                        ':')[4] == federated.split(':')[4]), False)) else External
+                    node = base(
+                        key="Arn",
+                        labels=["AWS::Iam::SamlProvider"],
+                        properties={
+                            "Name": federated.split('/')[-1],
+                            "Arn":  federated
+                        })
+                elif re.compile(
+                    "^(?=.{1,253}\.?$)(?:(?!-|[^.]+_)[A-Za-z0-9-_]{1,63}(?<!-)(?:\.|$)){2,}$"
+                ).match(federated):
+                    node = External(
+                        labels=["Internet::Domain"],
+                        properties={
+                            "Name": federated
+                        })
+                else:
+                    node = External(
+                        properties={
+                            "Name": federated,
+                        })
+                principals.add(node)
 
         # TODO:
         elif "CanonicalUser" in statement:
@@ -372,10 +371,27 @@ class Statement:
 
         for action in self.actions():
 
-            # Rewrite
             resources = Elements()
-            for affected in ACTIONS[action]["Affects"]:
-                resources.update(Elements(self._explicit_resources.get(affected)))
+
+            # Actions that do not affect specific resource types.
+
+            if ACTIONS[action]["Affects"] == {}:
+
+                resources.update(Elements(
+                    self._explicit_resources.get("CatchAll")))
+
+            for affected_type in ACTIONS[action]["Affects"].keys():
+
+                affected = self._explicit_resources.get(affected_type)
+
+                # Ignore mutable actions affecting built in policies
+
+                if affected_type == "AWS::Iam::Policy" \
+                        and ACTIONS[action]["Access"] in ["Permissions Management", "Write"]:
+                    affected = [a for a in affected if str(a).split(':')[
+                        4] != "aws"]
+
+                resources.update(Elements(affected))
 
             for resource in resources:
 
@@ -391,6 +407,10 @@ class Statement:
                 condition = json.dumps(condition) \
                     if len(condition[0]) > 0 else "[]"
 
+                supplementary = next((ACTIONS[action]["Affects"][r]
+                                      for r in resource.labels(
+                ) if r in ACTIONS[action]["Affects"]), {})
+
                 for principal in self._explicit_principals:
                     actions.add(Action(
                         properties={
@@ -399,7 +419,8 @@ class Statement:
                             "Effect":       self._statement["Effect"],
                             "Access":       ACTIONS[action]["Access"],
                             "Reference":    ACTIONS[action]["Reference"],
-                            "Condition":    condition
+                            "Condition":    condition,
+                            **supplementary
                         },
                         source=principal, target=resource))
 
@@ -680,4 +701,3 @@ class ObjectACL(BucketACL):
             "s3:PutObjectVersionAcl",
         ],
     }
-

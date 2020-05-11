@@ -60,7 +60,7 @@ export default {
         style: [{
             selector: 'node',
             style: {
-                'font-family': 'Source Code Pro',
+                'font-family': 'Roboto Mono, monospace',
                 'font-size': '12px',
                 'height': 75,
                 'width': 75,
@@ -68,7 +68,7 @@ export default {
 
                 'background-color': 'white',
                 'border-color': 'black',
-                'border-width': 1,
+                'border-width': 0.2,
 
                 'text-halign': 'center',
                 'text-valign': 'bottom',
@@ -86,13 +86,13 @@ export default {
             selector: 'edge',
             style: {
 
-                'font-family': 'Source Code Pro',
+                'font-family': 'Roboto Mono, monospace',
                 'font-size': '6px',
 
                 'curve-style': 'bezier',
                 'target-arrow-shape': 'triangle',
                 'width': '1px',
-
+                'line-color': "#999999",
                 'color': 'White',
                 'text-rotation': 'autorotate',
                 'text-background-color': 'Black',
@@ -118,6 +118,12 @@ export default {
             selector: 'node.Admin',
             style: {
                 'background-image': icons.Admin,
+            }
+        },
+        {
+            selector: 'node.CatchAll',
+            style: {
+                'background-image': icons.CatchAll,
             }
         },
         {
@@ -202,14 +208,21 @@ export default {
             }
         },
         {
-            selector: '.selected',
+            selector: 'node.selected',
             style: {
-                'line-color': colors.blue.base,
-                'line-gradient-stop-colors': colors.blue.base,
-                'border-color': colors.blue.base,
-                zIndex: 4,
+                'border-color': "black",
+                'border-width': 1,
+                'z-index': 4,
             }
         },
+        {
+            selector: 'edge.selected',
+            style: {
+                'z-index': 4,
+                'width': '1.5px',
+            }
+        },
+
         {
             selector: '.unselected',
             style: {
@@ -290,7 +303,7 @@ export default {
             padding: 40,
             spacingFactor: 1.5,
             nodeDimensionsIncludeLabels: true,
-            animate: false,
+            animate: true,
             animateFilter: function (node, i) { return true; },
             animationDuration: 250,
             animationEasing: undefined,

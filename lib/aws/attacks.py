@@ -50,9 +50,7 @@ class Attacks:
 
                 "Grants": "Admin"
 
-            },
-
-            "Grants": "CreatePolicyVersion"
+            }
         },
 
         "AssociateInstanceProfile": {
@@ -81,11 +79,9 @@ class Attacks:
                 "Cypher": [
                     "(${AWS::Ec2::Instance}) WHERE NOT EXISTS((${AWS::Iam::InstanceProfile})-[:TRANSITIVE]->(:`AWS::Iam::Role`)) "
                     "OR EXISTS((${AWS::Iam::InstanceProfile})-[:TRANSITIVE]->(:`AWS::Iam::Role`)<-[:ACTION{Name:'iam:PassRole', Effect:'Allow'}]-(${}))"
-                ],
+                ]
 
-            },
-
-            "Grants": "Attached",
+            }
         },
 
         "AssumeRole": {
@@ -109,11 +105,9 @@ class Attacks:
 
                 "Cypher": [
                     "(${})<-[:TRUSTS{Name:'sts:AssumeRole'}]-(${AWS::Iam::Role})"
-                ],
+                ]
 
-            },
-
-            "Grants": "AssumeRole",
+            }
         },
 
         "AddRoleToInstanceProfile": {
@@ -144,9 +138,7 @@ class Attacks:
                     "OR (${})-[:TRANSITIVE|ATTACK*0..]->()-[:ACTION{Effect:'Allow', Name:'iam:DeleteInstanceProfile'}]->(${AWS::Iam::InstanceProfile}) "
                     "OR NOT EXISTS((${AWS::Iam::InstanceProfile})-[:TRANSITIVE]->(${AWS::Iam::Role})) "
                 ]
-            },
-
-            "Grants": "Attached",
+            }
         },
 
         "AddUserToGroup": {
@@ -167,11 +159,9 @@ class Attacks:
                     "iam:AddUserToGroup"
                 ],
 
-                "Affects": "AWS::Iam::Group",
+                "Affects": "AWS::Iam::Group"
 
-            },
-
-            "Grants": "MemberOf"
+            }
         },
 
         "AttachGroupPolicy": {
@@ -197,9 +187,7 @@ class Attacks:
 
                 "Grants": "AWS::Iam::Policy"
 
-            },
-
-            "Grants": "Attached"
+            }
         },
 
         "AttachRolePolicy": {
@@ -224,9 +212,8 @@ class Attacks:
                 "Affects": "AWS::Iam::Role",
 
                 "Grants": "AWS::Iam::Policy"
-            },
+            }
 
-            "Grants": "Attached"
         },
 
         "AttachUserPolicy": {
@@ -250,11 +237,9 @@ class Attacks:
 
                 "Affects": "AWS::Iam::User",
 
-                "Grants": "AWS::Iam::Policy",
+                "Grants": "AWS::Iam::Policy"
 
-            },
-
-            "Grants": "Attached"
+            }
         },
 
         "CreateGroup": {
@@ -383,9 +368,7 @@ class Attacks:
                 "      \"Effect\": \"Allow\",\n"
                 "      \"Action\": \"sts:AssumeRole\",\n"
                 "      \"Principal\": {\n"
-                "        \"AWS\": [\n"
-                "          \"${}.Arn\"\n"
-                "        ]\n"
+                "        \"AWS\": \"*\"\n"
                 "      }\n"
                 "    }\n"
                 "  ]\n"
@@ -412,7 +395,7 @@ class Attacks:
         # "CreateSnapshot": {
 
         #     "Description": "Create a snapshot of the target volume "
-        #     "and gain read access to it by launching a new Ec2 instance that mounts it:",
+        #     "and gain read access to it by launching a new EC2 instance that mounts it:",
 
         #     "Commands": [
         #         "aws ec2 create-snapshot ${AWS::Ec2::Volume}",
@@ -429,9 +412,7 @@ class Attacks:
 
         #         "Affects": "AWS::Ec2::Volume",
 
-        #     },
-
-        #     "Grants": "ReadFileSystem"
+        #     }
         # },
 
         "CreateUserLoginProfile": {
@@ -607,9 +588,7 @@ class Attacks:
 
                 "Affects": "AWS::Iam::Role"
 
-            },
-
-            "Grants": "AssumeRole"
+            }
         },
 
         "UpdateUserLoginProfile": {
@@ -630,9 +609,7 @@ class Attacks:
 
                 "Affects": "AWS::Iam::User"
 
-            },
-
-            "Grants": "ChangePassword"
+            }
         },
 
         "SetUserLoginProfile": {
@@ -655,10 +632,8 @@ class Attacks:
 
                 "Cypher": [
                     "${AWS::Iam::User}.LoginProfile IS NULL"
-                ],
-            },
-
-            "Grants": "SetPassword"
+                ]
+            }
         },
 
         "CreateUserAccessKey": {
@@ -682,11 +657,9 @@ class Attacks:
                     "(COALESCE(SIZE(SPLIT("
                     "${AWS::Iam::User}.AccessKeys,"
                     "'Status')), 1) - 1) < 2",
-                ],
+                ]
 
-            },
-
-            "Grants": "CreateAccessKey"
+            }
         },
 
         "ReplaceUserAccessKey": {
@@ -714,11 +687,9 @@ class Attacks:
                     "(SIZE(SPLIT("
                     "${AWS::Iam::User}.AccessKeys,"
                     "'Status')) - 1) > 0",
-                ],
+                ]
 
-            },
-
-            "Grants": "ReplaceAccessKey"
+            }
         },
 
     }
@@ -729,7 +700,8 @@ class Attacks:
         return (
             "MERGE (admin:Admin:`AWS::Iam::Policy`{"
             "Name: 'Effective Admin', "
-            "Arn: 'arn:aws:iam::$account:policy/Admin', "
+            "Description: 'Pseudo-Policy representing full and unfettered access.', "
+            "Arn: 'arn:aws:iam::${Account}:policy/Admin', "
             'Document: \'[{"DefaultVersion": {"Version": "2012-10-17", '
             '"Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"'
             '}]}}]\''
@@ -770,15 +742,12 @@ class Attacks:
         CYPHER = ""
         VARs = {
             "name": name,
-            "attack": name,
-            "requires_list": attack["Requires"],
-            "target_type": attack["Affects"],
-            "grants_type": attack["Grants"] if "Grants" in attack else "",
-            "dependency": attack["Depends"] if "Depends" in attack else "",
             "description": definition["Description"],
-            "requires": attack["Requires"],
             "commands": definition["Commands"],
-            "grants": definition["Grants"] if "Grants" in definition else "Create",
+            "depends": attack["Depends"] if "Depends" in attack else "",
+            "affects": attack["Affects"],
+            "requires": attack["Requires"],
+            "grants": attack["Grants"] if "Grants" in attack else "",
             "depth": max_search_depth,
             "steps": len(definition["Commands"]),
             "size": len(attack["Requires"]),
@@ -975,15 +944,13 @@ class Attacks:
 
         if "Grants" in attack:
 
-            # VARs["grants_type"] = ""
-
             CYPHER += ''.join((
 
-                "OPTIONAL MATCH (grant:`{grants_type}`) WHERE NOT grant:Generic ",
+                "OPTIONAL MATCH (grant:`{grants}`) WHERE NOT grant:Generic ",
                 str("AND grant:Resource " if attack["Grants"]
                     != "Admin" else ""),
                 "OPTIONAL MATCH creation=(c)-[:TRANSITIVE|ATTACK|CREATE*..{depth}]",
-                "->(generic:Generic:`{grants_type}`) ",
+                "->(generic:Generic:`{grants}`) ",
                 "WHERE c = source ",
 
                 "WITH DISTINCT source, options, admin, ",
@@ -1014,11 +981,9 @@ class Attacks:
             # only direct relationships need to be identified, weight computation
             # and pruning requirements can be safely ommitted.
 
-            VARs["requires"] = VARs["requires"][0]
-
             CYPHER += ' '.join((
-                "MATCH path=(source)-[edge:ACTION{{Name:'{requires}', Effect: 'Allow'}}]"
-                "->(target:`{target_type}`) ",
+                "MATCH path=(source)-[edge:ACTION{{Name:'{requires[0]}', Effect: 'Allow'}}]"
+                "->(target:`{affects}`) ",
 
                 "WHERE NOT source:Pattern ",
                 "AND ALL(_ IN REVERSE(TAIL(REVERSE(NODES(path)))) WHERE NOT _ IN admin) ",
@@ -1040,7 +1005,7 @@ class Attacks:
 
                 "MATCH path=(source)-"
                 "[:TRANSITIVE|ATTACK*0..{depth}]->()"
-                "-[edge:ACTION]->(target:`{target_type}`)",
+                "-[edge:ACTION]->(target:`{affects}`)",
 
                 "WHERE NOT source:Pattern",
                 "AND ALL(_ IN REVERSE(TAIL(REVERSE(NODES(path)))) WHERE NOT _ IN admin)",
@@ -1130,13 +1095,11 @@ class Attacks:
         # Assert: CYPHER includes source, targets, options, grants; where options, targets
         #         and grants comprise of (destination, commands) tuples.
 
-        # Reduce result set to Generics only when a CreateAction has been specified.
-
         if OPTs["CreateAction"]:
 
-            # Targets can only comprise of Generic nodes
+            # Reduce result set to Generics only when a CreateAction has been specified.
 
-            VARs["target_type"] += "`:`Generic"
+            VARs["affects"] += "`:`Generic"
 
         else:
 
@@ -1195,11 +1158,11 @@ class Attacks:
             if "Grants" not in attack else \
             "WITH DISTINCT source, COLLECT([target, commands]) AS options, grants ",
 
-            "MERGE (source)-[:ATTACK{{Name:'{attack}'}}]-> "
-            "(pattern:Pattern:{attack}{{Name:'{attack}'}})",
+            "MERGE (source)-[:ATTACK{{Name:'{name}'}}]-> "
+            "(pattern:Pattern:{name}{{Name:'{name}'}})",
             "ON CREATE SET ",
-            "pattern.Requires = {requires_list},",
-            "pattern.Depends = \"{dependency}\"",
+            "pattern.Requires = {requires},",
+            "pattern.Depends = \"{depends}\"",
 
             "WITH DISTINCT source, pattern, options, grants",
             "UNWIND grants AS grant",
@@ -1247,7 +1210,7 @@ class Attacks:
     @staticmethod
     def compute(
         max_iterations=5,
-        except_attacks=[],
+        skip_attacks=[],
         only_attacks=[],
         max_search_depth="",
         ignore_actions_with_conditions=True
@@ -1279,7 +1242,7 @@ class Attacks:
         # of iterations.
 
         attack_definitions = {k: v for k, v in Attacks.definitions.items()
-                              if k not in except_attacks
+                              if k not in skip_attacks
                               and (only_attacks == [] or k in only_attacks)}
 
         try:
@@ -1359,7 +1322,7 @@ class Attacks:
                           else 0 for s in stats])
 
         sys.stdout.write("\033[F\033[K")
-        print(f"[+] {discovered} patterns were discovered " + str(
+        print(f"[+] {discovered} potential attacks were discovered " + str(
               f"(successfully converged after {iteration} iterations)" if iteration < max_iterations else
               f"(failed to converge of {max_iterations})")
               )
