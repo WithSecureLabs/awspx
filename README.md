@@ -56,7 +56,7 @@ cd awspx && ./INSTALL
 2. Browse to the **web interface** — *<http://localhost> by default* — and [explore this environment](https://github.com/FSecureLABS/awspx/wiki/Data-Exploration##usage-examples). 
 
     </br>
-    [[https://raw.githubusercontent.com/wiki/FSecureLABS/awspx/uploads/Awspx.gif]] 
+    <img src="https://raw.githubusercontent.com/wiki/FSecureLABS/awspx/uploads/Awspx.gif">
 
 # Contributing
 
