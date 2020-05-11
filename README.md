@@ -1,4 +1,4 @@
-[[https://raw.githubusercontent.com/wiki/FSecureLABS/awspx/uploads/Awspx.svg|width=600px]]
+<img src="https://raw.githubusercontent.com/wiki/FSecureLABS/awspx/uploads/Awspx.svg" width="600px">
 
 > auspex [ˈau̯s.pɛks] noun: An augur of ancient Rome, especially one who interpreted omens derived from the observation of birds.
 
