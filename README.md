@@ -3,7 +3,7 @@
 > auspex [ˈau̯s.pɛks] noun: An augur of ancient Rome, especially one who interpreted omens derived from the observation of birds.
 
 ![](https://img.shields.io/github/license/FSecureLABS/awspx)
-![](https://img.shields.io/github/v/tag/FSecureLabs/awspx)
+![](https://img.shields.io/github/v/release/FSecureLABS/awspx)
 ![](https://img.shields.io/github/contributors/FSecureLABS/awspx)
 
 # Overview
