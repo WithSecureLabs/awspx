@@ -656,6 +656,14 @@ class IAM(Ingestor):
             "AWS::Iam::InstanceProfile").get(
             "Resource")
 
+        clusters = self.get(
+            "AWS::EKS::Cluster").get(
+            "Resource") 
+
+        fargate_profiles = self.get(
+            "AWS::EKS::FargateProfile").get(
+            "Resource") 
+
         # Instance - [TRANSITIVE] -> Iam Instance Profile
 
         for instance in instances:
@@ -687,6 +695,42 @@ class IAM(Ingestor):
 
             self.add(Transitive(
                 {"Name": "Attached"}, source=function, target=role))
+
+
+
+	# Cluster - [TRANSITIVE] -> Role
+
+        for cluster in clusters:
+
+            if "roleArn" not in cluster.properties():
+                continue
+
+            role = next((r for r in roles
+                         if r.id() == cluster.properties()["roleArn"]),
+                        None)
+
+            del cluster.properties()["roleArn"]
+
+            self.add(Transitive(
+                {"Name": "Attached"}, source=cluster, target=role))
+
+        # Fargate Profiles - [TRANSITIVE] -> Role
+
+        for profile in fargate_profiles:
+
+            if "podExecutionRoleArn" not in profile.properties():
+                continue
+
+            role = next((r for r in roles
+                         if r.id() == profile.properties()["podExecutionRoleArn"]),
+                        None)
+
+            del profile.properties()["podExecutionRoleArn"]
+
+            self.add(Transitive(
+                {"Name": "Attached"}, source=profile, target=role))
+
+
 
     def resolve(self):
 
@@ -982,6 +1026,8 @@ class Lambda(Ingestor):
         'AWS::Lambda::Function',
     ]
 
+    
+
     def __init__(self, session, account="000000000000", verbose=False, quick=False,
                  only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
@@ -1030,3 +1076,96 @@ class Lambda(Ingestor):
                 functions.add(f)
 
         self.update(functions)
+
+
+
+
+
+class EKS(Ingestor):
+    run = [
+        'AWS::EKS::Cluster',
+    ]
+    associates = [
+        ("AWS::EKS::Cluster", "AWS::EKS::FargateProfile")]
+
+    def __init__(self, session, account="000000000000", verbose=False, quick=False,
+                 only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
+
+        super().__init__(session=session, default=False, verbose=verbose, quick=quick)
+
+        self.run = [t for t in self.run
+                    if (len(skip_types) == 0 or t not in skip_types)
+                    and (len(only_types) == 0 or t in only_types)]
+
+        if len(self.run) == 0:
+            return
+
+        self.client = self.session.client('eks')
+
+        self.get_clusters()
+
+        self._print_stats()
+
+
+    def get_fargate_profiles(self, cluster, cluster_arn):
+        fargate_profiles_elements = Elements()
+        edges = Elements()
+        self._print("[*] Retrieving Fargate profiles (this can take a while)")
+        for fargate_profiles_all in self.client.get_paginator("list_fargate_profiles").paginate(clusterName=cluster):
+            fargate_profiles = fargate_profiles_all["fargateProfileNames"]
+            for fargate_profile in fargate_profiles:
+                profile = self.client.describe_fargate_profile(clusterName=cluster, fargateProfileName=fargate_profile)["fargateProfile"]
+                profile["Name"] = profile["fargateProfileName"]
+                profile["Arn"] = profile["fargateProfileArn"]
+                del profile["fargateProfileName"]
+                del profile["fargateProfileArn"]
+                f = Resource(
+                    properties=profile,
+                    labels=["AWS::EKS::FargateProfile"])
+                if f not in fargate_profiles_elements:
+                    self._print(f"[*] Adding {f}")
+                    fargate_profiles_elements.add(f)
+                edges.add(Associative(
+                        properties={"Name": "Attached"}, source=cluster_arn, target=f))
+
+        self.update(fargate_profiles_elements)
+        self.update(edges)        
+  
+\
+
+
+    def get_clusters(self):
+
+        clusters = Elements()
+        self._print("[*] Retrieving EKS clusters (this can take a while)")
+        for cluster_name_all in self.client.get_paginator("list_clusters").paginate():
+            cluster_names = cluster_name_all["clusters"]
+            for cluster_name in cluster_names:
+                cluster = self.client.describe_cluster(name=cluster_name)["cluster"]
+                cluster["Name"] = cluster["name"]
+                cluster["Arn"] = cluster["arn"]
+                del cluster["name"]
+                del cluster["arn"]
+                f = Resource(
+                    properties=cluster,
+                    labels=["AWS::EKS::Cluster"])
+                if f not in clusters:
+                    self._print(f"[*] Adding {f}")
+                    clusters.add(f)
+                
+                self.get_fargate_profiles(cluster["Name"],f)
+
+
+        self.update(clusters)
+
+
+
+
+
+
+
+
+
+
+
+   
