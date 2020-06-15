@@ -658,11 +658,11 @@ class IAM(Ingestor):
 
         clusters = self.get(
             "AWS::EKS::Cluster").get(
-            "Resource") 
+            "Resource")
 
         fargate_profiles = self.get(
             "AWS::EKS::FargateProfile").get(
-            "Resource") 
+            "Resource")
 
         # Instance - [TRANSITIVE] -> Iam Instance Profile
 
@@ -695,10 +695,8 @@ class IAM(Ingestor):
 
             self.add(Transitive(
                 {"Name": "Attached"}, source=function, target=role))
-
-
-
-	# Cluster - [TRANSITIVE] -> Role
+                
+        # Cluster - [TRANSITIVE] -> Role
 
         for cluster in clusters:
 
@@ -729,8 +727,6 @@ class IAM(Ingestor):
 
             self.add(Transitive(
                 {"Name": "Attached"}, source=profile, target=role))
-
-
 
     def resolve(self):
 
@@ -1026,8 +1022,6 @@ class Lambda(Ingestor):
         'AWS::Lambda::Function',
     ]
 
-    
-
     def __init__(self, session, account="000000000000", verbose=False, quick=False,
                  only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
@@ -1078,10 +1072,8 @@ class Lambda(Ingestor):
         self.update(functions)
 
 
-
-
-
 class EKS(Ingestor):
+
     run = [
         'AWS::EKS::Cluster',
     ]
@@ -1101,47 +1093,59 @@ class EKS(Ingestor):
             return
 
         self.client = self.session.client('eks')
-
         self.get_clusters()
-
         self._print_stats()
 
-
     def get_fargate_profiles(self, cluster, cluster_arn):
+
         fargate_profiles_elements = Elements()
         edges = Elements()
+
         self._print("[*] Retrieving Fargate profiles (this can take a while)")
-        for fargate_profiles_all in self.client.get_paginator("list_fargate_profiles").paginate(clusterName=cluster):
+
+        for fargate_profiles_all in self.client.get_paginator(
+            "list_fargate_profiles"
+        ).paginate(clusterName=cluster):
+
             fargate_profiles = fargate_profiles_all["fargateProfileNames"]
+
             for fargate_profile in fargate_profiles:
-                profile = self.client.describe_fargate_profile(clusterName=cluster, fargateProfileName=fargate_profile)["fargateProfile"]
+                profile = self.client.describe_fargate_profile(
+                    clusterName=cluster,
+                    fargateProfileName=fargate_profile
+                )["fargateProfile"]
+
                 profile["Name"] = profile["fargateProfileName"]
                 profile["Arn"] = profile["fargateProfileArn"]
                 del profile["fargateProfileName"]
                 del profile["fargateProfileArn"]
+
                 f = Resource(
                     properties=profile,
                     labels=["AWS::EKS::FargateProfile"])
+
                 if f not in fargate_profiles_elements:
                     self._print(f"[*] Adding {f}")
                     fargate_profiles_elements.add(f)
+
                 edges.add(Associative(
-                        properties={"Name": "Attached"}, source=cluster_arn, target=f))
+                    properties={"Name": "Attached"},
+                    source=cluster_arn,
+                    target=f))
 
         self.update(fargate_profiles_elements)
-        self.update(edges)        
-  
-\
-
+        self.update(edges)
 
     def get_clusters(self):
 
         clusters = Elements()
         self._print("[*] Retrieving EKS clusters (this can take a while)")
+
         for cluster_name_all in self.client.get_paginator("list_clusters").paginate():
             cluster_names = cluster_name_all["clusters"]
             for cluster_name in cluster_names:
-                cluster = self.client.describe_cluster(name=cluster_name)["cluster"]
+                cluster = self.client.describe_cluster(
+                    name=cluster_name)["cluster"]
                 cluster["Name"] = cluster["name"]
                 cluster["Arn"] = cluster["arn"]
                 del cluster["name"]
@@ -1152,20 +1156,7 @@ class EKS(Ingestor):
                 if f not in clusters:
                     self._print(f"[*] Adding {f}")
                     clusters.add(f)
-                
-                self.get_fargate_profiles(cluster["Name"],f)
 
+                self.get_fargate_profiles(cluster["Name"], f)
 
         self.update(clusters)
-
-
-
-
-
-
-
-
-
-
-
-   
