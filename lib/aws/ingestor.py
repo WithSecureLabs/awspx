@@ -664,6 +664,10 @@ class IAM(Ingestor):
             "AWS::EKS::FargateProfile").get(
             "Resource")
 
+        nodegroup_profiles = self.get(
+            "AWS::EKS::NodeGroup").get(
+            "Resource")
+
         # Instance - [TRANSITIVE] -> Iam Instance Profile
 
         for instance in instances:
@@ -724,6 +728,22 @@ class IAM(Ingestor):
                         None)
 
             del profile.properties()["podExecutionRoleArn"]
+
+            self.add(Transitive(
+                {"Name": "Attached"}, source=profile, target=role))
+
+        # Node Group Roles - [TRANSITIVE] -> Role
+
+        for profile in nodegroup_profiles:
+
+            if "nodeRole" not in profile.properties():
+                continue
+
+            role = next((r for r in roles
+                         if r.id() == profile.properties()["nodeRole"]),
+                        None)
+
+            del profile.properties()["nodeRole"]
 
             self.add(Transitive(
                 {"Name": "Attached"}, source=profile, target=role))
@@ -1078,7 +1098,8 @@ class EKS(Ingestor):
         'AWS::EKS::Cluster',
     ]
     associates = [
-        ("AWS::EKS::Cluster", "AWS::EKS::FargateProfile")]
+        ("AWS::EKS::Cluster", "AWS::EKS::FargateProfile"),
+        ("AWS::EKS::Cluster", "AWS::EKS::NodeGroup")]
 
     def __init__(self, session, account="000000000000", verbose=False, quick=False,
                  only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
@@ -1119,6 +1140,9 @@ class EKS(Ingestor):
                 profile["Arn"] = profile["fargateProfileArn"]
                 del profile["fargateProfileName"]
                 del profile["fargateProfileArn"]
+ 
+                print(profile)
+                print()
 
                 f = Resource(
                     properties=profile,
@@ -1135,6 +1159,51 @@ class EKS(Ingestor):
 
         self.update(fargate_profiles_elements)
         self.update(edges)
+
+
+    def get_node_profiles(self, cluster, cluster_arn):
+
+        node_profiles_elements = Elements()
+        edges = Elements()
+
+        self._print("[*] Retrieving node group profiles (this can take a while)")
+
+        for node_profiles_all in self.client.get_paginator(
+            "list_nodegroups"
+        ).paginate(clusterName=cluster):
+
+            node_profiles = node_profiles_all["nodegroups"]
+
+            for node_profile in node_profiles:
+                profile = self.client.describe_nodegroup(
+                    clusterName=cluster,
+                    nodegroupName=node_profile
+                )["nodegroup"]
+
+                profile["Name"] = profile["nodegroupName"]
+                profile["Arn"] = profile["nodegroupArn"]
+                del profile["nodegroupName"]
+                del profile["nodegroupArn"]
+
+                print(profile)
+                print()
+
+                f = Resource(
+                    properties=profile,
+                    labels=["AWS::EKS::NodeGroup"])
+
+                if f not in node_profiles_elements:
+                    self._print(f"[*] Adding {f}")
+                    node_profiles_elements.add(f)
+
+                edges.add(Associative(
+                    properties={"Name": "Attached"},
+                    source=cluster_arn,
+                    target=f))
+
+        self.update(node_profiles_elements)
+        self.update(edges)
+
 
     def get_clusters(self):
 
@@ -1158,5 +1227,6 @@ class EKS(Ingestor):
                     clusters.add(f)
 
                 self.get_fargate_profiles(cluster["Name"], f)
+                self.get_node_profiles(cluster["Name"], f)
 
         self.update(clusters)
