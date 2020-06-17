@@ -18,7 +18,7 @@ function install(){
 
     APT_DEPS=("nodejs" "npm" "python3-pip" "procps" "git")
     PY_DEPS=("argparse" "awscli-local" "boto3" "neo4j"
-             "neobolt" "configparser" "git-python") 
+             "configparser" "git-python") 
 
     # Ensure dependencies are met 
     for dep in ${DEPS[*]}; do
