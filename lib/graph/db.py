@@ -4,8 +4,7 @@ import shutil
 import subprocess
 import time
 
-from neo4j import GraphDatabase
-from neobolt import exceptions
+from neo4j import GraphDatabase, exceptions
 
 
 class Neo4j(object):
@@ -16,9 +15,11 @@ class Neo4j(object):
 
     @staticmethod
     def run(cypher):
+
         driver = GraphDatabase.driver(
             Neo4j.connection,
             auth=(Neo4j.username, Neo4j.password))
+
         with driver.session() as session:
             results = session.run(cypher)
         driver.close()
@@ -42,7 +43,6 @@ class Neo4j(object):
                 Neo4j.connection,
                 auth=(Neo4j.username, Neo4j.password)
             ).session()
-
         except exceptions.ServiceUnavailable:
             return False
         return True
@@ -147,5 +147,5 @@ class Neo4j(object):
 
     @staticmethod
     def _run(tx, cypher):
-        results=tx.run(cypher)
+        results = tx.run(cypher)
         return results

@@ -1270,7 +1270,7 @@ class Attacks:
                     )
 
                     start = time.time()
-                    summary = Neo4j().run(cypher).summary()
+                    summary = Neo4j().run(cypher)._summary
 
                     stats.append({
                         "pattern": pattern,
