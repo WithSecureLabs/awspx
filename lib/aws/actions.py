@@ -5393,6 +5393,283 @@ ACTIONS = {
     "Description": "Grants permission to stop advertising an address range that was provisioned for use in AWS through bring your own IP addresses (BYOIP)",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_WithdrawByoipCidr.html"
   },
+ "eks:CreateCluster": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Creates an Amazon EKS cluster.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html"
+  },
+  "eks:CreateFargateProfile": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Creates an AWS Fargate profile.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateFargateProfile.html"
+  },
+  "eks:CreateNodegroup": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Creates an Amazon EKS Nodegroup.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html"
+  },
+  "eks:DeleteCluster": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Deletes an Amazon EKS cluster.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_DeleteCluster.html"
+  },
+  "eks:DeleteFargateProfile": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Eks::FargateProfile": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Deletes an AWS Fargate profile.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_DeleteFargateProfile.html"
+  },
+  "eks:DeleteNodegroup": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Eks::Nodegroup": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Deletes an Amazon EKS Nodegroup.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_DeleteNodegroup.html"
+  },
+  "eks:DescribeCluster": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Returns descriptive information about an Amazon EKS cluster.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeCluster.html"
+  },
+  "eks:DescribeFargateProfile": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::Eks::FargateProfile": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Returns descriptive information about an AWS Fargate profile associated with a cluster.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeFargateProfile.html"
+  },
+  "eks:DescribeNodegroup": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::Eks::Nodegroup": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Returns descriptive information about an Amazon EKS nodegroup.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeNodegroup.html"
+  },
+  "eks:DescribeUpdate": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      },
+      "AWS::Eks::Nodegroup": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Describes a given update for a given Amazon EKS cluster/nodegroup (in the specified or default region).",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeUpdate.html"
+  },
+  "eks:ListClusters": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Lists the Amazon EKS clusters in your AWS account (in the specified or default region).",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_ListClusters.html"
+  },
+  "eks:ListFargateProfiles": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Lists the AWS Fargate profiles in your AWS account (in the specified or default region) associated with a given cluster.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_ListFargateProfiles.html"
+  },
+  "eks:ListNodegroups": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Lists the Amazon EKS nodegroups in your AWS account (in the specified or default region) attached to given cluster.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_ListNodegroups.html"
+  },
+  "eks:ListTagsForResource": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      },
+      "AWS::Eks::FargateProfile": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      },
+      "AWS::Eks::Nodegroup": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "List tags for the specified resource.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_ListTagsForResource.html"
+  },
+  "eks:ListUpdates": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      },
+      "AWS::Eks::Nodegroup": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Lists the updates for a given Amazon EKS cluster/nodegroup (in the specified or default region).",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_ListUpdates.html"
+  },
+  "eks:TagResource": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Eks::FargateProfile": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      },
+      "AWS::Eks::Nodegroup": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Tags the specified resource.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_TagResource.html"
+  },
+  "eks:UntagResource": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [
+          "aws:TagKeys"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Eks::FargateProfile": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      },
+      "AWS::Eks::Nodegroup": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Untags the specified resource.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_UntagResource.html"
+  },
+  "eks:UpdateClusterConfig": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Update Amazon EKS cluster configurations (eg: API server endpoint access).",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_UpdateClusterConfig.html"
+  },
+  "eks:UpdateClusterVersion": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Eks::Cluster": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Update the Kubernetes version of an Amazon EKS cluster.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_UpdateClusterVersion.html"
+  },
+  "eks:UpdateNodegroupConfig": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Eks::Nodegroup": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Update Amazon EKS nodegroup configurations (eg: min/max/desired capacity or labels).",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_UpdateNodegroupConfig.html"
+  },
+  "eks:UpdateNodegroupVersion": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Eks::Nodegroup": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Update the Kubernetes version of an Amazon EKS nodegroup.",
+    "Reference": "https://docs.aws.amazon.com/eks/latest/APIReference/API_UpdateNodegroupVersion.html"
+  },  
   "iam:AddClientIDToOpenIDConnectProvider": {
     "Access": "Write",
     "Affects": {
