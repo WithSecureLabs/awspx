@@ -41,7 +41,7 @@
         </v-card-text>
 
         <v-card-actions class="px-5">
-          <v-btn text @click="db_settings_close()">Close</v-btn>
+          <v-btn text disabled="!db.populated" @click="db_settings_close()">Close</v-btn>
           <v-spacer></v-spacer>
           <v-btn outlined @click="db_settings_test()" :loading="test.busy">Test</v-btn>
           <v-btn outlined @click="db_settings_apply()" :loading="form.loading">Apply</v-btn>
@@ -58,10 +58,10 @@
             <v-col />
             <v-col cols="11">
               <div class="mb-2">
-                <b>Either</b> run the ingestor to load an account of your own:
+                <b>a) Either</b> run the ingestor to load an account of your own:
               </div>
 
-              <v-card style="font-size: 11px; border: 1px solid whitesmoke; " class="pa-2">
+              <v-card color="black" class="pa-2 white--text" style="font-size: 11px">
                 [root@localhost ~]#
                 <b>awspx ingest</b>
                 <br />[-] The profile 'default' was not found. Would you like to create it? (y/n) y
@@ -72,9 +72,9 @@
                 <br />
               </v-card>
               <div class="mt-5 mb-2">
-                <b>OR</b> load an existing database (e.g. the provided sample):
+                <b>b) OR</b> load an existing database (e.g. the provided sample):
               </div>
-              <v-card style="font-size: 11px; border: 1px solid whitesmoke;" class="pa-2">
+              <v-card color="black" class="pa-2 white--text" style="font-size: 11px">
                 [root@localhost ~]#
                 <b>awspx db --load-zip sample.zip</b>
                 <br />[*] Importing records from /opt/awspx/data/sample.zip
@@ -91,12 +91,7 @@
         <v-card-actions>
           <v-btn text @click="page = 0">Back</v-btn>
           <v-spacer></v-spacer>
-          <v-btn
-            outlined
-            color="primary"
-            @click="db_settings_apply()"
-            :loading="form.loading"
-          >Check Again</v-btn>
+          <v-btn outlined @click="db_settings_apply()" :loading="form.loading">Check Again</v-btn>
         </v-card-actions>
       </div>
     </v-card>
@@ -122,7 +117,8 @@ export default {
         loading: false
       },
       db: {
-        connected: false
+        connected: false,
+        populated: false
       },
       test: {
         busy: false,
@@ -284,7 +280,6 @@ export default {
 
           this.$emit("resources", resources);
           this.$emit("actions", actions);
-          this.$emit("populated", this.db.populated);
         })
         .catch(e => {
           this.db.connected = false;
