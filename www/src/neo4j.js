@@ -1,8 +1,5 @@
 import neo4j from 'neo4j-driver'
 
-const username = "neo4j"
-const password = "neo4j"
-const hostname = "127.0.0.1"
 
 export default {
 
@@ -307,48 +304,106 @@ export default {
             return Promise.resolve(results)
         }
     },
-    install: function (Vue, ) {
+    install: function (Vue,) {
 
+        const driver = Vue.observable({ value: {} });
         const error = Vue.observable({ value: {} });
         const state = Vue.observable({ statement: "", active: false });
-        const driver = neo4j.driver(
-            `bolt://${hostname}`,
-            neo4j.auth.basic(username, password), {
-            encrypted: false
+
+        const auth = Vue.observable({
+            uri: "bolt://localhost:7687",
+            username: "neo4j",
+            password: "neo4j"
         });
 
-        Object.defineProperty(Vue.prototype, 'neo4j', { value: driver });
-        Object.defineProperty(Vue.prototype.neo4j, 'state', { value: state });
+        Object.defineProperty(Vue.prototype, 'neo4j', {
+            value: {
+                auth: auth,
+                state: state,
+                error: error
+            }
+        });
+
         Object.defineProperty(Vue.prototype.neo4j, 'error', {
             get() { return error.value },
             set(value) { error.value = value }
         });
 
+        Vue.prototype.neo4j.setup = (
+            uri = auth.uri,
+            username = auth.username,
+            password = auth.password
+        ) => {
 
-        Vue.prototype.neo4j.run = (statement, selectors = ["Graph", "Text"]) => {
+            auth.uri = uri;
+            auth.username = username;
+            auth.password = password;
 
+            driver.value = neo4j.driver(
+                uri, neo4j.auth.basic(username, password), {
+                encrypted: false
+            })
+        }
+
+        Vue.prototype.neo4j.test = (
+            uri = auth.uri,
+            username = auth.username,
+            password = auth.password
+        ) => {
+            try {
+                const connection = neo4j.driver(
+                    uri, neo4j.auth.basic(username, password), {
+                    encrypted: false
+                })
+                return this.methods.run("RETURN 1", connection).then(
+                ).catch(e => {
+                    return new Promise(() => {
+                        throw e
+                    })
+                })
+            } catch (e) {
+                return new Promise(() => {
+                    throw e
+                })
+            }
+        }
+
+        Vue.prototype.neo4j.run = (
+            statement,
+            suppress_error = true,
+            connection = driver.value,
+            selectors = ["Graph", "Text"]
+        ) => {
+
+            if (connection.constructor.name !== "Driver") {
+                return Promise.resolve({
+                    Text: [],
+                    Graph: []
+                })
+            }
+
+            const leniency = setTimeout(function () { state.active = true; }, 200);
             state.statement = statement;
             error.value = {};
 
-            const leniency = setTimeout(function () { state.active = true; }, 200);
-
-            return this.methods.run(statement, driver, selectors)
+            return this.methods.run(statement, connection, selectors)
                 // Comment out the following 3 '.then' lines to genericize this component.
                 .then(r => this.methods.stylize(r))
                 .then(r => this.methods.bundle_actions(r))
                 .then(r => this.methods.collapse_branches(r))
                 .catch(e => {
-                    console.error("[ERR]", e)
                     error.value = e;
-                    return Promise.resolve({
-                        Text: [],
-                        Graph: []
-                    })
+                    if (suppress_error) {
+                        return Promise.resolve({
+                            Text: [],
+                            Graph: []
+                        })
+                    } else throw e
                 })
                 .finally(() => {
                     clearTimeout(leniency);
                     state.active = false;
                 });
         }
-    }
+    },
 }

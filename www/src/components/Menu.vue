@@ -4,7 +4,6 @@
       <template v-slot:prepend>
         <v-list dense>
           <!-- Configure Layout -->
-
           <v-list-item class="pa-0">
             <v-menu v-model="layout.enabled" offset-x left>
               <template v-slot:activator="{ on: menu }">
@@ -27,6 +26,29 @@
                 </v-list-item-group>
               </v-list>
             </v-menu>
+          </v-list-item>
+
+          <!-- Database -->
+          <v-list-item class="pa-0">
+            <v-fab-transition transition="scale-transition">
+              <v-tooltip left>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    color="white"
+                    class="pa-0"
+                    v-on="on"
+                    depressed
+                    block
+                    @click="$emit('database', true)"
+                  >
+                    <template #default>
+                      <v-icon>mdi-database-edit</v-icon>
+                    </template>
+                  </v-btn>
+                </template>
+                <span>Configure database</span>
+              </v-tooltip>
+            </v-fab-transition>
           </v-list-item>
 
           <!-- Clear -->
