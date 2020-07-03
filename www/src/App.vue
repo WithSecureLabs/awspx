@@ -1,9 +1,9 @@
 <template>
   <div id="app">
     <v-app>
-      <v-content>
+      <v-main>
         <graph></graph>
-      </v-content>
+      </v-main>
     </v-app>
   </div>
 </template>
