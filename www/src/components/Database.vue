@@ -41,7 +41,7 @@
         </v-card-text>
 
         <v-card-actions class="px-5">
-          <v-btn text disabled="!db.populated" @click="db_settings_close()">Close</v-btn>
+          <v-btn text :disabled="!db.populated" @click="db_settings_close()">Close</v-btn>
           <v-spacer></v-spacer>
           <v-btn outlined @click="db_settings_test()" :loading="test.busy">Test</v-btn>
           <v-btn outlined @click="db_settings_apply()" :loading="form.loading">Apply</v-btn>
