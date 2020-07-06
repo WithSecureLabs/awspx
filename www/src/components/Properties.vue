@@ -137,6 +137,7 @@
                   :value="notes.value"
                   @input="notes_save"
                   class="mx-8 mt-8"
+                  :rules="[notes.connected || 'Database disconnected, changes will not be saved']"
                 ></v-textarea>
               </v-card>
             </v-col>
@@ -165,7 +166,8 @@ export default {
       element: {},
       notes: {
         value: "",
-        enabled: false
+        enabled: false,
+        connected: false
       }
     };
   },
@@ -184,12 +186,20 @@ export default {
     notes_save(value) {
       const id = this.element.data.id;
       this.notes.value = value;
-      this.neo4j.run(
-        (id.charAt(0) === "n"
-          ? `MATCH (e) WHERE ID(e) = ${id.substring(1)}`
-          : `MATCH ()-[e]->() WHERE ID(e) = ${id.substring(1)}`) +
-          ` SET e.Notes = "${this.notes.value}"`
-      );
+      this.neo4j
+        .run(
+          (id.charAt(0) === "n"
+            ? `MATCH (e) WHERE ID(e) = ${id.substring(1)}`
+            : `MATCH ()-[e]->() WHERE ID(e) = ${id.substring(1)}`) +
+            ` SET e.Notes = "${this.notes.value}"`,
+          false
+        )
+        .then(() => {
+          this.notes.connected = true;
+        })
+        .catch(e => {
+          this.notes.connected = false;
+        });
     },
 
     notes_load() {
@@ -199,11 +209,16 @@ export default {
           (id.charAt(0) === "n"
             ? `MATCH (e) WHERE ID(e) = ${id.substring(1)}`
             : `MATCH ()-[e]->() WHERE ID(e) = ${id.substring(1)}`) +
-            ` RETURN e.Notes AS Notes`
+            ` RETURN e.Notes AS Notes`,
+          false
         )
         .then(n => {
           this.notes.value =
             n.Text[0]["Notes"] == null ? "" : n.Text[0]["Notes"];
+          this.notes.connected = true;
+        })
+        .catch(e => {
+          this.notes.connected = false;
         });
     },
 
@@ -438,6 +453,7 @@ export default {
         style: "action"
       };
     },
+
     view_set_attack(element) {
       let attacks = [];
       let descriptions = element.data.properties.Descriptions || [];
