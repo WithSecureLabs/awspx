@@ -988,7 +988,9 @@ export default {
 
     busy: function() {
       return (
-        this.loading.enabled && (this.neo4j.state.active || this.loading.value)
+        this.loading.enabled &&
+        (this.loading.value ||
+          (this.database.resources.length > 0 && this.neo4j.state.active))
       );
     }
   }

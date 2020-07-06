@@ -222,7 +222,6 @@ export default {
       let actions = [];
 
       this.form.loading = true;
-      //   this.db.connected = false;
 
       Promise.all([
         this.neo4j
