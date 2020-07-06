@@ -95,16 +95,17 @@ export default {
                 // Node
                 if (result !== null &&
                     typeof result == "object" &&
-                    Object.keys(result).includes("labels"))
+                    ["identity", "labels", "properties"].every(
+                        k => Object.keys(result).includes(k))
+                )
                     return JSON.stringify(node(result), null, 2)
 
                 // Edge
                 else if (
                     result !== null &&
                     typeof result === "object" &&
-                    Object.keys(result).includes("start") &&
-                    Object.keys(result).includes("end") &&
-                    Object.keys(result).includes("identity")
+                    ["identity", "start", "end", "type", "properties"].every(
+                        k => Object.keys(result).includes(k))
                 )
                     return JSON.stringify(edge(result), null, 2)
                 // Path
