@@ -63,7 +63,11 @@
                       >
                         <v-row class="ma-5 codeblock" v-html="item.value"></v-row>
                         <v-row>
-                          <v-col align="right" class="mx-5 mt-n3 overline">{{item.key}}</v-col>
+                          <v-col
+                            align="right"
+                            class="mx-5 mt-n3 overline"
+                            style="font-size: 9px !important"
+                          >{{item.key}}</v-col>
                         </v-row>
                       </v-card>
 
