@@ -114,7 +114,6 @@
       @advanced="search.advanced = $event"
       @visual_queries_active="search.visual_queries_active = $event"
       :visual_queries_active="search.visual_queries_active"
-      :alt="events.keys.alt"
       :show="search.visible"
       :resources="database.resources"
       :actions="database.actions"
@@ -188,10 +187,6 @@ export default {
         }
       ],
       events: {
-        keys: {
-          alt: false,
-          ctrl: false
-        },
         clicked: {},
         context_menu: {}
       },
@@ -751,16 +746,6 @@ export default {
       // Keyboard events
       window.addEventListener("keydown", event => {
         switch (event.key) {
-          case "Tab":
-            event.preventDefault();
-            this.search.visible = true;
-            this.events.keys.alt = !this.events.keys.alt;
-
-            break;
-          case "Control":
-            event.preventDefault();
-            this.events.keys.ctrl = true;
-            break;
           case "a":
             if (event.ctrlKey) {
               event.preventDefault();
@@ -776,17 +761,12 @@ export default {
             break;
           // TODO: Add panning using arrow keys
           case "default":
-            this.events.keys.ctrl = event.ctrlKey;
             break;
         }
       });
 
       window.addEventListener("keyup", event => {
         switch (event.key) {
-          case "Control":
-            event.preventDefault();
-            this.events.keys.ctrl = false;
-            break;
           // TODO: Breaks clipboard, when copying foreground objects (eg policy documents)
           // case "c":
           //   if (event.ctrlKey) {
@@ -841,7 +821,7 @@ export default {
         };
 
         if (!event.target.id) {
-          event.target.trigger("singleclick");
+          event.target.trigger("singleclick", event);
           return;
         }
 
@@ -857,7 +837,7 @@ export default {
 
           this.events.clicked = click;
           this.events.clicked.timeout = setTimeout(() => {
-            event.target.trigger("singleclick");
+            event.target.trigger("singleclick", event);
           }, timeout);
         }
       });
@@ -878,14 +858,16 @@ export default {
         this.bundle_actions(event.target);
       });
 
-      cy.on("singleclick", event => {
+      cy.on("singleclick", (event, extra) => {
         this.search.visible = false;
         this.context_menu_destroy();
+        const ctrl =
+          typeof extra !== "undefined" ? extra.originalEvent.ctrlKey : false;
 
         if (event.target.group) {
           let collection = cy.collection();
 
-          if (!this.events.keys.ctrl) {
+          if (!ctrl) {
             if (event.target.group() == "nodes") {
               let edges = event.target.edgesTo("node");
               let nodes = edges.connectedNodes();
@@ -910,7 +892,7 @@ export default {
               event.target.addClass("selected");
             }
           }
-        } else if (!this.events.keys.ctrl) {
+        } else if (!ctrl) {
           this.properties.value = null;
           cy.elements(".unselected").removeClass("unselected");
           cy.elements(".selected").removeClass("selected");
