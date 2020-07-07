@@ -473,6 +473,7 @@ class IAM(Ingestor):
 
         elements = Elements()
         edges = {
+            "GroupNames": [],
             "Groups": [],
             "Policies": [],
             "InstanceProfiles": []
@@ -515,8 +516,8 @@ class IAM(Ingestor):
 
             if f"AWS::Iam::Group" in self.run and "GroupList" in entry.keys():
 
-                edges["Groups"].extend([(element, g)
-                                        for g in entry["GroupList"]])
+                edges["GroupNames"].extend([(element, g)
+                                            for g in entry["GroupList"]])
 
             if f"AWS::Iam::InstanceProfile" in self.run \
                     and "InstanceProfileList" in entry.keys():
@@ -551,14 +552,21 @@ class IAM(Ingestor):
         for label, entry in account_authorization_details:
             get_aad_element(label, entry)
 
+        # Reconcile group names
+        groups = elements.get("AWS::Iam::Group")
+        for (element, groupname) in edges["GroupNames"]:
+            group = next((g for g in groups if str(g).endswith(
+                f":group/{groupname}")), None)
+            if group is not None:
+                edges["Groups"].append((element, group))
+
         # Ensure edge nodes exist
         for k, v in edges.items():
             edges[k] = list(filter(
                 lambda e: e[0] is not None and e[1] is not None,
                 [e if type(e[1]) == Resource
                  else (e[0], next((t for t in elements
-                                   if (k == "Groups" and str(t).endswith(str(e[1])))
-                                   or str(t) == str(e[1])
+                                   if str(t) == str(e[1])
                                    ), None))
                  for e in v]))
 
@@ -570,7 +578,7 @@ class IAM(Ingestor):
                 target=t
             ))
 
-        # # (:User)-[:TRANSITIVE{MemberOf}]->(:Group)
+        # (:User)-[:TRANSITIVE{MemberOf}]->(:Group)
         for (s, t) in edges["Groups"]:
             elements.add(Transitive(
                 properties={"Name": "MemberOf"},
