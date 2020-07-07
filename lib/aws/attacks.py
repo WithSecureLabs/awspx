@@ -1242,8 +1242,12 @@ class Attacks:
                     stats.append({
                         "pattern": pattern,
                         "iteration": iteration,
-                        "seconds_elapsed": time.time() - start,
-                        **summary.counters.__dict__
+                        "time": f"{str(time.time() - start)}s",
+                        "labels_added": 0,
+                        "relationships_created": 0,
+                        "nodes_created": 0,
+                        "properties_set": 0,
+                        ** summary.counters.__dict__
                     })
 
                     if str(summary.counters) == "{}":
