@@ -1198,12 +1198,6 @@ class Attacks:
         print("[*] Creating pseudo admin")
         Neo4j().run(Attacks._admin_cypher())
 
-        # Temporarily set generic policy to admin. This is
-        # because all attack paths that allow for reaching
-        # this node (eg: AttachUserPolicy) would grant admin.
-
-        Neo4j().run("MATCH (gp:`AWS::Iam::Policy`:Generic) SET gp:Admin")
-
         # Identify any new attack paths, we stop when we've
         # converged or exceeded the maximum number
         # of iterations.
@@ -1218,6 +1212,12 @@ class Attacks:
 
                 index = 0
                 converged = True
+
+                # Temporarily set generic policy to admin. This is
+                # because all attack paths that allow for reaching
+                # this node (eg: AttachUserPolicy) would grant admin.
+
+                Neo4j().run("MATCH (gp:`AWS::Iam::Policy`:Generic) SET gp:Admin")
 
                 for pattern, definition in attack_definitions.items():
 
@@ -1255,21 +1255,57 @@ class Attacks:
 
                     converged = False
 
+                # Restore generic policy (unset :Admin)
+
+                Neo4j().run("MATCH (admin:`AWS::Iam::Policy`:Generic) "
+                            "REMOVE admin:Admin")
+
+                # Only keep the 'cheapest' paths to admin.
+
+                Neo4j().run("MATCH shortestPath((admin)-[:ATTACK|TRANSITIVE*1..]->(:Admin)) "
+                            "WHERE NOT (admin:Pattern OR admin:Admin) "
+                            "WITH admin MATCH path=(admin)-[:ATTACK|:TRANSITIVE*..]->(:Admin) "
+                            "WITH DISTINCT admin, path, "
+                            "REDUCE(sum=0, _ IN EXTRACT(_ IN RELS(path)|"
+                            "COALESCE(_.Weight, 0))|sum + _) AS weight "
+                            "ORDER BY admin, weight "
+                            "WITH admin, COLLECT([weight, path]) AS paths "
+                            "WITH admin, FILTER(attack IN NODES(paths[0][1]) "
+                            "WHERE attack:Pattern) AS cheapest "
+                            "MATCH path=(admin)-[:ATTACK]->(pattern:Pattern) "
+                            "WHERE NOT pattern IN cheapest "
+                            "DETACH DELETE pattern")
+
+                # Favor TRANSITIVE over ATTACK relationships, even if they're cheaper.
+
+                Neo4j().run("MATCH (admin)-[:ATTACK*..2]->(:Admin) "
+                            "WITH COLLECT(DISTINCT admin) AS admins "
+                            "WITH admins UNWIND admins AS admin "
+                            "MATCH (source)-[:TRANSITIVE*1..]->(target) "
+                            "WHERE target IN admins "
+                            "WITH DISTINCT source "
+                            "MATCH (source)-[:ATTACK]->(pattern:Pattern) "
+                            "DETACH DELETE pattern ")
+
                 if converged:
                     break
 
             exception = None
 
         except Exception as e:
-            print(f"[-] Neo4j returned:\n\n{e}")
-            print("[!] Don't worry, we'll use what we already have")
 
-        sys.stdout.write("\033[F\033[K")
-        print("[+] Consolidating attack patterns")
+            print(f"[-] Neo4j returned:\n\n{e}\n\n"
+                  "[!] We're going to try and use what we already have "
+                  "(it may take a while for the db recover)\n")
 
-        # Restore generic policy (unset :Admin)
+            Neo4j().run("MATCH (gp:`AWS::Iam::Policy`:Generic) REMOVE gp:Admin")
 
-        Neo4j().run("MATCH (gp:`AWS::Iam::Policy`:Generic) REMOVE gp:Admin")
+        if Exception is None:
+            sys.stdout.write("\033[F\033[K")
+
+        print("[+] Updating attack descriptions")
+
+        # TODO: This approach is not ideal: finding all descriptions isn't guarantee. 
 
         # Replace all attack 'Description' entries with a 'Descriptions' set that maps
         # to 'Commands'. We do this to support presenting each command with an associated
