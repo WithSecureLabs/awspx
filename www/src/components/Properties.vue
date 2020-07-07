@@ -208,6 +208,7 @@ export default {
 
     notes_load() {
       const id = this.element.data.id;
+      let value = "";
       this.neo4j
         .run(
           (id.charAt(0) === "n"
@@ -217,12 +218,14 @@ export default {
           false
         )
         .then(n => {
-          this.notes.value =
-            n.Text[0]["Notes"] == null ? "" : n.Text[0]["Notes"];
+          value = n.Text[0]["Notes"] == null ? "" : n.Text[0]["Notes"];
           this.notes.connected = true;
         })
         .catch(e => {
           this.notes.connected = false;
+        })
+        .finally(() => {
+          this.notes.value = value;
         });
     },
 
