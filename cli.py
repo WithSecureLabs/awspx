@@ -135,6 +135,35 @@ def handle_ingest(args):
     print(f"[+] Database:  {args.database}")
     print(f"[+] Region:    {args.region}")
 
+    # Get a new session with MFA
+    if args.mfa_device:
+        try:
+            response = session.client('sts').get_session_token(
+                SerialNumber=args.mfa_device,
+                TokenCode=args.mfa_token,
+                DurationSeconds=args.mfa_duration)
+        except ClientError as e:
+            print("\n" + str(e))
+            if "MaxSessionDuration" in e.response["Error"]["Message"]:
+                print("\nTry reducing the session duration using "
+                      "'--mfa-duration'.")
+
+            sys.exit(1)
+
+        if response:
+            session = boto3.session.Session(
+                aws_access_key_id=response["Credentials"]["AccessKeyId"],
+                aws_secret_access_key=response["Credentials"]["SecretAccessKey"],
+                aws_session_token=response["Credentials"]["SessionToken"],
+                region_name=args.region)
+        try:
+            identity = session.client('sts').get_caller_identity()
+            account = identity["Account"]
+            print(f"[+] Successful MFA authentication")
+        except:
+            print("[-] Request to establish identity (sts:GetCallerIdentity) failed.")
+
+    # Assume a role
     if args.role_to_assume:
         try:
             response = session.client('sts').assume_role(
@@ -364,6 +393,12 @@ def main():
                      help="Use AWS credential environment variables.")
     pnr.add_argument('--profile', dest='profile', default="default",
                      help="Profile to use for ingestion (corresponds to a `[section]` in `~/.aws/credentials).")
+    pnr.add_argument('--mfa-device', dest='mfa_device',
+                     help="ARN of the MFA device to authenticate with.")
+    pnr.add_argument('--mfa-token', dest='mfa_token',
+                     help="Current MFA token.")
+    pnr.add_argument('--mfa-duration', dest='mfa_duration', type=int, default=3600,
+                     help="Maximum session duration in seconds (for MFA session).")
     pnr.add_argument('--assume-role', dest='role_to_assume',
                      help="ARN of a role to assume for ingestion (useful for cross-account ingestion).")
     pnr.add_argument('--assume-role-duration', dest='role_to_assume_duration', type=int, default=3600,
