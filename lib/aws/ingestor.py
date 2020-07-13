@@ -423,7 +423,8 @@ class Ingestor(Elements):
 class IAM(Ingestor):
 
     run = ["AWS::Iam::User", "AWS::Iam::Role", "AWS::Iam::Group",
-           "AWS::Iam::Policy", "AWS::Iam::InstanceProfile"]
+           "AWS::Iam::Policy", "AWS::Iam::InstanceProfile",
+           "AWS::Iam::MfaDevice", "AWS::Iam::VirtualMfaDevice"]
 
     def __init__(self, session, resources=None, db="default.db", verbose=False, quick=False,
                  only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
@@ -450,9 +451,12 @@ class IAM(Ingestor):
 
         self.get_account_authorization_details(only_arns, skip_arns)
 
-        if not quick:
+        if "AWS::Iam::User" in self.run:
 
-            if "AWS::Iam::User" in self.run:
+            if "AWS::Iam::MfaDevice" in self.run or "AWS::Iam::VirtualMfaDevice" in self.run:
+                self.list_users_mfa_devices()
+                
+            if not quick:
                 self.get_login_profile()
                 self.list_access_keys()
 
@@ -633,6 +637,43 @@ class IAM(Ingestor):
 
             except self.client.exceptions.NoSuchEntityException:
                 pass
+
+    def list_users_mfa_devices(self):
+
+        self._print("[*] Listing user mfa devices")
+        users = self.get("AWS::Iam::User").get("Resource")
+
+        for user in users:
+
+            for mfa_device in self.client.list_mfa_devices(
+                UserName=user.properties()["Name"]
+            )["MFADevices"]:
+
+                label = RESOURCES.label(mfa_device["SerialNumber"])
+                mfa_device["Arn"] = mfa_device["SerialNumber"]
+                mfa_device["Name"] = mfa_device["Arn"].split('/')[-1] if label == "AWS::Iam::MfaDevice" \
+                    else "Virtual Device" if label == "AWS::Iam::VirtualMfaDevice" \
+                    else "Device"
+
+                if label is None:
+                    continue
+
+                del mfa_device["SerialNumber"]
+                del mfa_device["UserName"]
+
+                resource = Resource(
+                    labels=[label],
+                    properties=mfa_device
+                )
+
+                associative = Associative(
+                    properties={"Name": "Attached"},
+                    source=user,
+                    target=resource)
+
+                self._print(f"[+] Adding {resource}")
+                self.add(resource)
+                self.add(associative)
 
     def post(self, skip_all_actions=False):
         if not skip_all_actions:

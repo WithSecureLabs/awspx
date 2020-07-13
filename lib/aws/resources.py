@@ -149,7 +149,8 @@ class Resources(dict):
         "AWS::Iam::FederatedUser":                                          "arn:aws:iam::{Account}:federated-user/{User}",
         "AWS::Iam::Group":                                                  "arn:aws:iam::{Account}:group/{Group}",
         "AWS::Iam::InstanceProfile":                                        "arn:aws:iam::{Account}:instance-profile/{InstanceProfile}",
-        "AWS::Iam::Mfa":                                                    "arn:aws:iam::{Account}:mfa/{VirtualDevice}",
+        "AWS::Iam::VirtualMfaDevice":                                       "arn:aws:iam::{Account}:mfa/{UserName}",
+        "AWS::Iam::MfaDevice":                                              "arn:aws:iam::{Account}:u2f/user/{UserName}/{MfaDevice}",
         "AWS::Iam::OidcProvider":                                           "arn:aws:iam::{Account}:oidc-provider/{ProvIder}",
         "AWS::Iam::Policy":                                                 "arn:aws:iam::{Account}:policy/{Policy}",
         "AWS::Iam::Role":                                                   "arn:aws:iam::{Account}:role/{Role}",
@@ -329,5 +330,10 @@ class Resources(dict):
         else:
             return self.types[k]
 
+    def label(self, arn):
+        for k,v in self.items():
+            if re.match(v, arn):
+                return k
+        return None
 
 RESOURCES = Resources()
