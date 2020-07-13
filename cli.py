@@ -90,9 +90,10 @@ def handle_ingest(args):
     session = None
     graph = None
 
-    # Check to see if environment variables are being used for credentials.
+    # Get credentials from environment variables
     if args.env:
         session = boto3.session.Session(region_name=args.region)
+
     # Use existing profile
     elif args.profile in CREDENTIALS.sections():
         session = boto3.session.Session(region_name=args.region,
@@ -113,6 +114,7 @@ def handle_ingest(args):
 
     # Create new profile
     if not session:
+
         if input(f"[-] Would you like to create the profile '{args.profile}'? (y/n) ").upper() == "Y":
             args.create_profile = args.profile
             handle_profile(args)
@@ -121,79 +123,48 @@ def handle_ingest(args):
         else:
             sys.exit(1)
 
+    # Ancillary operations
     try:
+
+        if args.mfa_device:
+
+            session_token = session.client('sts').get_session_token(
+                SerialNumber=args.mfa_device,
+                TokenCode=args.mfa_token,
+                DurationSeconds=args.mfa_duration
+            )["Credentials"]
+
+            session = boto3.session.Session(
+                aws_access_key_id=session_token["AccessKeyId"],
+                aws_secret_access_key=session_token["SecretAccessKey"],
+                aws_session_token=session_token["SessionToken"],
+                region_name=args.region)
+
+        if args.role_to_assume:
+
+            assumed_role = session.client('sts').assume_role(
+                RoleArn=args.role_to_assume,
+                RoleSessionName=f"awspx",
+                DurationSeconds=args.role_to_assume_duration
+            )["Credentials"]
+
+            session = boto3.session.Session(
+                aws_access_key_id=assumed_role["AccessKeyId"],
+                aws_secret_access_key=assumed_role["SecretAccessKey"],
+                aws_session_token=assumed_role["SessionToken"],
+                region_name=args.region)
+
         identity = session.client('sts').get_caller_identity()
         account = identity["Account"]
-
         print(f"[+] Profile:   {args.profile} (identity: {identity['Arn']})")
 
-    except:
-        print("[-] Request to establish identity (sts:GetCallerIdentity) failed.")
+    except ClientError as e:
+        print("[-]", e)
         sys.exit(1)
 
     print(f"[+] Services:  {', '.join([s.__name__ for s in args.services])}")
     print(f"[+] Database:  {args.database}")
     print(f"[+] Region:    {args.region}")
-
-    # Get a new session with MFA
-    if args.mfa_device:
-        try:
-            response = session.client('sts').get_session_token(
-                SerialNumber=args.mfa_device,
-                TokenCode=args.mfa_token,
-                DurationSeconds=args.mfa_duration)
-        except ClientError as e:
-            print("\n" + str(e))
-            if "MaxSessionDuration" in e.response["Error"]["Message"]:
-                print("\nTry reducing the session duration using "
-                      "'--mfa-duration'.")
-
-            sys.exit(1)
-
-        if response:
-            session = boto3.session.Session(
-                aws_access_key_id=response["Credentials"]["AccessKeyId"],
-                aws_secret_access_key=response["Credentials"]["SecretAccessKey"],
-                aws_session_token=response["Credentials"]["SessionToken"],
-                region_name=args.region)
-        try:
-            identity = session.client('sts').get_caller_identity()
-            account = identity["Account"]
-            print(f"[+] Successful MFA authentication")
-        except:
-            print("[-] Request to establish identity (sts:GetCallerIdentity) failed.")
-
-    # Assume a role
-    if args.role_to_assume:
-        try:
-            response = session.client('sts').assume_role(
-                RoleArn=args.role_to_assume,
-                RoleSessionName=f"awspx",
-                DurationSeconds=args.role_to_assume_duration)
-
-        except ClientError as e:
-            print("\n" + str(e))
-            if "MaxSessionDuration" in e.response["Error"]["Message"]:
-                print("\nTry reducing the session duration using "
-                      "'--assume-role-duration'.")
-
-            sys.exit(1)
-
-        if response:
-            print(f"[+] Assumed role: {args.role_to_assume}")
-            session = boto3.session.Session(
-                aws_access_key_id=response["Credentials"]["AccessKeyId"],
-                aws_secret_access_key=response["Credentials"]["SecretAccessKey"],
-                aws_session_token=response["Credentials"]["SessionToken"],
-                region_name=args.region)
-        try:
-            identity = session.client('sts').get_caller_identity()
-            account = identity["Account"]
-            print(f"[+] Running as {identity['Arn']}.")
-            print(f"[+] Region set to {args.region}.")
-        except:
-            print("[-] Request to establish identity (sts:GetCallerIdentity) failed.")
-
     print()
 
     if session is None:
