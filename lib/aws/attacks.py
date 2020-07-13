@@ -1325,6 +1325,12 @@ class Attacks:
             "REMOVE attack.Description"
         )
 
+        # Remove attacks affecting generic resources
+        Neo4j().run(
+            "OPTIONAL MATCH ()-[:ATTACK]->(:Pattern)-[attack:ATTACK]->(:Generic) "
+            "DELETE attack"
+        )
+
         discovered = sum([s["nodes_created"] if "nodes_created" in s
                           else 0 for s in stats])
 
