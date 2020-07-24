@@ -1300,7 +1300,7 @@ class Attacks:
 
             Neo4j().run("MATCH (gp:`AWS::Iam::Policy`:Generic) REMOVE gp:Admin")
 
-        if Exception is None:
+        if exception is None:
             sys.stdout.write("\033[F\033[K")
 
         print("[+] Updating attack descriptions")
