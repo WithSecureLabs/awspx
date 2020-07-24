@@ -1164,6 +1164,7 @@ class Attacks:
             "MERGE (pattern)-[edge:OPTION{{Name:'Option'}}]->(option) "
             "ON CREATE SET "
             "edge.Weight = SIZE(commands), "
+            "edge.Description = \"{description}\", "
             "edge.Commands = commands " \
             if ("Depends" in attack and attack["Depends"] != attack["Affects"]) \
             or "Grants" in attack \
@@ -1274,7 +1275,12 @@ class Attacks:
                             "WHERE attack:Pattern) AS cheapest "
                             "MATCH path=(admin)-[:ATTACK]->(pattern:Pattern) "
                             "WHERE NOT pattern IN cheapest "
-                            "DETACH DELETE pattern")
+                            "WITH pattern MATCH (source)-[attack:ATTACK]->(pattern) "
+                            "MERGE (source)-[_attack_:_ATTACK_]->(pattern) "
+                            "ON CREATE SET _attack_ = attack "
+                            "DELETE attack"
+
+                            )
 
                 # Favor TRANSITIVE over ATTACK relationships, even if they're cheaper.
 
@@ -1284,8 +1290,11 @@ class Attacks:
                             "MATCH (source)-[:TRANSITIVE*1..]->(target) "
                             "WHERE target IN admins "
                             "WITH DISTINCT source "
-                            "MATCH (source)-[:ATTACK]->(pattern:Pattern) "
-                            "DETACH DELETE pattern ")
+                            "MATCH (source)-[attack:ATTACK]->(pattern:Pattern) "
+                            "MERGE (source)-[_attack_:_ATTACK_]->(pattern) "
+                            "ON CREATE SET _attack_ = attack "
+                            "DELETE attack "
+                            )
 
                 if converged:
                     break
@@ -1303,9 +1312,7 @@ class Attacks:
         if exception is None:
             sys.stdout.write("\033[F\033[K")
 
-        print("[+] Updating attack descriptions")
-
-        # TODO: This approach is not ideal: finding all descriptions isn't guarantee. 
+        print("[*] Updating attack descriptions")
 
         # Replace all attack 'Description' entries with a 'Descriptions' set that maps
         # to 'Commands'. We do this to support presenting each command with an associated
@@ -1313,19 +1320,33 @@ class Attacks:
         # It is easier to do it like this than to incorporate logic into _pattern_cypher().
 
         Neo4j().run(
-            "MATCH ()-[attack:ATTACK]->() " +
-            "WITH attack UNWIND attack.Commands AS command " +
-            "OPTIONAL MATCH (:Pattern)-[_]->() " +
-            "WHERE command IN _.Commands " +
-            "WITH attack, command, _ ORDER BY _.Weight " +
-            "WITH attack, command, COLLECT(_)[0] AS _ " +
-            "WITH attack, COALESCE(_.Description, attack.Description) AS description " +
-            "WITH attack, COLLECT(description) AS descriptions " +
-            "SET attack.Descriptions = descriptions " +
+            "MATCH (:Pattern)-[attack:ATTACK|OPTION|CREATE]->() "
+            "WHERE LENGTH(attack.Commands) > 0 "
+            "WITH COLLECT(DISTINCT attack) AS attacks "
+            "UNWIND attacks AS attack "
+            "WITH attacks, COLLECT(DISTINCT ["
+            "    attack.Commands[LENGTH(attack.Commands) - 1], "
+            "    attack.Description]) as commands "
+            "UNWIND attacks AS attack "
+            "WITH attack, commands WHERE TYPE(attack) = 'ATTACK' "
+            "WITH attack, EXTRACT(command IN attack.Commands|"
+            "    COALESCE([description IN commands "
+            "        WHERE command = description[0]][0][1], "
+            "        attack.Description)) AS descriptions "
+            "WITH attack, descriptions "
+            "SET attack.Descriptions = descriptions "
             "REMOVE attack.Description"
         )
 
-        # Remove attacks affecting generic resources
+        sys.stdout.write("\033[F\033[K")
+        print("[*] Deleting redundant paths")
+        Neo4j().run(
+            "MATCH ()-[:_ATTACK_]->(pattern:Pattern) "
+            "DETACH DELETE pattern"
+        )
+
+        sys.stdout.write("\033[F\033[K")
+        print("[*] Removing attacks affecting generic resource types")
         Neo4j().run(
             "OPTIONAL MATCH ()-[:ATTACK]->(:Pattern)-[attack:ATTACK]->(:Generic) "
             "DELETE attack"
