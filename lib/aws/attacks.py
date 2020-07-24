@@ -1335,9 +1335,9 @@ class Attacks:
                           else 0 for s in stats])
 
         sys.stdout.write("\033[F\033[K")
-        print(f"[+] {discovered} potential attacks were discovered " + str(
-              f"(successfully converged after {iteration} iterations)" if iteration < max_iterations else
-              f"(failed to converge of {max_iterations})")
+        print(f"[{'+' if exception is None else '-'}] {discovered} potential attacks were discovered " + str(
+              f"(successfully converged after {iteration} iterations)" if iteration < max_iterations and exception is None else
+              f"(failed to converge during iteration {iteration} of max {max_iterations})")
               )
 
         # print(json.dumps(stats, indent=2))
