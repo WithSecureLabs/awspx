@@ -59,6 +59,11 @@ class Element:
     def properties(self):
         return self._properties
 
+    def label(self):
+        return [l for l in self.labels()
+                if l != self.__class__.__name__
+                ][0]
+
     def labels(self):
         return sorted(list(self._labels))
 
@@ -192,7 +197,6 @@ class Elements(set):
             header = list(set([
                 (f, 'str' if [k for k, _ in header].count(f) > 1 else t)
                 for (f, t) in header]))
-
 
             if type(next(iter(elements))) is Node or Node in type(next(iter(elements))).__bases__:
 
