@@ -455,7 +455,7 @@ class IAM(Ingestor):
 
             if "AWS::Iam::MfaDevice" in self.run or "AWS::Iam::VirtualMfaDevice" in self.run:
                 self.list_users_mfa_devices()
-                
+
             if not quick:
                 self.get_login_profile()
                 self.list_access_keys()
@@ -964,66 +964,75 @@ class S3(Ingestor):
 
     def get_bucket_policies(self):
 
-        sr = self.session.resource(self.__class__.__name__.lower())
-
         for bucket in self.get("AWS::S3::Bucket").get("Resource"):
+
             try:
-                bucket.set("Policy", json.loads(sr.BucketPolicy(
-                    bucket.get('Name')).policy))
-                self._print(f"[+] Updated bucket policy for {bucket}")
-            # No policy for this bucket
-            except:
-                pass
+                policy = self.client.get_bucket_policy(
+                    Bucket=bucket.get('Name'))["Policy"]
 
-    def get_bucket_acls(self):
+                bucket.set("Policy", json.loads(policy))
+                self._print(f"[+] Updated Bucket ({bucket}) policy")
 
-        sr = self.session.resource(self.__class__.__name__.lower())
-
-        for bucket in self.get("AWS::S3::Bucket").get("Resource"):
-            try:
-                bucket.set("ACL", sr.BucketAcl(bucket.get('Name')).grants)
-                self._print(f"[+] Updated bucket acl for {bucket}")
             except ClientError as e:
-                if "AccessDenied" in str(e):
-                    self._print(
-                        f"[!] Access denied when getting ACL for {bucket}")
-                else:
-                    self._print("[!]", e)
-
-    def get_object_acls(self):
-
-        sr = self.session.resource(self.__class__.__name__.lower())
-
-        for obj in self.get("AWS::S3::Object").get("Resource"):
-            try:
-                arn = obj.get("Arn")
-                bucket, *key = arn.split(':::')[1].split('/')
-                key = "/".join(key)
-                obj.set("ACL", sr.ObjectAcl(bucket, key).grants)
-                self._print(f"[+] Updated object acl for {obj}")
-            except ClientError as e:
-                if "AccessDenied" in str(e):
-                    self._print(
-                        f"[!] Access denied when getting ACL for {obj}")
-                else:
-                    self._print("[!]", e)
+                self._print("[-] Failed to update Bucket policy "
+                            f"({bucket}): {str(e)}")
 
     def get_public_access_blocks(self):
 
         for bucket in self.get("AWS::S3::Bucket").get("Resource"):
 
+            # https://docs.aws.amazon.com/AmazonS3/latest/dev/access-control-block-public-access.html
+            # Implicitly affects Bucket ACLs and Policies (values returned by associated get requests
+            # specify what is being enforced rather than actual values)
+
             try:
-                # https://docs.aws.amazon.com/AmazonS3/latest/dev/access-control-block-public-access.html
-                # Implicitly affects Bucket ACLs and Policies (values returned by associated get requests
-                # specify what is being enforced rather than actual values)
+                public_access_block = self.client.get_public_access_block(
+                    Bucket=bucket.get("Name")
+                )["PublicAccessBlockConfiguration"]
 
-                bucket.set("PublicAccessBlock",
-                           self.client.get_public_access_block(
-                               Bucket=bucket.get("Name")
-                           )["PublicAccessBlockConfiguration"])
+                bucket.set("PublicAccessBlock", public_access_block)
+                self._print(
+                    f"[+] Updated Bucket ({bucket}) public access block")
 
-            except Exception:
-                pass
+            except ClientError as e:
+                self._print("[-] Failed to update Bucket public access block "
+                            f"({bucket}): {str(e)}")
+
+    def get_bucket_acls(self):
+
+        for bucket in self.get("AWS::S3::Bucket").get("Resource"):
+
+            try:
+                acl = self.client.get_bucket_acl(Bucket=bucket.get('Name'))
+                bucket.set("ACL", {
+                    "Owner": acl["Owner"],
+                    "Grants": acl["Grants"]
+                })
+                self._print(f"[+] Updated Bucket ({bucket}) ACL")
+
+            except ClientError as e:
+                self._print("[-] Failed to update Bucket ACL "
+                            f"({bucket}): {str(e)}")
+
+    def get_object_acls(self):
+
+        for obj in self.get("AWS::S3::Object").get("Resource"):
+
+            try:
+                arn = obj.get("Arn")
+                bucket, *key = arn.split(':::')[1].split('/')
+                key = "/".join(key)
+
+                acl = self.client.get_object_acl(Bucket=bucket, Key=key)
+                obj.set("ACL", {
+                    "Owner": acl["Owner"],
+                    "Grants": acl["Grants"]
+                })
+                self._print(f"[+] Updated Object ({obj}) ACL")
+
+            except ClientError as e:
+                self._print("[-] Failed to update Object ACL "
+                            f"({obj}): {str(e)}")
 
 
 class Lambda(Ingestor):
