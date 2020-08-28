@@ -158,7 +158,7 @@ class Resources(dict):
         "AWS::Iam::ServerCertificate":                                      "arn:aws:iam::{Account}:server-certificate/{Certificate}",
         "AWS::Iam::SmsMfa":                                                 "arn:aws:iam::{Account}:sms-mfa/{MfaTokenIdWithPath}",
         "AWS::Iam::U2F":                                                    "arn:aws:iam::{Account}:u2f/{U2FTokenId}",
-        "AWS::Iam::User":                                                   "arn:aws:iam::{Account}:user/{User}",
+        "AWS::Iam::User":                                                   "arn:aws:iam::{Account}:user/{UserName}",
         # "AWS::Iot::Cert":                                                 "arn:aws:iot:{Region}:{Account}:cert/{CertId}",
         # "AWS::Iot::Client":                                               "arn:aws:iot:{Region}:{Account}:client/{ClientId}(/{Rule})?",
         # "AWS::Iot::Policy":                                               "arn:aws:iot:{Region}:{Account}:policy/{Policy}",
