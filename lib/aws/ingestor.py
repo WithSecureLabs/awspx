@@ -897,6 +897,8 @@ class EC2(Ingestor):
                          only_types=only_types, skip_types=skip_types,
                          only_arns=only_arns, skip_arns=skip_arns)
 
+        self.client = self.session.client("ec2")
+        
         if not quick:
             self.get_instance_user_data()
 
@@ -904,24 +906,14 @@ class EC2(Ingestor):
 
     def get_instance_user_data(self):
 
-        client = self.session.client(self.__class__.__name__.lower())
-
         for instance in self.get("AWS::Ec2::Instance").get("Resource"):
 
             name = instance.get("Name")
 
             try:
-                client.describe_instance_attribute(
-                    Attribute="userData", DryRun=True, InstanceId=name)
-            except ClientError as e:
-                if 'DryRunOperation' not in str(e):
-                    self._print(
-                        "[!] EC2: Not authorised to get instance user data.")
-
-            try:
-                response = client.describe_instance_attribute(Attribute="userData",
-                                                              DryRun=False,
-                                                              InstanceId=name)
+                response = self.client.describe_instance_attribute(Attribute="userData",
+                                                                   DryRun=False,
+                                                                   InstanceId=name)
             except ClientError as e:
                 self._print("[!] Couldn't get user data for "
                             f"{name} -- it may no longer exist.")
