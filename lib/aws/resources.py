@@ -4,7 +4,7 @@ import re
 
 class Resources(dict):
 
-    # https://docs.aws.amazon.com/general/latest/gr/aws-arns-a              nd-namespaces.html#genref-aws-service-namespaces
+    # https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#genref-aws-service-namespaces
 
     types = {
         "AWS::Account":                                                     "arn:aws:iam::{Account}:root",
@@ -276,7 +276,7 @@ class Resources(dict):
         # "AWS::ServiceDiscovery::Service":                                 "arn:aws:servicediscovery:{Region}:{Account}:service/{ServiceId}",
         # "AWS::ServiceQuotas::Service":                                    "arn:aws:servicequotas:{Region}:{Account}:{ServiceCode}/{QuotaCode}",
         # "AWS::Ses::Identity":                                             "arn:aws:ses:{Region}:{Account}:identity/{Identity}",
-        "AWS::Sns::Topic":                                                  "arn:aws:sns:{Region}:{Account}:{Topic}",
+        # "AWS::Sns::Topic":                                                "arn:aws:sns:{Region}:{Account}:{Topic}",
         # "AWS::Sqs::Queue":                                                "arn:aws:sqs:{Region}:{Account}:{Queue}",
         # "AWS::Ssm::AutomationActivity":                                   "arn:aws:ssm:{Region}:{Account}:automation-activity/{ActivityName}$",
         # "AWS::Ssm::AutomationDefinition":                                 "arn:aws:ssm:{Region}:{Account}:automation-definition/{Definition}:{Version}",
@@ -308,19 +308,23 @@ class Resources(dict):
         # "AWS::WorkLink::Fleet":                                           "arn:aws:worklink::{Account}:fleet/{Fleet}"
     }
     regex = {
+        "Region":   "([a-z0-9-]*)",
         "Account":  "(\d{12})?",
         "Default":  "([A-Za-z0-9-_]*)",
-        "Region":   "([a-z0-9-]*)",
+        "Key":      "(.*)",
     }
 
     def __init__(self):
+
         format_string = re.compile("{([A-Za-z]+)}")
         for k, v in self.types.items():
             self[k] = self.types[k]
             for placeholder in set(format_string.findall(v)):
-                self[k] = self[k].replace("{%s}" % placeholder, self.regex[placeholder]
-                                          if placeholder in self.regex
-                                          else self.regex["Default"])
+                self[k] = self[k].replace(f"{{{placeholder}}}", "(?P<{placeholder}>{regex})".format(
+                    placeholder=placeholder,
+                    regex=str(self.regex[placeholder] if placeholder in self.regex
+                              else self.regex["Default"])))
+            self[k] += '$'
 
     def definition(self, k):
         if k not in self.types:
@@ -331,9 +335,10 @@ class Resources(dict):
             return self.types[k]
 
     def label(self, arn):
-        for k,v in self.items():
+        for k, v in self.items():
             if re.match(v, arn):
                 return k
         return None
+
 
 RESOURCES = Resources()
