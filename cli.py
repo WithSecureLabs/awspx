@@ -85,10 +85,8 @@ def handle_ingest(args):
     """
     awspx ingest
     """
-    resources = Elements()
-    account = "000000000000"
+
     session = None
-    graph = None
 
     # Get credentials from environment variables
     if args.env:
@@ -112,7 +110,7 @@ def handle_ingest(args):
         except:
             pass
 
-    # Create new profile
+    # Specified profile doesn't exist, offer to create it
     if not session:
 
         if input(f"[-] Would you like to create the profile '{args.profile}'? (y/n) ").upper() == "Y":
@@ -123,6 +121,8 @@ def handle_ingest(args):
         else:
             sys.exit(1)
 
+        session = boto3.session.Session(profile_name=args.profile,
+                                        region_name=args.region)
     # Ancillary operations
     try:
 
@@ -154,45 +154,22 @@ def handle_ingest(args):
                 aws_session_token=assumed_role["SessionToken"],
                 region_name=args.region)
 
-        identity = session.client('sts').get_caller_identity()
-        account = identity["Account"]
-        print(f"[+] Profile:   {args.profile} (identity: {identity['Arn']})")
-
     except ClientError as e:
-        print("[-]", e)
-        sys.exit(1)
+        print(f"[-] {e}")
+        sys.exit()
 
-    print(f"[+] Services:  {', '.join([s.__name__ for s in args.services])}")
-    print(f"[+] Database:  {args.database}")
-    print(f"[+] Region:    {args.region}")
-    print()
+    ingestor = IngestionManager(session=session, services=args.services,
+                               db=args.database, quick=args.quick,
+                               skip_actions=args.skip_actions_all,
+                               only_types=args.only_types, skip_types=args.skip_types,
+                               only_arns=args.only_arns, skip_arns=args.skip_arns)
 
-    if session is None:
-        sys.exit(1)
+    assert ingestor.zip is not None, "Ingestion failed"
 
-    # Run IAM first to try acquire an account number
-    if IAM in args.services:
-        graph = IAM(session, db=args.database, verbose=args.verbose, quick=args.quick,
-                    only_types=args.only_types, skip_types=args.skip_types,
-                    only_arns=args.only_arns, skip_arns=args.skip_arns)
-        account = graph.account
-
-    for service in [s for s in args.services if s != IAM]:
-        resources += service(session, account=account, verbose=args.verbose, quick=args.quick,
-                             only_types=args.only_types, skip_types=args.skip_types,
-                             only_arns=args.only_arns, skip_arns=args.skip_arns)
-
-    if graph is None:
-        graph = IAM(session, verbose=args.verbose, quick=args.quick,
-                    db=args.database,
-                    resources=resources)
-    else:
-        graph.update(resources)
-
-    args.load_zip = graph.post(skip_all_actions=args.skip_all_actions)
+    args.load_zip = ingestor.zip
     handle_db(args)
 
-    if not (args.skip_all_attacks or args.skip_all_actions):
+    if not (args.skip_attacks_all or args.skip_actions_all):
         handle_attacks(args)
 
 
@@ -405,7 +382,7 @@ def main():
                            help="Enable verbose output.")
 
     actions = ingest_parser.add_argument_group("Actions")
-    actions.add_argument('--skip-all-actions', dest='skip_all_actions', action='store_true', default=False,
+    actions.add_argument('--skip-actions-all', dest='skip_actions_all', action='store_true', default=False,
                          help="Skip policy resolution (actions will not be processed).")
 
     #
@@ -432,7 +409,7 @@ def main():
                         help="Include conditional actions when computing attacks (default False).")
 
         if p is ingest_parser:
-            ag.add_argument('--skip-all-attacks', dest='skip_all_attacks', action='store_true', default=False,
+            ag.add_argument('--skip-attacks--all', dest='skip_attacks_all', action='store_true', default=False,
                             help="Skip attack path computation (it can be run later with `awspx attacks`).")
 
     #
