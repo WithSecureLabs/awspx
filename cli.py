@@ -175,7 +175,7 @@ def handle_ingest(args):
         graph = IAM(session, db=args.database, verbose=args.verbose, quick=args.quick,
                     only_types=args.only_types, skip_types=args.skip_types,
                     only_arns=args.only_arns, skip_arns=args.skip_arns)
-        account = graph.account_id
+        account = graph.account
 
     for service in [s for s in args.services if s != IAM]:
         resources += service(session, account=account, verbose=args.verbose, quick=args.quick,

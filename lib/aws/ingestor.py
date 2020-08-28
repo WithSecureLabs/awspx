@@ -19,37 +19,64 @@ from lib.graph.nodes import Generic, Resource
 
 class Ingestor(Elements):
 
-    run = []
-    associates = []
+    types = []
+    associations = []
+
+    _only_types = []
+    _skip_types = []
+    _only_arns = []
+    _skip_arns = []
 
     def __init__(self, session, account="000000000000", default=True, verbose=True, quick=False,
                  only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
         self.session = session
-        self.account_id = account
-        self.run_all = len(self.run) == 0
+        self.account = account
         self._verbose = verbose
-        self._load_generics()
 
-        if default and len(self.run) > 0:
+        self._only_arns = only_arns
+        self._skip_arns = skip_arns
 
-            self.run = [t for t in self.run
-                        if (len(skip_types) == 0 or t not in skip_types)
-                        and (len(only_types) == 0 or t in only_types)]
+        if default:
+            available_resources = self.session.get_available_resources()
+            if self.__class__.__name__.lower() not in available_resources:
+                self._print(f"[-] '{self.__class__.__name__}' is not a supported boto resource. "
+                            "This means you'll need to write a custom ingestor (see Lambda for a practical example). "
+                            f"For future reference, boto supports: {', '.join(available_resources)}.")
+                return
 
-            self.only_arns = only_arns
-            self.skip_arns = skip_arns
+        # If no resources to ingest have been specified, assume all
+        if len(self.types) == 0:
+            self.types = [t for t in RESOURCES if t.upper().startswith(
+                "AWS::%s::" % self.__class__.__name__.upper())]
 
-            print("[*] Commencing {resources} ingestion\n".format(
-                ingestor=self.__class__.__name__,
-                resources=', '.join([
-                    r if (i == 0 or i % 3 > 0)
-                    else f'\n{" " * 15}{r}'
-                    for i, r in enumerate(self.run)])
-            ))
+        # There must be nothing specified for this service
+        if len(self.types) == 0:
+            self._print(f"[-] No {self.__class__.__name__.capitalize()} resources were found in 'lib.aws.resources.py'. "
+                        "You'll need to add them before this ingestor will work.")
+            return
 
-            self._load_resources()
-            self._load_associations()
+        # Ensure ingested resources conform to RESOURCES casing
+        self.types = [r for r in map(lambda r: next(
+            (t for t in RESOURCES if t.upper() == r.upper()), None), self.types)
+            if r is not None]
+
+        # Remove types that dont match user specifications
+        self.types = [t for t in self.types if t not in skip_types
+                      and (len(only_types) == 0 or t in only_types)]
+        self.load_generics()
+
+        print("[*] Commencing {resources} ingestion\n".format(
+            ingestor=self.__class__.__name__,
+            resources=', '.join([
+                r if (i == 0 or i % 3 > 0)
+                else f'\n{" " * 15}{r}'
+                for i, r in enumerate(self.types)])
+        ))
+
+        if default and len(self.types) > 0:
+            self.load_resources()
+            self.load_associatives()
 
     def _print(self, *messages):
         if not self._verbose:
@@ -61,377 +88,259 @@ class Ingestor(Elements):
                     f"{len(self.get('Resource'))} resources, ",
                     f"{len(self.get('Generic'))} generic resources were added\n")
 
-    def _resolve_arn_selection(self, only_arns=[], skip_arns=[]):
-        """
-        Set only/except ARNS for this ingestor.
-        """
+    def load_generics(self, types=None):
 
-        if only_arns and skip_arns:
-            print("[!] Can't specify both --only-arns and --skip-arns.")
-            return False
-
-        self.only_arns = self._filter_arns(only_arns)
-        self.skip_arns = self._filter_arns(skip_arns)
-
-        return True
-
-    def _filter_arns(self, arns):
-        """ From a list of ARNs, return only those relevant to this ingestor's service. """
-        return [a for a in arns if self.__class__.__name__.lower() == a.split(":")[2].lower()]
-
-    def _load_resources(self, boto_base_resource=None, awspx_base_resource=None):
-
-        if boto_base_resource is None:
-            boto_base_resource = self.session.resource(
-                self.__class__.__name__.lower())
-
-        for rt in self._get_collections(boto_base_resource):
-            self._load_resource_collection(
-                rt,
-                boto_base_resource,
-                awspx_base_resource
-            )
-
-    # Needs to be recursive
-    def _load_resource_collection(self,
-                                  collection,
-                                  boto_base_resource=None,
-                                  awspx_base_resource=None):
-
-        resources = []
-
-        label = "AWS::{service}::{type}".format(
-            service=self.__class__.__name__.capitalize(),
-            type=getattr(
-                boto_base_resource,
-                collection
-            )._model.resource.type
-        )
-
-        # Known cases of misaligned naming conventions (boto and lib.aws.RESOURCES)
-        if label.endswith("Version"):
-            label = label[:-7]
-        elif label == "AWS::Ec2::KeyPairInfo":
-            label = "AWS::Ec2::KeyPair"
-
-        # Skip excluded types or types unknown to us
-        if label not in RESOURCES.types \
-                or (not self.run_all and label not in self.run):
-            return
-
-        try:
-            # Note: Depending on the stage at which the exception is thrown, we
-            # may miss certain resources.
-
-            resources = [r for r in getattr(
-                boto_base_resource,
-                collection).all()]
-
-        except Exception as e:
-            self._print(f"[!] Couldn't load {collection} of {boto_base_resource} "
-                        "-- probably due to a resource based policy or something.")
-
-        for resource in resources:
-
-            # Get properties
-            properties = resource.meta.data
-
-            if properties is None:
-                continue
-
-            # Get Arn and Name
-            arn = self._get_resource_arn(resource, boto_base_resource)
-            name = self._get_resource_name(resource)
-
-            # Include or exclude this ARN
-            if self.only_arns and arn not in self.only_arns:
-                continue
-            elif self.skip_arns and arn in self.skip_arns:
-                continue
-
-            properties["Arn"] = arn
-            properties["Name"] = name
-
-            if not (properties["Arn"] and properties["Name"]):
-                print(label)
-                print(json.dumps(properties, indent=2, default=str))
-                raise ValueError
-
-            # Create resource
-            r = Resource(labels=[label], properties=properties)
-            if r not in self:
-                self._print(f"[*] Adding {r}")
-                self.add(r)
-
-            # Add associative relationship with parent
-            if awspx_base_resource:
-                assocs = [set(a) for a in self.associates]
-                if {awspx_base_resource.labels()[0], r.labels()[0]} in assocs \
-                        or not self.associates:
-                    e = Associative(properties={"Name": "Attached"},
-                                    source=r, target=awspx_base_resource)
-                    oe = Associative(properties={"Name": "Attached"},
-                                     source=awspx_base_resource, target=r)
-                    if not (e in self or oe in self):
-                        self.add(e)
-
-            # Load resources from this one's collections
-            if self._get_collections(resource):
-                self._load_resources(resource, r)
-
-            # Return when we've seen all explicit resources
-            if self.only_arns and all([
-                    r in map(lambda x: x.id(), self)
-                    for r in self.only_arns]):
-                return
-
-    def _get_resource_arn(self, resource, base_resource):
-
-        resource_type = resource.__class__.__name__.split(".")[-1]
-        properties = resource.meta.data
-        keys = properties.keys()
-        label = self._get_resource_type_label(resource_type)
-        arn = None
-
-        if "Arn" in keys:
-            arn = properties["Arn"]
-        elif f"{resource_type}Arn" in keys:
-            arn = properties[f"{resource_type}Arn"]
-        elif f"{resource_type}Id" in keys and properties[f"{resource_type}Id"].startswith("arn:aws"):
-            arn = properties[f"{resource_type}Id"]
-        elif label in RESOURCES.keys():
-            parent = base_resource.meta.data if base_resource.meta.data is not None else {}
-            combined = {**parent, **properties}
-            arn = RESOURCES.definition(label).format(
-                Region=self.session.region_name,
-                Account=self.account_id,
-                **combined)
-
-        if isinstance(arn, str) \
-                and re.compile("arn:aws:([a-zA-Z0-9]+):([a-z0-9-]*):(\d{12}|aws)?:(.*)"
-                               ).match(arn) is not None:
-            return arn
-
-        return None
-
-    def _get_resource_name(self, resource):
-
-        resource_type = resource.__class__.__name__.split(".")[-1]
-        properties = resource.meta.data
-        keys = properties.keys()
-
-        if "Name" in keys:
-            return properties["Name"]
-        elif f"{resource_type}Name" in keys:
-            return properties[f"{resource_type}Name"]
-        elif "Id" in keys and not properties["Id"].startswith("arn:aws"):
-            return properties["Id"]
-        elif f"{resource_type}Id" in keys and not properties[f"{resource_type}Id"].startswith("arn:aws"):
-            return properties[f"{resource_type}Id"]
-        elif "Key" in keys:
-            return properties["Key"]
-        else:
-            # Irregular variants: e.g. KeyName for KeyPairs
-            key = [k for k in
-                   [k for k in keys if "Name" in k]
-                   if k.replace("Name", "") in resource_type
-                   ][0]
-            return properties[key]
-
-    def _get_resource_type_label(self, resource_type):
-
-        return "AWS::%s::%s" % (
-            self.__class__.__name__.capitalize(),
-            resource_type.replace("Info", "").replace("Version", "").replace("Summary", ""))
-
-    def _load_generics(self, types=None):
-
-        labels = [t for t in types if t in RESOURCES]  \
-            if types is not None else \
-            [t for t in RESOURCES if t.startswith(
-                "AWS::%s::" % self.__class__.__name__.capitalize())]
-
-        for k in labels:
+        for k in self.types:
 
             self.add(Generic(properties={
-                "Name": "$%s" % k.split(':')[-1],
+                "Name": f"${k.split(':')[-1]}",
                 "Arn":  RESOURCES.definition(k)
             }, labels=[k]))
 
-    def _load_associations(self):
+    def load_resources(self):
 
-        if len(self.associates) == 0:
+        def get_resource_type_model(collection):
+
+            service = self.__class__.__name__.capitalize()
+            resource_model = collection.meta.resource_model._resource_defs
+            remap = {k: k for k in resource_model.keys()}
+
+            # Map model types to RESOURCE definitions
+            for rt in resource_model.keys():
+
+                for resource_type in sorted([k for k in resource_model.keys()
+                                             if rt.startswith(k)], key=len, reverse=True):
+
+                    remap[rt] = f"AWS::{service}::{resource_type}"
+
+                    if remap[rt] in RESOURCES.types.keys():
+                        break
+
+            model = {k: {remap[getattr(collection, k)._model.resource.type]: {}}
+                     for k in [attr for attr in dir(collection)
+                               if boto3.resources.collection.CollectionManager
+                               in getattr(collection, attr).__class__.__bases__]
+                     }
+
+            # Update model to include reflect resources which themselves
+            # are CollectionManager(s).
+            for rt in resource_model.keys():
+
+                for rm in boto3.resources.factory.ResourceModel(
+                        rt, resource_model[rt],
+                        resource_model).collections:
+
+                    # Explicitly skip Version objects
+                    if rm._definition["resource"]["type"].endswith("Version"):
+                        continue
+
+                    # Remap model key (only once)
+                    if rt in remap:
+                        rt = remap[rt]
+
+                    resource_type = remap[rm._definition["resource"]["type"]]
+                    operation = rm.name
+
+                    # Skip this operation if another method producing this resource
+                    # type is available from the root collection
+                    if resource_type in [list(i.keys())[0]
+                                         for i in model.values()]:
+                        continue
+
+                    for k, v in model.items():
+
+                        if rt in v.keys():
+                            v[rt][operation] = {resource_type: {}}
+                            break
+
+            return model
+
+        def run_ingestor(collections, model):
+
+            if not len(collections) > 0:
+                return
+
+            for attr, v in model.items():
+
+                label = list(v.keys())[0]
+                collection_managers = []
+
+                if len(self.types) > 0 and label not in self.types:
+
+                    collateral = [
+                        rt for rt in [list(k.keys())[0] for k in list(v.values())[0].values()]
+                        if rt in self.types
+                        and rt not in [list(k.keys())[0] for k in model.values()]
+                    ]
+
+                    # self._print(''.join((
+                    #     f"[*] Skipped {label} ingestion ",
+                    #     f"({', '.join(collateral)} will also be skipped)." if len(collateral) > 0 else "")))
+
+                    continue
+
+                rt = ''.join(''.join([f" {c}" if c.isupper() else c for c in getattr(
+                    collections[0], attr)._model.request.operation]).split()[1:])
+
+                for operation, collection in map(lambda c: (getattr(c, attr).all, c), collections):
+
+                    for cm in operation():
+
+                        collection_managers.append(cm)
+
+                        if cm.meta.data is None:
+
+                            # self._print(f"[*] Skipping ServiceResource {cm}: "
+                            #                   "it has no properties")
+                            continue
+
+                        cm.meta.data["Name"] = [getattr(cm, i)
+                                                for i in cm.meta.identifiers
+                                                ][-1] if "Name" not in cm.meta.data.keys() \
+                            else cm.meta.data["Name"]
+
+                        properties = {
+                            **cm.meta.data,
+                            **dict(collection.meta.data
+                                   if collection is not None
+                                   and not collection.__class__.__name__.endswith("ServiceResource")
+                                   and collection.meta.data is not None
+                                   else {}),
+                        }
+
+                        try:
+                            cm.meta.data["Arn"] = RESOURCES.definition(label).format(
+                                Region=self.session.region_name,
+                                Account=self.account,
+                                **properties)
+
+                        except KeyError as p:
+
+                            # self._print(f"[-] Failed to construct resource ARN: defintion for type '{label}' is malformed - "
+                            #                   f"boto collection '{cm.__class__.__name__}' does not have property {p}, "
+                            #                   f"maybe you meant one of the following instead? {', '.join(properties.keys())}")
+                            continue
+
+                        # Add Resource
+                        resource = Resource(labels=[label],
+                                            properties=cm.meta.data)
+
+                        if resource not in self:
+                            self._print(f"[*] Adding {resource}")
+                            self.add(resource)
+
+                for _, attrs in v.items():
+                    run_ingestor(collection_managers, attrs)
+
+        service = self.__class__.__name__.lower()
+        collection = self.session.resource(service)
+        model = get_resource_type_model(collection)
+
+        run_ingestor([collection], model)
+
+    def load_associatives(self):
+
+        if len(self.associations) == 0:
             return
 
-        edges = Elements()
-        self._print(f"[*] Adding {self.__class__.__name__} "
-                    "associative relationships")
+        def set_references(references, item, key=None):
+
+            if isinstance(item, list):
+                [set_references(references, i) for i in item]
+
+            elif isinstance(item, dict):
+                [set_references(references, v, k) for k, v in item.items()]
+
+            elif (key is not None
+                  and any([isinstance(item, t) for t in [str, int, bool]])
+                  and len(str(item)) > 0):
+
+                if key not in references:
+                    references[key] = set()
+
+                references[key].update([item])
 
         for resource in self.get("Resource"):
 
-            references = {}
-            label = [l for l in resource.labels() if l != "Resource"][0]
+            # Extract reference key-value pairs from this resource's
+            # properties (if we need to)
+            prop_refs = {}
 
-            # Find references to other resources in the form of a dictionary (refs)
+            # Extract reference key-value pairs from this resource's ARN:
+            regex = re.compile(RESOURCES[resource.label()])
+            matches = regex.match(resource.id())
+            arn_refs = {k: set([matches.group(k)])
+                        for k in regex.groupindex.keys()
+                        } if matches is not None else {}
 
-            self._references(resource.properties(), references)
+            # For each of the resource types associated with this resource type
+            for rt in [[rt for rt in association if rt != resource.label()][0]
+                       for association in self.associations
+                       if resource.label() in association]:
 
-            # Create an edge, for all known associations (as defined by self.rels).
+                refs = {}
+                required = list(re.compile(RESOURCES[rt]).groupindex.keys())
 
-            for rel in [r for r in self.associates if r[0] == label or r[1] == label]:
+                # We have all the information we need using just the ARN
+                if all([k in arn_refs for k in required]):
+                    refs = arn_refs
+                else:
+                    # Check the resource's properties (once)
+                    if len(prop_refs) == 0:
+                        set_references(prop_refs,
+                                       resource.properties())
 
-                i = 1 if label == rel[0] else 0
+                    # Use property and ARN refs (ARN values take precedence)
+                    refs = {
+                        **{k: v for k, v in prop_refs.items()
+                           if k in required},
+                        **{k: v for k, v in arn_refs.items()
+                           if k in required},
+                    }
 
-                # Get a list of foreign keys that we must be capable of referencing
-                # in order to create an association
-
-                fk = [a for a in re.compile(
-                    "{([A-Za-z]+)}").findall(RESOURCES.definition(rel[i]))
-                    if a not in ["Account", "Region"]]
-
-                if not all([k in references.keys() for k in fk]):
-                    continue
-
-                # TODO: Handle Types that make use of more than one
-                # variable identifier
-
-                if len(fk) != 1:
-                    raise NotImplementedError
-
-                fk = fk[0]
-
-                for v in list(references[fk]):
-
-                    # Find the first resource matching the reference
-
-                    r = next((r for r in self if re.compile(
-                        RESOURCES.definition(rel[i]).format(
-                            Account=self.account_id,
-                            Region=self.session.region_name,
-                            **{
-                                **{x: list(y)[0] for x, y in references.items() if len(y) == 1},
-                                **{fk: v}
-                            })
-                    ).match(str(r.id())) is not None), None)
-
-                    if r is None:
-                        # print("Failed to match (%s: %s) against any resources" % (k, v))
-                        # print("Its likely that the resource was missed during ingestion")
+                    # There isn't enough information to create a reference ARN
+                    if not all([k in refs for k in required]):
                         continue
 
-                    # Delete the properties that are responsible for the edge's existence.
+                # Hopefully, this never happens
+                if not all([len(v) == 1 for v in refs.values()]):
+                    continue
 
-                    properties = self._extract_property_value(
-                        resource.properties(), fk)
+                # Construct a reference ARN and get the associated resource
+                arn = RESOURCES.types[rt].format(
+                    **{k: list(v)[0] for k, v in refs.items()})
 
-                    # Even though direction is irrelavent when dealing with Associative
-                    # edges, neo4j is directed. We need to ensure the direction is kept
-                    # in order to eliminate duplicate edges.
+                associate = next((r for r in self
+                                  if r.id() == arn), None)
 
-                    (source, target) = (resource, r) if i == 1 else (r, resource)
+                if associate is None:
+                    # self._print(f"Couldn't create association: resource ({arn}), "
+                    #                    f"referenced by {resource}, doesn't exist ")
+                    continue
 
-                    edge = Associative(
-                        properties={"Name": "Attached"}, source=source, target=target)
-                    opposite_edge = Associative(
-                        properties={"Name": "Attached"}, source=target, target=source)
+                (source, target) = sorted((resource, associate),
+                                          key=lambda r: r.id())
 
-                    if (edge not in self and opposite_edge not in self) and edge not in edges:
-                        edges.add(edge)
-
-        self.update(edges)
-
-    def _extract_property_value(self, properties, key, depth=None):
-
-        def get_dereference_indexes(properties, value, keys=[]):
-
-            if isinstance(properties, dict):
-
-                for k, v in properties.items():
-                    if k == value:
-                        return keys + [value]
-
-                    r = get_dereference_indexes(
-                        v, value, keys + [k])
-                    if r is not None:
-                        return r
-
-                return None
-
-            elif isinstance(properties, list):
-
-                for i in range(len(properties)):
-
-                    r = get_dereference_indexes(
-                        properties[i], value, keys + [i])
-                    if r is not None:
-                        return r
-
-            return None
-
-        dereferences = get_dereference_indexes(properties, key)
-
-        # Key not present in properties
-
-        if dereferences is None or len(dereferences) == 0:
-            return {}
-
-        # Set the depth to max
-
-        if depth is None:
-            depth = len(dereferences) - 1
-
-        depth *= -1
-
-        backup = copy.deepcopy(reduce(lambda x, y: x[y],
-                                      dereferences[:depth] if depth != 0 else dereferences,
-                                      properties))
-
-        reduce(lambda x, y: x[y], dereferences[:depth-1],
-               properties).pop(dereferences[depth-1])
-
-        return backup
-
-    def _get_collections(self, resource):
-
-        return [attribute for attribute in dir(resource)
-                if boto3.resources.collection.CollectionManager
-                in getattr(resource, attribute).__class__.__bases__]
-
-    def _references(self, value, references={}, key=None):
-
-        if isinstance(value, list):
-            [self._references(v, references)
-             for v in value]
-
-        elif isinstance(value, dict):
-            [self._references(v, references, k)
-             for k, v in value.items()]
-
-        elif key is not None \
-                and key != "Arn" \
-                and key != "Name" \
-                and isinstance(value, str) \
-                and len(value) > 0 \
-                and (key.endswith("Id") or key.endswith("Arn") or key.endswith("Name")):
-
-            if key not in references:
-                references[key] = set()
-
-            references[key].update([value])
+                self.add(Associative(properties={"Name": "Attached"},
+                                     source=source, target=target))
 
 
 class IAM(Ingestor):
 
-    run = ["AWS::Iam::User", "AWS::Iam::Role", "AWS::Iam::Group",
-           "AWS::Iam::Policy", "AWS::Iam::InstanceProfile",
-           "AWS::Iam::MfaDevice", "AWS::Iam::VirtualMfaDevice"]
+    types = [
+        "AWS::Iam::User", "AWS::Iam::Role", "AWS::Iam::Group",
+        "AWS::Iam::Policy", "AWS::Iam::InstanceProfile",
+        "AWS::Iam::MfaDevice", "AWS::Iam::VirtualMfaDevice"
+    ]
+
+    associations = [
+        ("AWS::Iam::User", "AWS::Iam::VirtualMfaDevice")
+    ]
 
     def __init__(self, session, resources=None, db="default.db", verbose=False, quick=False,
                  only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
         self._db = db
-        self._verbose = verbose
-        self.account_id = "000000000000"
 
         if resources is not None:
             self += resources
@@ -440,20 +349,11 @@ class IAM(Ingestor):
         super().__init__(session=session, default=False, verbose=verbose, quick=False)
 
         self.client = self.session.client("iam")
-
-        self.run = [r for r in self.run
-                    if (len(only_types) == 0 or r in only_types)
-                    and r not in skip_types]
-
-        print("[*] Commencing {resources} ingestion\n".format(
-            resources=', '.join([r if (i == 0 or i % 3 > 0) else f'\n{" " * 15}{r}'
-                                 for i, r in enumerate(self.run)])))
-
         self.get_account_authorization_details(only_arns, skip_arns)
 
-        if "AWS::Iam::User" in self.run:
+        if "AWS::Iam::User" in self.types:
 
-            if "AWS::Iam::MfaDevice" in self.run or "AWS::Iam::VirtualMfaDevice" in self.run:
+            if "AWS::Iam::MfaDevice" in self.types or "AWS::Iam::VirtualMfaDevice" in self.types:
                 self.list_users_mfa_devices()
 
             if not quick:
@@ -468,7 +368,7 @@ class IAM(Ingestor):
 
         # Set Account
         for a in set([e.account() for e in self.entities.get("Resource")]):
-            self.account_id = a
+            self.account = a
             break
 
         self._print_stats()
@@ -518,23 +418,23 @@ class IAM(Ingestor):
                 properties=properties,
                 labels=["Resource", f"AWS::Iam::{label}"])
 
-            if f"AWS::Iam::Group" in self.run and "GroupList" in entry.keys():
+            if f"AWS::Iam::Group" in self.types and "GroupList" in entry.keys():
 
                 edges["GroupNames"].extend([(element, g)
                                             for g in entry["GroupList"]])
 
-            if f"AWS::Iam::InstanceProfile" in self.run \
+            if f"AWS::Iam::InstanceProfile" in self.types \
                     and "InstanceProfileList" in entry.keys():
 
                 edges["InstanceProfiles"].extend([(get_aad_element("InstanceProfile", ip), element)
                                                   for ip in entry["InstanceProfileList"]])
 
-            if f"AWS::Iam::Policy" in self.run \
+            if f"AWS::Iam::Policy" in self.types \
                     and "AttachedManagedPolicies" in entry.keys():
                 edges["Policies"].extend([(element, p["PolicyArn"])
                                           for p in entry["AttachedManagedPolicies"]])
 
-            if (str(f"AWS::Iam::{label}") in self.run
+            if (str(f"AWS::Iam::{label}") in self.types
                 and (len(skip_arns) == 0 or properties["Arn"] not in skip_arns)
                 and (len(only_arns) == 0 or properties["Arn"] in only_arns)
                     and element not in elements):
@@ -810,7 +710,7 @@ class IAM(Ingestor):
 
                     principals.update([p for p in rbp.principals()
                                        if p not in principals and
-                                       str(p) != RESOURCES.types["AWS::Account"].format(Account=self.account_id)])
+                                       str(p) != RESOURCES.types["AWS::Account"].format(Account=self.account)])
 
                     # TODO: This code should be moved to 'ResourceBasedPolicy' and override resolve().
 
@@ -822,7 +722,7 @@ class IAM(Ingestor):
                                    str(a).startswith("sts:AssumeRole")]:
 
                         if action.source().type("AWS::Account") \
-                                and action.source().properties()["Arn"].split(':')[4] == self.account_id:
+                                and action.source().properties()["Arn"].split(':')[4] == self.account:
 
                             if "AWS::Iam::Role" in resource.labels():
 
@@ -858,7 +758,7 @@ class IAM(Ingestor):
 
 class EC2(Ingestor):
 
-    run = [
+    types = [
         'AWS::Ec2::DhcpOptions',
         # 'AWS::Ec2::Image',
         'AWS::Ec2::Instance',
@@ -876,7 +776,7 @@ class EC2(Ingestor):
         'AWS::Ec2::VpcPeeringConnection',
     ]
 
-    associates = [
+    associations = [
         ("AWS::Ec2::Instance", "AWS::Ec2::NetworkInterface"),
         ("AWS::Ec2::Instance", "AWS::Ec2::KeyPair"),
         ("AWS::Ec2::Instance", "AWS::Ec2::Volume"),
@@ -898,7 +798,7 @@ class EC2(Ingestor):
                          only_arns=only_arns, skip_arns=skip_arns)
 
         self.client = self.session.client("ec2")
-        
+
         if not quick:
             self.get_instance_user_data()
 
@@ -932,11 +832,14 @@ class EC2(Ingestor):
 
 class S3(Ingestor):
 
-    run = [
+    types = [
         'AWS::S3::Bucket',
         'AWS::S3::Object',
     ]
 
+    associations = [
+        ('AWS::S3::Bucket', 'AWS::S3::Object')
+    ]
     def __init__(self, session, account="000000000000", verbose=False, quick=False,
                  only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
 
@@ -1028,7 +931,8 @@ class S3(Ingestor):
 
 
 class Lambda(Ingestor):
-    run = [
+
+    types = [
         'AWS::Lambda::Function',
     ]
 
@@ -1037,23 +941,7 @@ class Lambda(Ingestor):
 
         super().__init__(session=session, default=False, verbose=verbose, quick=quick)
 
-        self.run = [t for t in self.run
-                    if (len(skip_types) == 0 or t not in skip_types)
-                    and (len(only_types) == 0 or t in only_types)]
-
-        if len(self.run) == 0:
-            return
-
         self.client = self.session.client('lambda')
-
-        print("[*] Commencing {resources} ingestion".format(
-            ingestor=self.__class__.__name__,
-            resources=', '.join([
-                r if (i == 0 or i % 3 > 0)
-                else f'\n{" " * 15}{r}'
-                for i, r in enumerate(self.run)])
-        ))
-
         self.list_functions()
 
         super()._print_stats()
