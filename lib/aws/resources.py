@@ -258,7 +258,7 @@ class Resources(dict):
         # "AWS::Route53::Hostedzone":                                       "arn:aws:route53:::hostedzone/{Name}",
         # "AWS::Route53Resolver::ResolverEndpoint":                         "arn:aws:route53resolver:{Region}:{Account}:resolver-endpoint/{EndpointId}",
         # "AWS::Route53Resolver::ResolverRule":                             "arn:aws:route53resolver:{Region}:{Account}:resolver-rule/{RuleId}",
-        "AWS::S3::Bucket":                                                  "arn:aws:s3:::{Name}$",
+        "AWS::S3::Bucket":                                                  "arn:aws:s3:::{Name}",
         "AWS::S3::Job":                                                     "arn:aws:s3:{Region}:{Account}:job/{JobId}",
         "AWS::S3::Object":                                                  "arn:aws:s3:::{Name}/{Key}",
         "AWS::S3::AccessPoint":                                             "arn:aws:s3:{Region}:{Account}:accesspoint/{AccessPoint}",
