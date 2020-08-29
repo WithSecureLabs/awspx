@@ -159,10 +159,10 @@ def handle_ingest(args):
         sys.exit()
 
     ingestor = IngestionManager(session=session, services=args.services,
-                               db=args.database, quick=args.quick,
-                               skip_actions=args.skip_actions_all,
-                               only_types=args.only_types, skip_types=args.skip_types,
-                               only_arns=args.only_arns, skip_arns=args.skip_arns)
+                                db=args.database, quick=args.quick,
+                                skip_actions=args.skip_actions_all,
+                                only_types=args.only_types, skip_types=args.skip_types,
+                                only_arns=args.only_arns, skip_arns=args.skip_arns)
 
     assert ingestor.zip is not None, "Ingestion failed"
 
@@ -178,23 +178,12 @@ def handle_attacks(args):
     awspx attacks
     """
 
-    try:
-        Attacks.compute(
-            max_iterations=args.max_attack_iterations,
-            skip_attacks=args.skip_attacks,
-            only_attacks=args.only_attacks,
-            max_search_depth=str(args.max_attack_depth
-                                 if args.max_attack_depth is not None
-                                 else ""),
-            ignore_actions_with_conditions=(
-                not args.include_conditional_attacks)
-        )
-    except Exception as attack:
-        if attack in Attacks.definitions:
-            print(f"[!] Attack: `{attack}` failed, to exclude this "
-                  f"attack in future append --skip-attacks='{attack}'")
-        else:
-            print("[-]", attack)
+    attacks = Attacks(skip_conditional_actions=args.include_conditional_attacks == False,
+                      skip_attacks=args.skip_attacks, only_attacks=args.only_attacks)
+
+    attacks.compute(
+        max_iterations=args.max_attack_iterations,
+        max_search_depth=str(args.max_attack_depth if args.max_attack_depth is not None else ""))
 
 
 def handle_db(args):
