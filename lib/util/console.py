@@ -345,7 +345,7 @@ class Console(Table):
                 pass
 
             busy._text = ["→"]
-            color = "dim cyan"
+            color = Style(color="rgb(161, 209, 255)", dim=True)
             value = Bar(total=total, pulse=pulse,
                         complete_style=color,
                         finished_style=color,
