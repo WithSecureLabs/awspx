@@ -331,7 +331,7 @@ def main():
                      help="Maximum session duration in seconds (for --assume-role).")
     pnr.add_argument('--region', dest='region', default="eu-west-1", type=region,
                      help="Region to ingest (defaults to profile region, or `eu-west-1` if not set).")
-    pnr.add_argument('--database', dest='database', default=None, choices=DATABASES,
+    pnr.add_argument('--database', dest='database', default=None, choices=Neo4j.databases,
                      help="Database to store results (defaults to <profile>.db).")
 
     # Services & resources args
@@ -380,14 +380,14 @@ def main():
         g.add_argument('--only-attacks', dest='only_attacks', default=[], nargs="+", type=attack,
                        help="Attacks to include by name, all other attacks will be excluded.")
         ag.add_argument('--max-attack-iterations', dest='max_attack_iterations', default=5, type=int,
-                        help="Maximum number of iterations to run each attack (default 5).")
+                        help="Maximum number of iterations to run each attack (default: 5).")
         ag.add_argument('--max-attack-depth', dest='max_attack_depth', default=None, type=int,
-                        help="Maximum search depth for attacks (default None).")
+                        help="Maximum search depth for attacks (default: None).")
         ag.add_argument('--include-conditional-attacks', dest='include_conditional_attacks', action='store_true', default=False,
-                        help="Include conditional actions when computing attacks (default False).")
+                        help="Include conditional actions when computing attacks (default: False).")
 
         if p is ingest_parser:
-            ag.add_argument('--skip-attacks--all', dest='skip_attacks_all', action='store_true', default=False,
+            ag.add_argument('--skip-attacks-all', dest='skip_attacks_all', action='store_true', default=False,
                             help="Skip attack path computation (it can be run later with `awspx attacks`).")
 
     #
@@ -400,13 +400,12 @@ def main():
 
     db_group = db_parser.add_mutually_exclusive_group(required=True)
 
-    db_group.add_argument('--use', dest='use_db', choices=DATABASES,
+    db_group.add_argument('--use', dest='use_db', choices=Neo4j.databases,
                           help="Switch to the specified database.")
     db_group.add_argument('--list', dest='list_dbs', action='store_true',
                           help="List available databases.")
-    db_group.add_argument('--load-zip', dest='load_zip', choices=sorted([z for z in os.listdir("/opt/awspx/data/")
-                                                                         if z.endswith(".zip")]),
-                          help="Create/overwrite database with ZIP file content.")
+    db_group.add_argument('--load-zip', dest='load_zip', choices=sorted(Neo4j.zips),
+                          help="Create/overwrite database using ZIP file content.")
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
