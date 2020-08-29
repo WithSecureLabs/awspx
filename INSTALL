@@ -84,6 +84,8 @@ function install(){
         apt install -y ${APT_DEPS[@]}
     docker exec -it awspx \
         pip3 install --upgrade ${PY_DEPS[@]}
+    docker exec -it awspx \
+        npm install -g npm@latest
 
     # Set neo4j user:pass to neo4j:neo4j
     docker exec -it awspx \
