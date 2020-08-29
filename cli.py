@@ -32,7 +32,7 @@ def handle_update(args):
     repo.remotes.origin.pull()
 
     if head == repo.head.commit:
-        console.info("Already up to date")
+        console.notice("Already up to date")
         return
 
     console.task(f"Updating to {repo.head.commit}", os.system, args=[
@@ -49,7 +49,7 @@ def handle_profile(args, console=console):
 
     if args.create_profile:
         profile.create(args.create_profile)
-        console.info(f"Saved profile '{args.create_profile}'")
+        console.notice(f"Saved profile '{args.create_profile}'")
 
     elif args.list_profiles:
         profile.list()
@@ -133,9 +133,6 @@ def handle_ingest(args):
 
     except ClientError as e:
         console.critical(e)
-
-    if args.verbose:
-        console.verbose()
 
     ingestor = IngestionManager(session=session, console=console, services=args.services,
                                 db=args.database, quick=args.quick, skip_actions=args.skip_actions_all,
@@ -310,10 +307,6 @@ def main():
     arn_args.add_argument('--skip-arns', dest='skip_arns', default=[], nargs="+", type=ARN,
                           help="Resources to exclude by ARN.")
 
-    verbosity = ingest_parser.add_argument_group("Verbosity")
-    verbosity.add_argument('--verbose', dest='verbose', action='store_true', default=False,
-                           help="Enable verbose output.")
-
     actions = ingest_parser.add_argument_group("Actions")
     actions.add_argument('--skip-actions-all', dest='skip_actions_all', action='store_true', default=False,
                          help="Skip policy resolution (actions will not be processed).")
@@ -325,7 +318,7 @@ def main():
                                            help="Compute attacks using the active database.")
     attacks_parser.set_defaults(func=handle_attacks)
 
-    # add args to both
+    # Add args to ingest, attacks
     for p in [ingest_parser, attacks_parser]:
         ag = p.add_argument_group("Attack computation")
         g = ag.add_mutually_exclusive_group()
@@ -362,6 +355,11 @@ def main():
     db_group.add_argument('--load-zip', dest='load_zip', choices=sorted(Neo4j.zips),
                           help="Create/overwrite database using ZIP file content.")
 
+    # Add --verbose to ingest, attacks, db 
+    for p in [ingest_parser, attacks_parser, db_parser]:
+        p.add_argument('--verbose', dest='verbose', action='store_true', default=False,
+                       help="Enable verbose output.")
+
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
@@ -372,7 +370,10 @@ def main():
     if 'database' in args and args.database is None:
         args.database = f"{args.profile}.db"
 
-    console.start()
+    if 'verbose' in args and args.verbose:
+        console.verbose()
+    else:
+        console.start()
 
     try:
         args.func(args)

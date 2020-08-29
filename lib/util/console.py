@@ -241,7 +241,10 @@ class Console(Table):
         for d in dictionaries:
             t.add_row(*d.values())
 
-        self.add_row(t)
+        if self._verbose: 
+            self.console.print(t)
+        else:
+            self.add_row(t)
 
     def input(self, message):
 
