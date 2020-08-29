@@ -16,17 +16,11 @@ from botocore.utils import InstanceMetadataFetcher
 from lib.aws.attacks import Attacks
 from lib.aws.ingestor import *
 from lib.aws.resources import RESOURCES
+from lib.aws.profile import Profile
 from lib.graph.base import Elements
 from lib.graph.db import Neo4j
 
-CONFIG = ConfigParser()
-CREDENTIALS = ConfigParser()
-
-# for functions that use relative paths
-PATH = os.path.dirname(__file__)
-AWS_DIR = os.environ['HOME'] + '/.aws/'
-CONFIG_FILE = os.environ['HOME'] + '/.aws/config'
-CREDENTIALS_FILE = os.environ['HOME'] + '/.aws/credentials'
+SERVICES = list(Ingestor.__subclasses__())
 
 
 def handle_update(args):
@@ -47,38 +41,18 @@ def handle_profile(args):
     """
     awspx profile
     """
-    CREDENTIALS.read(CREDENTIALS_FILE)
-    CONFIG.read(CONFIG_FILE)
+
+    profile = Profile()
 
     if args.create_profile:
-        os.system(f"aws configure --profile {args.create_profile}")
-        try:
-            session = boto3.session.Session(profile_name=args.create_profile)
-            identity = session.client('sts').get_caller_identity()
-            print(f"[+] Profile '{args.create_profile}' successfully created. "
-                  f"(identity: {identity['Arn']}).\n")
-        except:
-            print(f"[+] Profile '{args.create_profile}' created.")
+        profile.create(args.create_profile)
+        print(f"[+] Saved profile '{args.create_profile}'")
 
     elif args.list_profiles:
-        profiles = list(CREDENTIALS.keys())
-        profiles.remove('DEFAULT')
-        print("\n".join(profiles))
-        return
+        profile.list()
 
     elif args.delete_profile:
-        if CONFIG.has_section(args.delete_profile):
-            CONFIG.remove_section(args.delete_profile)
-        if CREDENTIALS.has_section(args.delete_profile):
-            CREDENTIALS.remove_section(args.delete_profile)
-            print(f"[+] Profile '{args.delete_profile}' deleted.")
-
-        # Restore or delete profile
-        with open(CONFIG_FILE, 'w') as f:
-            CONFIG.write(f)
-
-        with open(CREDENTIALS_FILE, 'w') as f:
-            CREDENTIALS.write(f)
+        profile.delete(args.delete_profile)
 
 
 def handle_ingest(args):
@@ -93,9 +67,9 @@ def handle_ingest(args):
         session = boto3.session.Session(region_name=args.region)
 
     # Use existing profile
-    elif args.profile in CREDENTIALS.sections():
-        session = boto3.session.Session(region_name=args.region,
-                                        profile_name=args.profile)
+    elif args.profile in Profile().credentials.sections():
+        session = boto3.session.Session(profile_name=args.profile,
+                                        region_name=args.region)
     # Use instance profile
     elif args.profile == "default":
         try:
@@ -206,17 +180,10 @@ def handle_db(args):
 
 def main():
 
-    CONFIG.read(os.environ['HOME'] + '/.aws/config')
-    CREDENTIALS.read(os.environ['HOME'] + '/.aws/credentials')
-
-    SERVICES = list(Ingestor.__subclasses__())
-    DATABASES = [db for db in os.listdir("/data/databases")
-                 if os.path.isdir(os.path.join("/data/databases", db))]
-
     # input validation types
 
     def profile(p):
-        if p in list(CREDENTIALS.sections()):
+        if p in list(Profile().credentials.sections()):
             raise argparse.ArgumentTypeError(f"profile '{p}' already exists")
         return p
 
@@ -250,22 +217,6 @@ def main():
                 f"'{arn}' is not a valid ARN")
 
         return arn
-
-    def region(region):
-        regions = [
-            "us-east-2", "us-east-1", "us-west-1",
-            "us-west-2", "ap-south-1", "ap-northeast-3",
-            "ap-northeast-2", "ap-southeast-1", "ap-southeast-2",
-            "ap-northeast-1", "ca-central-1", "cn-north-1",
-            "cn-northwest-1", "eu-central-1", "eu-west-1",
-            "eu-west-2", "eu-west-3", "eu-north-1",
-            "sa-east-1", "us-gov-east-1", "us-gov-west-1",
-        ]
-
-        if region not in regions:
-            raise argparse.ArgumentTypeError(
-                f"'{region}' is not a valid region.")
-        return region
 
     def attack(name):
         match = next((a for a in Attacks.definitions
@@ -304,7 +255,7 @@ def main():
                                help="Create a new profile using `aws configure`.")
     profile_group.add_argument('--list', dest='list_profiles', action='store_true',
                                help="List saved profiles.")
-    profile_group.add_argument('--delete', dest='delete_profile', choices=CREDENTIALS.sections(),
+    profile_group.add_argument('--delete', dest='delete_profile', choices=Profile().credentials.sections(),
                                help="Delete a saved profile.")
     #
     # awspx ingest
@@ -329,7 +280,7 @@ def main():
                      help="ARN of a role to assume for ingestion (useful for cross-account ingestion).")
     pnr.add_argument('--assume-role-duration', dest='role_to_assume_duration', type=int, default=3600,
                      help="Maximum session duration in seconds (for --assume-role).")
-    pnr.add_argument('--region', dest='region', default="eu-west-1", type=region,
+    pnr.add_argument('--region', dest='region', default="eu-west-1", choices=Profile.regions,
                      help="Region to ingest (defaults to profile region, or `eu-west-1` if not set).")
     pnr.add_argument('--database', dest='database', default=None, choices=Neo4j.databases,
                      help="Database to store results (defaults to <profile>.db).")
