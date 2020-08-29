@@ -213,7 +213,7 @@ class Neo4j(object):
 
     def list(self):
 
-        console.list([{
+        self.console.list([{
             "Name": db,
             "Created": datetime.datetime.strptime(
                 time.ctime(os.path.getctime(f"/data/databases/{db}")),
