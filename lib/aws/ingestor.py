@@ -1,18 +1,23 @@
+import boto3
+import csv
 import json
 import os
 import re
+import shutil
+import subprocess
+import zlib
 from base64 import b64decode
 from datetime import datetime
 
-import boto3
 from botocore.exceptions import ClientError, PartialCredentialsError
 
 from lib.aws.actions import ACTIONS
-from lib.aws.policy import (BucketACL, IdentityBasedPolicy, ObjectACL,
-                            ResourceBasedPolicy)
+from lib.aws.policy import (BucketACL, IdentityBasedPolicy,
+                            ObjectACL, ResourceBasedPolicy)
 from lib.aws.resources import RESOURCES
 from lib.graph.base import Elements, Node
-from lib.graph.edges import Action, Associative, Transitive, Trusts
+from lib.graph.edges import (Action, Associative,
+                             Transitive, Trusts)
 from lib.graph.nodes import Generic, Resource
 
 
@@ -233,6 +238,104 @@ class IngestionManager(Elements):
 
                 self.update(acl.principals())
                 self.update(acl.resolve())
+
+    def save(self, db="default.db", path="/opt/awspx/data"):
+
+        archive = None
+        edge_files = []
+        node_files = []
+
+        if not db.endswith(".db"):
+            db = "%s.db" % db
+
+        directory = f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{db.split('.')[0]}"
+        labels = sorted(list(set([
+            next((l for l in e.labels()
+                  if l not in ["External", "Generic", "Resource"]),
+                 "Node")
+            for e in self])))
+
+        os.mkdir(f"{path}/{directory}")
+
+        def stringify(s, t):
+            return json.dumps(s, default=str) \
+                if t == "list" or t == "dict" \
+                else str(s)
+
+        for label in labels:
+
+            filename = "%s.csv" % label
+            elements = self.get(label)
+
+            if len(elements) == 0:
+                continue
+
+            header = sorted(list(set([
+                (f, e.get(f).__class__.__name__)
+                for e in elements for f in e.properties().keys()])))
+
+            # We default to type: 'str' in cases where key names collide accross types
+
+            header = list(set([
+                (f, 'str' if [k for k, _ in header].count(f) > 1 else t)
+                for (f, t) in header]))
+
+            if type(next(iter(elements))) is Node or Node in type(next(iter(elements))).__bases__:
+
+                prefix = [":ID"]
+                suffix = [":LABEL"]
+                data = [[e.id()] + [stringify(e.properties()[f], _)
+                                    if f in e.properties()
+                                    else '' for (f, _) in header]
+                        + [";".join(e.labels())] for e in elements]
+
+                node_files.append(filename)
+
+            else:
+
+                prefix = [":START_ID"]
+                suffix = [":END_ID", ":TYPE"]
+
+                data = [[e.source().id()] + [stringify(e.properties()[f], _)
+                                             if f in e.properties()
+                                             else '' for (f, _) in header]
+                        + [e.target().id(), label] for e in elements if e.target() is not None]
+
+                edge_files.append(filename)
+
+            data.insert(0, prefix + [
+                "%s:%s" % (k, {
+                    t:           t,
+                    "NoneType": "string",
+                    "dict":     "string",
+                    "list":     "string",
+                    "int":      "string",
+                    "datetime": "string",
+                    "bool":     "string",
+                    "str":      "string"
+                }[t]) for (k, t) in header] + suffix)
+
+            with open(f"{path}/{directory}/{filename}", mode='w') as elements:
+
+                c = csv.writer(
+                    elements,
+                    delimiter=',',
+                    quotechar='"',
+                    quoting=csv.QUOTE_MINIMAL)
+
+                for row in data:
+                    c.writerow(row)
+
+            if label == labels[-1]:
+
+                shutil.make_archive(f"{path}/{directory}",
+                                    'zip', f"{path}/{directory}")
+
+                subprocess.Popen(["rm", "-rf", f"{path}/{directory}"])
+
+                archive = f"{path}/{directory}.zip"
+
+        return archive
 
     def update(self, elements):
 
