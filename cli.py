@@ -202,28 +202,17 @@ def handle_db(args):
     awspx db
     """
 
+    db = Neo4j()
+
     if args.load_zip:
-        db = args.load_zip.split('_')[-1][0:-4] + ".db"
 
-        if not args.load_zip.startswith("/opt/awspx/data/"):
-            args.load_zip = "/opt/awspx/data/" + args.load_zip
-
-        print(f"[*] Importing records from {args.load_zip}")
-        (success, message) = Neo4j.load(args.load_zip, db)
-        print(f"{message}\n")
-
-        if not success:
-            sys.exit(1)
+        db.load_zip(args.load_zip)
 
     elif args.list_dbs:
-        print("\n".join([db for db in os.listdir("/data/databases/")
-                         if os.path.isdir(os.path.join("/data/databases/", db))]))
+        db.list()
 
     elif args.use_db:
-        print(f"[+] Changing database to {args.use_db} "
-              "(remember to refresh your browser)")
-        Neo4j.switch_database(args.use_db)
-        Neo4j.restart()
+        db.use(args.use_db)
 
 
 def main():
