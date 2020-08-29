@@ -50,39 +50,26 @@
 
       <!-- Empty database helper -->
       <div v-else-if="page == 1">
-        <v-card-title class="text-center ml-5">
-          <v-icon size="36" class="warning--text px-5">mdi-hand-right</v-icon>Hold up, this database appears to be empty
-        </v-card-title>
-        <v-card-text color="grey lighten-5" class="px-12">
-          <v-row>
+        <v-card-title class="ml-5">Hold up, this database appears to be empty...</v-card-title>
+        <v-card-subtitle class="ml-5">You'll need to populate it with something before continuing</v-card-subtitle>
+        <v-card-text>
+          <v-row class="ma-2">
             <v-col />
             <v-col cols="11">
               <div class="mb-2">
-                <b>a) Either</b> run the ingestor to load an account of your own:
+                To do this,
+                <a
+                  href="https://github.com/FSecureLABS/awspx/wiki/Data-Collection#ingestion"
+                >run the ingestor</a>:
               </div>
 
-              <v-card color="black" class="pa-2 white--text" style="font-size: 11px">
-                [root@localhost ~]#
-                <b>awspx ingest</b>
-                <br />[-] The profile 'default' was not found. Would you like to create it? (y/n) y
-                <br />AWS Access Key ID [None]: ****9XY7
-                <br />AWS Secret Access Key [None]: ****ks91
-                <br />Default region name [None]: eu-west-1
-                <br />Default output format [None]: json
-                <br />
-              </v-card>
+              <v-card outlined color="#f6f8fa" class="pa-2" style="font-size: 11px">awspx ingest</v-card>
               <div class="mt-5 mb-2">
-                <b>b) OR</b> load an existing database (e.g. the provided sample):
+                <i>or just play around with sample dataset now for now:</i>
               </div>
-              <v-card color="black" class="pa-2 white--text" style="font-size: 11px">
-                [root@localhost ~]#
-                <b>awspx db --load-zip sample.zip</b>
-                <br />[*] Importing records from /opt/awspx/data/sample.zip
-                <br />
-                <br />[root@localhost ~]#
-                <b>awspx attacks</b>
-                <br />[*] Searching database for attack patterns
-                <br />
+              <v-card outlined color="#f6f8fa" class="pa-2" style="font-size: 11px">
+                awspx db --load-zip sample.zip
+                <br />awspx attacks
               </v-card>
             </v-col>
             <v-col />
@@ -101,7 +88,7 @@
 <script>
 export default {
   name: "Database",
-  data: function() {
+  data: function () {
     return {
       page: 0,
       form: {
@@ -110,15 +97,15 @@ export default {
           uri: `bolt://${new URL(location.href).host}:7687`,
           username: this.neo4j.auth.username,
           password: this.neo4j.auth.password,
-          status: "Disconnected"
+          status: "Disconnected",
         },
         uri_placeholder: `bolt://${new URL(location.href).host}:7687`,
         password_masked: true,
-        loading: false
+        loading: false,
       },
       db: {
         connected: false,
-        populated: false
+        populated: false,
       },
       test: {
         busy: false,
@@ -126,12 +113,12 @@ export default {
         icons: {
           null: "",
           true: "mdi-check-circle-outline",
-          false: "mdi-alert-circle-outline"
+          false: "mdi-alert-circle-outline",
         },
         uri: null,
-        credentials: null
+        credentials: null,
       },
-      mounted: false
+      mounted: false,
     };
   },
 
@@ -140,7 +127,7 @@ export default {
       this.test = {
         ...this.test,
         uri: null,
-        credentials: null
+        credentials: null,
       };
     },
 
@@ -158,7 +145,7 @@ export default {
 
       const test = {
         uri: null,
-        credentials: null
+        credentials: null,
       };
 
       return this.neo4j
@@ -167,13 +154,13 @@ export default {
           this.form.values.username,
           this.form.values.password
         )
-        .then(r => {
+        .then((r) => {
           test.uri = true;
           test.credentials = true;
 
           return true;
         })
-        .catch(e => {
+        .catch((e) => {
           if (this.mounted) {
             switch (e.code) {
               case "Neo.ClientError.Security.Unauthorized":
@@ -192,7 +179,7 @@ export default {
           this.test.busy = false;
           this.test = {
             ...this.test,
-            ...test
+            ...test,
           };
 
           if (typeof this.$refs.form !== "undefined")
@@ -204,7 +191,7 @@ export default {
       localStorage.DB = JSON.stringify({
         uri: this.form.values.uri,
         username: this.form.values.username,
-        password: this.form.values.password
+        password: this.form.values.password,
       });
 
       this.neo4j.setup(
@@ -236,18 +223,18 @@ export default {
               "ORDER BY action.Name",
             false
           )
-          .then(results => {
-            actions = results.Text.map(result => result["action"]);
+          .then((results) => {
+            actions = results.Text.map((result) => result["action"]);
           }),
         this.neo4j
           .run(
             "MATCH (r) WHERE NOT (r:Pattern OR r:`AWS::Domain`) RETURN r",
             false
           )
-          .then(elements => {
-            resources = elements.Graph.map(r => {
+          .then((elements) => {
+            resources = elements.Graph.map((r) => {
               const classification = r.classes
-                .filter(c => types.indexOf(c) != -1)
+                .filter((c) => types.indexOf(c) != -1)
                 .concat("")[0];
               const id =
                 typeof r.data.properties.Arn !== "undefined"
@@ -260,7 +247,7 @@ export default {
                 type: r.data.name === "Effective Admin" ? "Admin" : r.data.type,
                 class:
                   r.data.name === "Effective Admin" ? "Admin" : classification,
-                element: r
+                element: r,
               };
             }).sort((a, b) => {
               let c = types.indexOf(a.class) - types.indexOf(b.class);
@@ -268,7 +255,7 @@ export default {
               else return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1;
               return c;
             });
-          })
+          }),
       ])
         .then(() => {
           this.db.connected = true;
@@ -280,7 +267,7 @@ export default {
           this.$emit("resources", resources);
           this.$emit("actions", actions);
         })
-        .catch(e => {
+        .catch((e) => {
           this.db.connected = false;
           this.form.values.status = "Disconnected";
         })
@@ -306,7 +293,7 @@ export default {
       this.mounted = false;
 
       this.db_settings_test()
-        .then(success => {
+        .then((success) => {
           if (success) {
             this.neo4j.setup(
               this.form.values.uri,
@@ -319,7 +306,7 @@ export default {
         .finally(() => {
           this.mounted = true;
         });
-    }
+    },
   },
   watch: {
     "form.values.uri"() {
@@ -330,23 +317,23 @@ export default {
     },
     "form.values.password"() {
       this.form_reset_validation();
-    }
+    },
   },
   computed: {
     rules() {
       const rules = {
         uri: [this.test.uri === null || this.test.uri],
-        credentials: [this.test.credentials === null || this.test.credentials]
+        credentials: [this.test.credentials === null || this.test.credentials],
       };
 
       return rules;
-    }
+    },
   },
 
   mounted() {
     // this.mounted = true;
     this.autologin();
-  }
+  },
 };
 </script>
 
