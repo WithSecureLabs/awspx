@@ -113,7 +113,8 @@ class Statement:
                     continue
 
                 node = next((a for a in self._resources
-                             if a.id() == principal), None)
+                             if a.id() == principal),
+                            None)
 
                 # We haven't seen this node before. It may belong to another account,
                 # or it belongs to a service that was not loaded.
@@ -181,22 +182,26 @@ class Statement:
             node = None
             labels = []
 
-            statements = statement["Federated"] if isinstance(
-                statement["Federated"], list) else [statement["Federated"]]
+            statements = statement["Federated"] \
+                if isinstance(statement["Federated"], list) \
+                else [statement["Federated"]]
 
             for federated in statements:
+
                 if re.compile(
                     RESOURCES["AWS::Iam::SamlProvider"]
                 ).match(federated) is not None:
-                    base = Resource if (next((a for a in self._resources if a.id().split(
-                        ':')[4] == federated.split(':')[4]), False)) else External
+
+                    base = Resource if (next((a for a in self._resources.get("Resource")
+                                              if a.account() == federated.split(':')[4]
+                                              ), False)) else External
                     node = base(
-                        key="Arn",
                         labels=["AWS::Iam::SamlProvider"],
                         properties={
                             "Name": federated.split('/')[-1],
                             "Arn":  federated
                         })
+
                 elif re.compile(
                     "^(?=.{1,253}\.?$)(?:(?!-|[^.]+_)[A-Za-z0-9-_]{1,63}(?<!-)(?:\.|$)){2,}$"
                 ).match(federated):
@@ -205,6 +210,7 @@ class Statement:
                         properties={
                             "Name": federated
                         })
+
                 else:
                     node = External(
                         properties={
