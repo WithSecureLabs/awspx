@@ -673,7 +673,11 @@ class Attacks:
     definitions = definitions
     stats = []
 
-    def __init__(self, skip_attacks=[], only_attacks=[], skip_conditional_actions=True):
+    def __init__(self, skip_attacks=[], only_attacks=[], skip_conditional_actions=True, console=None):
+
+        if console is None:
+            from lib.util.console import console
+        self.console = console
 
         self.ignore_actions_with_conditions = skip_conditional_actions
         self.definitions = {k: v for k, v in self.definitions.items()
@@ -736,8 +740,7 @@ class Attacks:
                 elif placeholder == '':
                     substitute = "source"
                 else:
-                    print(
-                        f"[-] Unknown placeholder: \'{placeholder}\'")
+                    self.console.debug(f"Unknown placeholder: '{placeholder}'")
                     continue
 
                 placeholder = f"${{{placeholder}}}"
@@ -1175,39 +1178,45 @@ class Attacks:
         converged = False
         db = Neo4j()
 
-        print("[*] Removing all existing attack patterns")
-        db.run("MATCH (p:Pattern) DETACH DELETE p")
+        self.console.task("Removing all existing attack patterns",
+                          db.run,  args=["MATCH (p:Pattern) DETACH DELETE p"],
+                          done="Removed all existing attack patterns")
 
-        print("[*] Creating pseudo Admin")
-        db.run("MERGE (admin:Admin:`AWS::Iam::Policy`{"
-               "Name: 'Effective Admin', "
-               "Description: 'Pseudo-Policy representing full and unfettered access.', "
-               "Arn: 'arn:aws:iam::${Account}:policy/Admin', "
-               'Document: \'[{"DefaultVersion": {"Version": "2012-10-17", '
-               '"Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"'
-               '}]}}]\''
-               '}) ')
+        self.console.task("Creating pseudo Admin",
+                          db.run,  args=[
+                              "MERGE (admin:Admin:`AWS::Iam::Policy`{"
+                              "Name: 'Effective Admin', "
+                              "Description: 'Pseudo-Policy representing full and unfettered access.', "
+                              "Arn: 'arn:aws:iam::${Account}:policy/Admin', "
+                              'Document: \'[{"DefaultVersion": {"Version": "2012-10-17", '
+                              '"Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"'
+                              '}]}}]\''
+                              '}) '
+                          ],
+                          done="Created pseudo Admin")
 
-        print("[*] Adding attack paths (this search can take a while)")
-        for i in range(max_iterations * len(self.definitions)):
-
+        for i in self.console.tasklist(
+            "Adding attack paths (this search can take a while)",
+            range(max_iterations * len(self.definitions)),
+            done="Added attack paths"
+        ):
             if converged:
                 continue
 
             # First iteration
             elif (i % len(self.definitions) == 0):
-                print("[*] Temporarily adding Admin label "
-                      "to Generic Policy")
+                self.console.info("Temporarily adding Admin label "
+                                  "to Generic Policy")
                 db.run("MATCH (gp:`AWS::Iam::Policy`:Generic) SET gp:Admin")
 
             # Last iteration, check for convergence
             elif ((i + 1) % len(self.definitions) == 0):
 
-                print("[*] Removing Admin label from Generic Policy")
+                self.console.info("Removing Admin label from Generic Policy")
                 db.run("MATCH (admin:`AWS::Iam::Policy`:Generic) "
                        "REMOVE admin:Admin")
 
-                print("[*] Pruning attack paths")
+                self.console.info("Pruning attack paths")
 
                 # Only keep the 'cheapest' paths to admin, favouring transitive
                 # relationships over attacks
@@ -1245,9 +1254,9 @@ class Attacks:
                         for s in self.stats[-(len(self.definitions)):]]) == 0:
 
                     converged = True
-                    print("[+] Search converged on iteration: "
-                          f"{iteration} of max: {max_iterations} - "
-                          "Tidying up")
+                    self.console.info("Search converged on iteration: "
+                                      f"{iteration} of max: {max_iterations} - "
+                                      "Tidying up")
 
                     # Update attack descriptions
                     db.run("MATCH (:Pattern)-[attack:ATTACK|OPTION|CREATE]->() "
@@ -1284,8 +1293,8 @@ class Attacks:
             definition = self.definitions[pattern]
             timestamp = time.time()
 
-            print(f"[*] Searching for attack: {pattern} "
-                  f"(iteration: {iteration} of max: {max_iterations})")
+            self.console.info(f"Searching for attack: {pattern} "
+                              f"(iteration: {iteration} of max: {max_iterations})")
 
             cypher = self._pattern_cypher(pattern, definition,
                                           max_search_depth)
@@ -1308,5 +1317,5 @@ class Attacks:
         discovered = sum([s["nodes_created"] if "nodes_created" in s
                           else 0 for s in self.stats])
 
-        print(f"[+] {discovered} potential attack paths "
-              "were added to the database")
+        self.console.notice(f"{discovered} potential attack paths "
+                            "were added to the database")

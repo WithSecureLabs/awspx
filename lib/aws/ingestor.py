@@ -25,7 +25,7 @@ class IngestionManager(Elements):
 
     zip = None
 
-    def __init__(self, session,
+    def __init__(self, session, console=None,
                  services=[], db="default.db",
                  quick=False, skip_actions=False,
                  only_types=[], skip_types=[],
@@ -33,21 +33,26 @@ class IngestionManager(Elements):
 
         try:
 
-            identity = session.client('sts').get_caller_identity()
+            if console is None:
+                from lib.util.console import console
+            self.console = console
 
-            print('\n'.join([
-                f"[+] Identity: {identity['Arn']}",
-                f"[+] Services: {', '.join([s.__name__ for s in services])}",
-                f"[+] Database: {db}",
-                f"[+] Account:  {identity['Account']}",
-                f"[+] Region:   {session.region_name}",
-            ]), "\n\n")
+            identity = self.console.task(
+                "Awaiting response to sts:GetCallerIdentity",
+                session.client('sts').get_caller_identity,
+                done=lambda r: '\n'.join([
+                    f"Identity: {r['Arn']}",
+                    f"Services: {', '.join([s.__name__ for s in services])}",
+                    f"Database: {db}",
+                    f"Account:  {r['Account']}",
+                    f"Region:   {session.region_name}",
+                ]))
 
             self.account = identity["Account"]
+            self.console.spacer()
 
         except (ClientError, PartialCredentialsError) as e:
-            print(f"[-] {e}")
-            sys.exit()
+            self.console.critical(e)
 
         if len(only_arns) > 0:
             only_types = list(set(only_types + [RESOURCES.label(arn)
@@ -55,7 +60,7 @@ class IngestionManager(Elements):
 
         for ingestor in services:
 
-            elements = ingestor(session=session,
+            elements = ingestor(session=session, console=self.console,
                                 account=self.account, quick=quick,
                                 only_types=only_types, skip_types=skip_types,
                                 only_arns=only_arns, skip_arns=skip_arns)
@@ -70,6 +75,8 @@ class IngestionManager(Elements):
 
         self.zip = self.save(db)
 
+        self.console.spacer()
+
     def load_transitives(self):
 
         resources = self.get("Resource")
@@ -78,9 +85,11 @@ class IngestionManager(Elements):
         groups = resources.get("AWS::Iam::Group")
         roles = resources.get("AWS::Iam::Role")
 
-        print("[!] Adding Transitive relationships")
-
-        for resource in resources:
+        for resource in self.console.tasklist(
+            "Adding Transitive relationships",
+            iterables=resources,
+            done="Added Transitive relationships",
+        ):
 
             # (User)-->(Group)
             if (resource.label() in ["AWS::Iam::User"]
@@ -168,9 +177,12 @@ class IngestionManager(Elements):
         entities = Elements(e for e in self.get("Resource")
                             if e.label() in ['AWS::Iam::User', 'AWS::Iam::Role'])
 
-        print("[!] Adding Action relationships")
+        for resource in self.console.tasklist(
+            "Resolving Policy information",
+            iterables=self.get("Resource"),
+            done="Added Action relationships"
 
-        for resource in self.get("Resource"):
+        ):
 
             # Identity-based policies (inline and managed)
             if resource.label() in [
@@ -262,7 +274,11 @@ class IngestionManager(Elements):
                 if t == "list" or t == "dict" \
                 else str(s)
 
-        for label in labels:
+        for label in self.console.tasklist(
+            "Saving ingested data",
+            labels,
+            done=f"Saved ingested data to {directory}.zip"
+        ):
 
             filename = "%s.csv" % label
             elements = self.get(label)
@@ -352,14 +368,14 @@ class IngestionManager(Elements):
 
         if "TRANSITIVE" in element.labels():
 
-            print(f"[+] Added {element.label().capitalize()} relationship: "
-                  f"({element.source()}) → ({element.target()})")
+            self.console.info(f"Added {element.label().capitalize()} relationship: "
+                              f"({element.source()}) → ({element.target()})")
 
         elif any([e in ["ACTION", "TRUSTS"] for e in element.labels()]):
             pass
 
         else:
-            print(f"[+] Added {element.label()}: ({element})")
+            self.console.info(f"Added {element.label()}: ({element})")
 
 
 class Ingestor(Elements):
@@ -372,11 +388,12 @@ class Ingestor(Elements):
     _only_arns = []
     _skip_arns = []
 
-    def __init__(self, session, account,
+    def __init__(self, session, account, console,
                  load_resources=True, quick=False,
                  only_types=[], skip_types=[],
                  only_arns=[], skip_arns=[]):
 
+        self.console = console.item(f"Ingesting {self.__class__.__name__}")
         self.session = session
         self.account = account
         self.quick = quick
@@ -385,12 +402,11 @@ class Ingestor(Elements):
         self._skip_arns = skip_arns
 
         if load_resources:
-
             available_resources = self.session.get_available_resources()
             if self.__class__.__name__.lower() not in available_resources:
-                print(f"[-] '{self.__class__.__name__}' is not a supported boto resource. "
-                      "This means you'll need to write a custom ingestor (see Lambda for a practical example). "
-                      f"For future reference, boto supports: {', '.join(available_resources)}.")
+                self.console.critical(f"'{self.__class__.__name__}' is not a supported boto resource. "
+                                      "This means you'll need to write a custom ingestor (see Lambda for a practical example). "
+                                      f"For future reference, boto supports: {', '.join(available_resources)}.")
                 return
 
         # If no resources to ingest have been specified, assume all
@@ -400,8 +416,8 @@ class Ingestor(Elements):
 
         # There must be nothing specified for this service
         if len(self.types) == 0:
-            print(f"[-] No {self.__class__.__name__.capitalize()} resources were found in 'lib.aws.resources.py'. "
-                  "You'll need to add them before this ingestor will work.")
+            self.console.critical(f"No {self.__class__.__name__.capitalize()} resources were found in 'lib.aws.resources.py'. "
+                                  "You'll need to add them before this ingestor will work.")
             return
 
         # Ensure ingested resources conform to RESOURCES casing
@@ -412,9 +428,6 @@ class Ingestor(Elements):
         # Remove types that dont match user specifications
         self.types = [t for t in self.types if t not in skip_types
                       and (len(only_types) == 0 or t in only_types)]
-
-        print(f"[*] Commencing {self.__class__.__name__} Ingestion")
-
         self.load_generics()
 
         if load_resources and len(self.types) > 0:
@@ -423,8 +436,11 @@ class Ingestor(Elements):
 
     def load_generics(self, types=None):
 
-        for k in self.types:
-
+        for k in self.console.tasklist(
+            f"Adding Generic resources",
+            self.types,
+            done=f"Added Generic resources"
+        ):
             self.add(Generic(properties={
                 "Name": f"${k.split(':')[-1]}",
                 "Arn":  RESOURCES.definition(k)
@@ -506,16 +522,23 @@ class Ingestor(Elements):
                         and rt not in [list(k.keys())[0] for k in model.values()]
                     ]
 
-                    # self.print(''.join((
-                    #     f"[*] Skipped {label} ingestion ",
-                    #     f"({', '.join(collateral)} will also be skipped)." if len(collateral) > 0 else "")))
+                    self.console.debug(''.join((
+                        f"Skipped {label} ingestion ",
+                        f"({', '.join(collateral)} will also be skipped)." if len(collateral) > 0 else "")))
 
                     continue
 
                 rt = ''.join(''.join([f" {c}" if c.isupper() else c for c in getattr(
                     collections[0], attr)._model.request.operation]).split()[1:])
 
-                for operation, collection in map(lambda c: (getattr(c, attr).all, c), collections):
+                for operation, collection in self.console.tasklist(
+                    f"Adding {rt}",
+                    iterables=map(lambda c: (
+                        getattr(c, attr).all, c), collections),
+                    wait=f"Awaiting response to {self.__class__.__name__.lower()}:"
+                    f"{getattr(collections[0], attr)._model.request.operation}",
+                    done=f"Added {rt}"
+                ):
 
                     for cm in operation():
 
@@ -523,8 +546,8 @@ class Ingestor(Elements):
 
                         if cm.meta.data is None:
 
-                            # self.print(f"[*] Skipping ServiceResource {cm}: "
-                            #                   "it has no properties")
+                            self.console.warn(f"Skipping ServiceResource {cm}: "
+                                              "it has no properties")
                             continue
 
                         cm.meta.data["Name"] = [getattr(cm, i)
@@ -549,9 +572,9 @@ class Ingestor(Elements):
 
                         except KeyError as p:
 
-                            # self.print(f"[-] Failed to construct resource ARN: defintion for type '{label}' is malformed - "
-                            #                   f"boto collection '{cm.__class__.__name__}' does not have property {p}, "
-                            #                   f"maybe you meant one of the following instead? {', '.join(properties.keys())}")
+                            self.console.warn(f"Failed to construct resource ARN: defintion for type '{label}' is malformed - "
+                                              f"boto collection '{cm.__class__.__name__}' does not have property {p}, "
+                                              f"maybe you meant one of the following instead? {', '.join(properties.keys())}")
                             continue
 
                         # Add Resource
@@ -590,7 +613,11 @@ class Ingestor(Elements):
 
                 references[key].update([item])
 
-        for resource in self.get("Resource"):
+        for resource in self.console.tasklist(
+            f"Adding Associative relationships",
+            self.get("Resource"),
+            done="Added Associative relationships"
+        ):
 
             # Extract reference key-value pairs from this resource's
             # properties (if we need to)
@@ -644,8 +671,8 @@ class Ingestor(Elements):
                                   if r.id() == arn), None)
 
                 if associate is None:
-                    # print(f"[*] Couldn't create association: resource ({arn}), "
-                    #       f"referenced by {resource}, doesn't exist ")
+                    # self.console.debug(f"Couldn't create association: resource ({arn}), "
+                    #                    f"referenced by {resource}, doesn't exist ")
                     continue
 
                 (source, target) = sorted((resource, associate),
@@ -663,15 +690,15 @@ class Ingestor(Elements):
         if any(r in element.labels() for r in ["Resource", "Generic"]):
 
             if element.label() not in self.types:
-                # print(f"[*] Not adding {element}: "
-                #       f"type ({element.label()}) does not match user specifications")
+                self.console.debug(f"Not adding {element}: "
+                                   f"type ({element.label()}) does not match user specifications")
                 return
 
             if "Resource" in element.labels() and \
                 ((len(self._only_arns) > 0 and element.id() not in self._only_arns)
                  or (len(self._skip_arns) > 0 and element.id() in self._skip_arns)):
-                # print(f"[*] Not adding {element}: "
-                #       "ARN does not match user specifications")
+                self.console.debug(f"Not adding {element}: "
+                                   "ARN does not match user specifications")
                 return
 
         length = len(self)
@@ -681,22 +708,23 @@ class Ingestor(Elements):
             return
 
         elif "Resource" in element.labels():
-            print(f"[+] Added {element.label().split(':')[-1]} ({element})")
+            self.console.info(
+                f"Added {element.label().split(':')[-1]} ({element})")
         elif "Generic" in element.labels():
-            print(
-                f"[+] Added Generic {element.label().split(':')[-1]} ({element})")
+            self.console.info(
+                f"Added Generic {element.label().split(':')[-1]} ({element})")
 
         elif any([e in ["ASSOCIATIVE", "TRANSITIVE"] for e in element.labels()]):
-            print(f"[+] Added {element.label().capitalize()} relationship: "
-                  f"({element.source()}) → ({element.target()})")
+            self.console.info(f"Added {element.label().capitalize()} relationship: "
+                              f"({element.source()}) → ({element.target()})")
 
     def destroy(self):
         associatives = len(self.get("ASSOCIATIVE"))
         resources = len(self.get("Resource"))
         generics = len(self.get("Generic"))
 
-        print(f"[*] Added {resources} Resource(s), {generics} Generic(s), "
-              f"and {associatives} Associative relationship(s)")
+        self.console.notice(f"Added {resources} Resource(s), {generics} Generic(s), "
+                            f"and {associatives} Associative relationship(s)")
         del self
 
 
@@ -785,7 +813,13 @@ class IAM(Ingestor):
 
             return resources
 
-        for page in self.client.get_paginator("get_account_authorization_details").paginate():
+        for page in self.console.tasklist(
+            f"Adding {resources}",
+            iterables=self.client.get_paginator(
+                "get_account_authorization_details").paginate(),
+            wait="Awaiting response to iam:GetAccountAuthorizationDetails",
+            done=f"Added {resources}"
+        ):
 
             account_authorization_details = [
                 (k.replace("DetailList", "").replace("Policies", "Policy"), detail)
@@ -798,22 +832,30 @@ class IAM(Ingestor):
 
     def get_login_profile(self):
 
-        for user in self.get("AWS::Iam::User").get("Resource"):
+        for user in self.console.tasklist(
+                "Updating User login profile information",
+                iterables=self.get("AWS::Iam::User").get("Resource"),
+                done="Updated User login profile information"
+        ):
 
             try:
                 login_profile = self.client.get_login_profile(
                     UserName=user.get("Name"))["LoginProfile"]
                 del login_profile["UserName"]
                 user.set("LoginProfile", login_profile)
-                print("[+] Updated login profile "
-                      f"information for {user}")
+                self.console.info(
+                    f"Updated User ({user}) login profile information")
 
             except self.client.exceptions.NoSuchEntityException:
                 pass
 
     def list_access_keys(self):
 
-        for user in self.get("AWS::Iam::User").get("Resource"):
+        for user in self.console.tasklist(
+            "Updating User access key information",
+            iterables=self.get("AWS::Iam::User").get("Resource"),
+            done="Updated User access key information",
+        ):
 
             try:
                 access_keys = self.client.list_access_keys(
@@ -829,7 +871,8 @@ class IAM(Ingestor):
                     }
 
                 user.set("AccessKeys", access_keys)
-                print(f"[+] Updated access key information for {user}")
+                self.console.info(
+                    f"Updated User ({user}) access key information")
 
             except self.client.exceptions.NoSuchEntityException:
                 pass
@@ -842,7 +885,12 @@ class IAM(Ingestor):
         ]]):
             return
 
-        for user in self.get("AWS::Iam::User").get("Resource"):
+        for user in self.console.tasklist(
+                "Adding MfaDevices",
+                iterables=self.get("AWS::Iam::User").get("Resource"),
+                wait="Awaiting response to iam:ListMFADevices",
+                done="Added MFA devices",
+        ):
 
             for mfa_device in self.client.list_mfa_devices(
                 UserName=user.get("Name")
@@ -911,7 +959,12 @@ class EC2(Ingestor):
 
     def get_instance_user_data(self):
 
-        for instance in self.get("AWS::Ec2::Instance").get("Resource"):
+        for instance in self.console.tasklist(
+            "Updating Instance user data information",
+            iterables=self.get("AWS::Ec2::Instance").get("Resource"),
+            wait="Awaiting response to ec2:DescribeInstanceAttribute",
+            done="Updated Instance user data information"
+        ):
 
             name = instance.get("Name")
 
@@ -920,8 +973,8 @@ class EC2(Ingestor):
                                                                    DryRun=False,
                                                                    InstanceId=name)
             except ClientError as e:
-                print("[!] Couldn't get user data for "
-                      f"{name} -- it may no longer exist.")
+                self.console.error(f"Couldn't get user data for {name} "
+                                   "- it may no longer exist.")
 
             if 'UserData' in response.keys() and 'Value' in response['UserData'].keys():
                 userdata = b64decode(response['UserData']['Value'])
@@ -932,7 +985,7 @@ class EC2(Ingestor):
                     userdata = userdata.decode('utf-8')
 
                 instance.set("UserData", {"UserData": userdata})
-                print(f"[+] Updated instance user data for {instance}")
+                self.console.info(f"Updated Instance ({instance}) user data")
 
 
 class S3(Ingestor):
@@ -960,22 +1013,31 @@ class S3(Ingestor):
 
     def get_bucket_policies(self):
 
-        for bucket in self.get("AWS::S3::Bucket").get("Resource"):
-
+        for bucket in self.console.tasklist(
+            "Updating Bucket policy information",
+            iterables=self.get("AWS::S3::Bucket").get("Resource"),
+            wait="Awaiting response to s3:GetBucketPolicy",
+            done="Updated Bucket policy information"
+        ):
             try:
                 policy = self.client.get_bucket_policy(
                     Bucket=bucket.get('Name'))["Policy"]
 
                 bucket.set("Policy", json.loads(policy))
-                print(f"[+] Updated Bucket ({bucket}) policy")
+                self.console.info(f"Updated Bucket ({bucket}) policy")
 
             except ClientError as e:
-                print("[-] Failed to update Bucket policy "
-                      f"({bucket}): {str(e)}")
+                self.console.debug("Failed to update Bucket policy "
+                                   f"({bucket}): {str(e)}")
 
     def get_public_access_blocks(self):
 
-        for bucket in self.get("AWS::S3::Bucket").get("Resource"):
+        for bucket in self.console.tasklist(
+            "Updating Bucket public access block information",
+            iterables=self.get("AWS::S3::Bucket").get("Resource"),
+            wait="Awaiting response to s3:GetPublicAccessBlock",
+            done="Updated Bucket public access block information"
+        ):
 
             # https://docs.aws.amazon.com/AmazonS3/latest/dev/access-control-block-public-access.html
             # Implicitly affects Bucket ACLs and Policies (values returned by associated get requests
@@ -987,33 +1049,41 @@ class S3(Ingestor):
                 )["PublicAccessBlockConfiguration"]
 
                 bucket.set("PublicAccessBlock", public_access_block)
-                print(
-                    f"[+] Updated Bucket ({bucket}) public access block")
+                self.console.info(
+                    f"Updated Bucket ({bucket}) public access block")
 
             except ClientError as e:
-                print("[-] Failed to update Bucket public access block "
-                      f"({bucket}): {str(e)}")
+                self.console.debug("Failed to update Bucket public access block "
+                                   f"({bucket}): {str(e)}")
 
     def get_bucket_acls(self):
 
-        for bucket in self.get("AWS::S3::Bucket").get("Resource"):
-
+        for bucket in self.console.tasklist(
+            "Updating Bucket ACL information",
+            iterables=self.get("AWS::S3::Bucket").get("Resource"),
+            wait="Awaiting response to s3:GetBucketACL",
+            done="Updated Bucket ACL information",
+        ):
             try:
                 acl = self.client.get_bucket_acl(Bucket=bucket.get('Name'))
                 bucket.set("ACL", {
                     "Owner": acl["Owner"],
                     "Grants": acl["Grants"]
                 })
-                print(f"[+] Updated Bucket ({bucket}) ACL")
+                self.console.info(f"Updated Bucket ({bucket}) ACL")
 
             except ClientError as e:
-                print("[-] Failed to update Bucket ACL "
-                      f"({bucket}): {str(e)}")
+                self.console.debug("Failed to update Bucket ACL "
+                                   f"({bucket}): {str(e)}")
 
     def get_object_acls(self):
 
-        for obj in self.get("AWS::S3::Object").get("Resource"):
-
+        for obj in self.console.tasklist(
+            "Updating Object ACL information",
+            iterables=self.get("AWS::S3::Object").get("Resource"),
+            wait="Awaiting response to s3:GetObjectACL",
+            done="Updated Object ACL information"
+        ):
             try:
                 arn = obj.get("Arn")
                 bucket, *key = arn.split(':::')[1].split('/')
@@ -1024,11 +1094,11 @@ class S3(Ingestor):
                     "Owner": acl["Owner"],
                     "Grants": acl["Grants"]
                 })
-                print(f"[+] Updated Object ({obj}) ACL")
+                self.console.info(f"Updated Object ({obj}) ACL")
 
             except ClientError as e:
-                print("[-] Failed to update Object ACL "
-                      f"({obj}): {str(e)}")
+                self.console.debug("Failed to update Object ACL "
+                                   f"({obj}): {str(e)}")
 
 
 class Lambda(Ingestor):
@@ -1051,8 +1121,12 @@ class Lambda(Ingestor):
 
         functions = Elements()
 
-        for function in [f for r in self.client.get_paginator("list_functions").paginate()
-                         for f in r["Functions"]]:
+        for function in [f for r in self.console.tasklist(
+            "Adding Functions",
+            iterables=self.client.get_paginator("list_functions").paginate(),
+            wait="Awaiting response to lambda:ListFunctions",
+            done="Added Functions"
+        ) for f in r["Functions"]]:
 
             function["Name"] = function["FunctionName"]
             function["Arn"] = function["FunctionArn"]

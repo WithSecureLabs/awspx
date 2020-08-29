@@ -10,6 +10,8 @@ from lib.graph.base import Element, Elements
 from lib.graph.edges import Action, Trusts
 from lib.graph.nodes import Resource, External
 
+from lib.util.console import console
+
 
 ''' Consists of Principals, Actions, Resources, and Conditions '''
 
@@ -62,8 +64,8 @@ class Statement:
 
             # TODO: Not implemented
             if "NotPrincipal" in keys:
-                print("[!] 'NotPrincipal' support has not yet been added. "
-                      "\n\tThis entire statement will be ingnored (%s)." % self._resource.id())
+                console.warn("'NotPrincipal' support has not yet been added. "
+                             "\n\tThis entire statement will be ingnored (%s)." % self._resource.id())
                 self._explicit_principals = []
 
             elif "Principal" not in keys:
@@ -230,7 +232,7 @@ class Statement:
                 }))
 
         else:
-            print("Unknown pricipal: ", statement)
+            console.warn("Unknown principal: ", statement)
 
         self._explicit_principals = principals
 

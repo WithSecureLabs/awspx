@@ -1,52 +1,55 @@
 #!/usr/bin/python3
 
 import argparse
-import csv
+import boto3
+
 import git
 import os
 import sys
-from configparser import ConfigParser
-from random import randrange
 
-import boto3
 from botocore.credentials import InstanceMetadataProvider
-from botocore.exceptions import ProfileNotFound, ClientError
+from botocore.exceptions import ClientError
 from botocore.utils import InstanceMetadataFetcher
 
 from lib.aws.attacks import Attacks
 from lib.aws.ingestor import *
 from lib.aws.resources import RESOURCES
 from lib.aws.profile import Profile
-from lib.graph.base import Elements
 from lib.graph.db import Neo4j
+from lib.util.console import console
 
 SERVICES = list(Ingestor.__subclasses__())
 
 
 def handle_update(args):
+    """
+    awspx update
+    """
+
     repo = git.Repo("/opt/awspx")
     head = repo.head.commit
     repo.remotes.origin.set_url("https://github.com/FSecureLABS/awspx.git")
     repo.remotes.origin.pull()
 
     if head == repo.head.commit:
-        print("[+] Already up to date")
+        console.info("Already up to date")
         return
 
-    print(f"[*] Updating to {repo.head.commit}")
-    os.system("cd /opt/awspx/www && npm install")
+    console.task(f"Updating to {repo.head.commit}", os.system, args=[
+                 "cd /opt/awspx/www && npm install"],
+                 done=f"Updated to {repo.head.commit}")
 
 
-def handle_profile(args):
+def handle_profile(args, console=console):
     """
     awspx profile
     """
 
-    profile = Profile()
+    profile = Profile(console=console)
 
     if args.create_profile:
         profile.create(args.create_profile)
-        print(f"[+] Saved profile '{args.create_profile}'")
+        console.info(f"Saved profile '{args.create_profile}'")
 
     elif args.list_profiles:
         profile.list()
@@ -87,13 +90,13 @@ def handle_ingest(args):
     # Specified profile doesn't exist, offer to create it
     if not session:
 
-        if input(f"[-] Would you like to create the profile '{args.profile}'? (y/n) ").upper() == "Y":
-            args.create_profile = args.profile
-            handle_profile(args)
-            session = boto3.session.Session(region_name=args.region,
-                                            profile_name=args.profile)
-        else:
-            sys.exit(1)
+        profile = console.item("Create profile")
+        profile.notice(f"The profile '{args.profile}' doesn't exist. "
+                       "Please enter your AWS credentials.\n"
+                       "(this information will be saved automatically)")
+
+        args.create_profile = args.profile
+        handle_profile(args, console=profile)
 
         session = boto3.session.Session(profile_name=args.profile,
                                         region_name=args.region)
@@ -129,43 +132,46 @@ def handle_ingest(args):
                 region_name=args.region)
 
     except ClientError as e:
-        print(f"[-] {e}")
-        sys.exit()
+        console.critical(e)
 
-    ingestor = IngestionManager(session=session, services=args.services,
-                                db=args.database, quick=args.quick,
-                                skip_actions=args.skip_actions_all,
+    if args.verbose:
+        console.verbose()
+
+    ingestor = IngestionManager(session=session, console=console, services=args.services,
+                                db=args.database, quick=args.quick, skip_actions=args.skip_actions_all,
                                 only_types=args.only_types, skip_types=args.skip_types,
                                 only_arns=args.only_arns, skip_arns=args.skip_arns)
 
     assert ingestor.zip is not None, "Ingestion failed"
 
     args.load_zip = ingestor.zip
-    handle_db(args)
+    handle_db(args, console=console.item("Creating Database"))
 
     if not (args.skip_attacks_all or args.skip_actions_all):
-        handle_attacks(args)
+        handle_attacks(args, console=console.item("Updating Attack paths"))
 
 
-def handle_attacks(args):
+def handle_attacks(args, console=console):
     """
     awspx attacks
     """
 
     attacks = Attacks(skip_conditional_actions=args.include_conditional_attacks == False,
-                      skip_attacks=args.skip_attacks, only_attacks=args.only_attacks)
+                      skip_attacks=args.skip_attacks, only_attacks=args.only_attacks,
+                      console=console)
 
-    attacks.compute(
-        max_iterations=args.max_attack_iterations,
-        max_search_depth=str(args.max_attack_depth if args.max_attack_depth is not None else ""))
+    attacks.compute(max_iterations=args.max_attack_iterations,
+                    max_search_depth=str(args.max_attack_depth
+                                         if args.max_attack_depth is not None
+                                         else ""))
 
 
-def handle_db(args):
+def handle_db(args, console=console):
     """
     awspx db
     """
 
-    db = Neo4j()
+    db = Neo4j(console=console)
 
     if args.load_zip:
 
@@ -179,8 +185,6 @@ def handle_db(args):
 
 
 def main():
-
-    # input validation types
 
     def profile(p):
         if p in list(Profile().credentials.sections()):
@@ -260,8 +264,8 @@ def main():
     #
     # awspx ingest
     #
-    ingest_parser = subparsers.add_parser("ingest",
-                                          help="Ingest data from an AWS account.")
+    ingest_parser = subparsers.add_parser(
+        "ingest", help="Ingest data from an AWS account.")
     ingest_parser.set_defaults(func=handle_ingest)
 
     # Profile & region args
@@ -368,10 +372,20 @@ def main():
     if 'database' in args and args.database is None:
         args.database = f"{args.profile}.db"
 
+    console.start()
+
     try:
         args.func(args)
-    except KeyboardInterrupt:
-        sys.exit()
+
+    except (KeyboardInterrupt, SystemExit):
+        console.stop()
+        os._exit(1)
+
+    except BaseException as e:
+        console.critical(e)
+        os._exit(1)
+
+    console.stop()
 
 
 main()

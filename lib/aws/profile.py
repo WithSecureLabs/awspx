@@ -1,7 +1,33 @@
 
 import sys
 import os
+from awscli.clidriver import CLIDriver, load_plugins
+from awscli.customizations.configure.configure import ConfigureCommand
+from awscli.customizations.configure import mask_value
+from botocore.session import Session
 from configparser import ConfigParser
+
+
+class InteractivePrompter(object):
+
+    def __init__(self, console):
+        self.console = console
+
+    def input(self, prompt, value):
+        return self.console.input(f"{prompt} [{value}]: ")
+
+    # See awscli/customizations/configure/configure.py
+
+    def get_value(self, current_value, config_name, prompt_text=''):
+        if config_name in ('aws_access_key_id', 'aws_secret_access_key'):
+            current_value = mask_value(current_value)
+        response = self.input(prompt_text, current_value)
+        if not response:
+            # If the user hits enter, we return a value of None
+            # instead of an empty string.  That way we can determine
+            # whether or not a value has changed.
+            response = None
+        return response
 
 
 class Profile:
@@ -24,7 +50,11 @@ class Profile:
     config = ConfigParser()
     credentials = ConfigParser()
 
-    def __init__(self):
+    def __init__(self, console=None):
+
+        if console is None:
+            from lib.util.console import console
+        self.console = console
 
         self.credentials.read(self.credentials_file)
         self.config.read(self.config_file)
@@ -34,18 +64,27 @@ class Profile:
 
     def reconfigure(self, profile=None):
 
-        os.system(f"aws configure --profile {profile}")
-        try:
-            print(f"[+] Profile '{profile}' successfully created. "
-                  f"(identity: {identity['Arn']}).\n")
-        except:
-            print(f"[+] Profile '{profile}' created.")
+        if profile is None:
+            return
+
+        # See awscli/clidriver.py
+        session = Session()
+        load_plugins(session.full_config.get('plugins', {}),
+                     event_hooks=session.get_component('event_emitter'))
+
+        driver = CLIDriver(session=session)
+        driver._command_table = driver._build_command_table()
+        driver._command_table["configure"] = ConfigureCommand(
+            session,
+            prompter=InteractivePrompter(self.console)
+        )
+
+        driver.main(args=["configure", "--profile", profile])
 
     def list(self):
 
-        for profile in [p for p in self.credentials.keys()
-                        if p != "DEFAULT"]:
-            print(profile)
+        self.console.list([{"Profile": p} for p in self.credentials.keys()
+                           if p != "DEFAULT"])
 
     def delete(self, profile=None):
 
@@ -64,4 +103,4 @@ class Profile:
         with open(self.credentials_file, 'w') as f:
             self.credentials.write(f)
 
-        print(f"[+] Profile '{profile}' deleted.")
+        self.console.info(f"Profile '{profile}' deleted.")

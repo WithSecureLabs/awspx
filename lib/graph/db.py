@@ -5,13 +5,6 @@ import subprocess
 import time
 
 from neo4j import GraphDatabase, exceptions
-import os
-import re
-import shutil
-import subprocess
-import time
-
-from neo4j import GraphDatabase, exceptions
 import datetime
 
 
@@ -24,8 +17,16 @@ class Neo4j(object):
     zips = [z for z in os.listdir("/opt/awspx/data/")
             if z.endswith(".zip")]
 
-    def __init__(self, host="localhost", port="7687",
-                 username="neo4j", password="neo4j"):
+    def __init__(self,
+                 host="localhost",
+                 port="7687",
+                 username="neo4j",
+                 password="neo4j",
+                 console=None):
+
+        if console is None:
+            from lib.util.console import console
+        self.console = console
 
         self.uri = f"bolt://{host}:{port}"
         self.username = username
@@ -35,10 +36,10 @@ class Neo4j(object):
             self.open()
 
         except exceptions.AuthError as e:
-            print(f"[-] {e}")
+            self.console.error(str(e))
 
         except exceptions.ServiceUnavailable as e:
-            print(f"[-] {e}")
+            self.console.error(str(e))
 
     def _start(self):
 
@@ -53,12 +54,12 @@ class Neo4j(object):
             retries += 1
 
         if not self.running():
-            print("[-] Neo4j failed to start")
+            self.console.critical("Neo4j failed to start")
             return False
         elif retries == 0:
-            print("[+] Neo4j has already been started")
+            self.console.info("Neo4j has already been started")
         else:
-            print("[+] Neo4j has successfully been started")
+            self.console.info("Neo4j has successfully been started")
 
         return True
 
@@ -73,12 +74,12 @@ class Neo4j(object):
             retries += 1
 
         if self.running():
-            print("[-] Neo4j failed to stop")
+            self.console.critical("Neo4j failed to stop")
             return False
         elif retries == 0:
-            print("[-]Neo4j has already been stopped")
+            self.console.info("Neo4j has already been stopped")
         else:
-            print("[+] Neo4j has successfully been stopped")
+            self.console.info("Neo4j has successfully been stopped")
 
         return True
 
@@ -137,14 +138,14 @@ class Neo4j(object):
 
         if stats is None:
 
-            print(str(stdout).replace(
+            self.console.error(str(stdout).replace(
                 "\\n", "\n").replace("\\t", "\t"))
 
             return False
 
         (time, nodes, edges, props, ram) = stats.groups()
 
-        return str(f"[+] Loaded {nodes} nodes, {edges} edges, and {props} properties "
+        return str(f"Loaded {nodes} nodes, {edges} edges, and {props} properties "
                    f"into '{db}' from '{archive}'")
 
     def running(self):
@@ -177,9 +178,15 @@ class Neo4j(object):
 
     def use(self, db):
 
-        self._stop()
-        self._switch_database(db)
-        self._start()
+        self.console.task("Stopping Neo4j",
+                          self._stop, done="Stopped Neo4j")
+
+        self.console.task(f"Switching database to {db}",
+                          self._switch_database, args=[db],
+                          done=f"Switched database to {db}")
+
+        self.console.task("Starting Neo4j",
+                          self._start, done="Started Neo4j")
 
     def load_zip(self, archive):
 
@@ -188,17 +195,31 @@ class Neo4j(object):
 
         db = f"{archive.split('/')[-1].split('_')[-1].split('.')[0]}.db"
 
-        self._stop()
-        loaded = self._load(archive, db)
-        self._switch_database(db)
-        self._start()
+        self.console.task("Stopping Neo4j",
+                          self._stop, done="Stopped Neo4j")
 
-        print(loaded)
+        loaded = self.console.task(f"Creating database",
+                                   self._load, args=[archive, db],
+                                   done=f"Created database '{db}'")
+
+        self.console.task(f"Switching active database to '{db}'",
+                          self._switch_database, args=[db],
+                          done=f"Switched active database to '{db}'")
+
+        self.console.task("Starting Neo4j",
+                          self._start, done="Started Neo4j")
+
+        self.console.notice(loaded)
 
     def list(self):
 
-        for db in self.databases:
-            print(db)
+        console.list([{
+            "Name": db,
+            "Created": datetime.datetime.strptime(
+                time.ctime(os.path.getctime(f"/data/databases/{db}")),
+                "%a %b %d %H:%M:%S %Y"
+            ).strftime('%Y-%m-%d %H:%M:%S')
+        } for db in self.databases])
 
     def run(self, cypher):
 
@@ -208,4 +229,4 @@ class Neo4j(object):
             return results
 
         except exceptions.CypherSyntaxError as e:
-            print(f"[-] {e}")
+            self.console.error(str(e))
