@@ -8,14 +8,21 @@ from neo4j import GraphDatabase, exceptions
 import datetime
 
 
+NEO4J_DB_DIR = "/data/databases"
+NEO4J_ZIP_DIR = "/opt/awspx/data"
+NEO4J_CONF_DIR = "/var/lib/neo4j/conf"
+
+
 class Neo4j(object):
 
     driver = None
-    databases = [db for db in os.listdir("/data/databases/")
-                 if db.endswith(".db")
-                 and os.path.isdir(f"/data/databases/{db}")]
-    zips = [z for z in os.listdir("/opt/awspx/data/")
+
+    zips = [z for z in os.listdir(f"{NEO4J_ZIP_DIR}/")
             if z.endswith(".zip")]
+
+    databases = [db for db in os.listdir(f"{NEO4J_DB_DIR}/")
+                 if os.path.isdir(f"{NEO4J_DB_DIR}/{db}")
+                 and db.endswith(".db")]
 
     def __init__(self,
                  host="localhost",
@@ -84,8 +91,8 @@ class Neo4j(object):
         return True
 
     def _delete(self, db):
-        database = f"/data/databases/{db}"
-        subprocess.Popen(["rm", "-rf", database])
+
+        subprocess.Popen(["rm", "-rf", f"{NEO4J_DB_DIR}/{db}"])
 
     def _run(self, tx, cypher):
         results = tx.run(cypher)
@@ -96,7 +103,7 @@ class Neo4j(object):
         subprocess.Popen([
             "sed", "-i",
             '/^\(#\)\{0,1\}dbms.active_database=/s/.*/dbms.active_database=%s/' % db,
-            "/var/lib/neo4j/conf/neo4j.conf"],
+            f"{NEO4J_CONF_DIR}/neo4j.conf"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT).communicate()
 
@@ -183,22 +190,22 @@ class Neo4j(object):
 
         self.console.task(f"Switching database to {db}",
                           self._switch_database, args=[db],
-                          done=f"Switched database to {db}")
+                          done=f"Switched database to '{db}'")
 
         self.console.task("Starting Neo4j",
                           self._start, done="Started Neo4j")
 
     def load_zip(self, archive):
 
-        if not archive.startswith("/opt/awspx/data/"):
-            archive = f"/opt/awspx/data/{archive}"
+        if not archive.startswith(f"{NEO4J_ZIP_DIR}/"):
+            archive = f"{NEO4J_ZIP_DIR}/{archive}"
 
         db = f"{archive.split('/')[-1].split('_')[-1].split('.')[0]}.db"
 
         self.console.task("Stopping Neo4j",
                           self._stop, done="Stopped Neo4j")
 
-        loaded = self.console.task(f"Creating database",
+        loaded = self.console.task(f"Creating database '{db}'",
                                    self._load, args=[archive, db],
                                    done=f"Created database '{db}'")
 
@@ -216,7 +223,7 @@ class Neo4j(object):
         self.console.list([{
             "Name": db,
             "Created": datetime.datetime.strptime(
-                time.ctime(os.path.getctime(f"/data/databases/{db}")),
+                time.ctime(os.path.getctime(f"{NEO4J_DB_DIR}/{db}")),
                 "%a %b %d %H:%M:%S %Y"
             ).strftime('%Y-%m-%d %H:%M:%S')
         } for db in self.databases])
