@@ -44,7 +44,12 @@
           <v-btn text :disabled="!db.populated" @click="db_settings_close()">Close</v-btn>
           <v-spacer></v-spacer>
           <v-btn outlined @click="db_settings_test()" :loading="test.busy">Test</v-btn>
-          <v-btn outlined @click="db_settings_apply()" :loading="form.loading">Apply</v-btn>
+          <v-btn
+            outlined
+            @click="db_settings_apply()"
+            :loading="form.loading"
+            :disabled="!test.value"
+          >Connect</v-btn>
         </v-card-actions>
       </div>
 
@@ -69,7 +74,7 @@
               <div class="mt-5 mb-2">
                 <p
                   class="text--secondary"
-                >or you load the sample dataset if you just want to play around:</p>
+                >or load the sample dataset if you just want to play around:</p>
               </div>
               <v-card outlined color="#f6f8fa" class="pa-2" style="font-size: 11px">
                 awspx db --load-zip sample.zip
@@ -162,6 +167,7 @@ export default {
           test.uri = true;
           test.credentials = true;
 
+          this.test.value = true;
           return true;
         })
         .catch((e) => {
@@ -177,6 +183,7 @@ export default {
             }
             this.neo4j.error = e;
           }
+          this.test.value = false;
           return false;
         })
         .finally(() => {
@@ -314,12 +321,15 @@ export default {
   },
   watch: {
     "form.values.uri"() {
+      this.test.value = false;
       this.form_reset_validation();
     },
     "form.values.username"() {
+      this.test.value = false;
       this.form_reset_validation();
     },
     "form.values.password"() {
+      this.test.value = false;
       this.form_reset_validation();
     },
   },
