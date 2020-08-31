@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-if="mounted" persistent max-width="40vw" v-model="form.enabled">
+  <v-dialog v-if="mounted" persistent max-width="800" v-model="form.enabled">
     <!-- Database connection form -->
     <v-card :disabled="form.loading && page == 0">
       <v-card-title>Database settings</v-card-title>
@@ -51,13 +51,15 @@
       <!-- Empty database helper -->
       <div v-else-if="page == 1">
         <v-card-title class="justify-center">Hold up, this database appears to be empty...</v-card-title>
-        <v-card-subtitle class="text-center">You'll need to populate it with something before continuing</v-card-subtitle>
+        <v-card-subtitle
+          class="text-center"
+        >You'll need to populate it with something before continuing</v-card-subtitle>
         <v-card-text>
           <v-row class="ma-2">
             <v-col />
             <v-col cols="11">
               <div class="mb-2">
-                Either, 
+                Either,
                 <a
                   href="https://github.com/FSecureLABS/awspx/wiki/Data-Collection#ingestion"
                 >run the ingestor</a>:
@@ -65,7 +67,9 @@
 
               <v-card outlined color="#f6f8fa" class="pa-2" style="font-size: 11px">awspx ingest</v-card>
               <div class="mt-5 mb-2">
-                <p class="text--secondary">or you load the sample dataset if you just want to play around:</p>
+                <p
+                  class="text--secondary"
+                >or you load the sample dataset if you just want to play around:</p>
               </div>
               <v-card outlined color="#f6f8fa" class="pa-2" style="font-size: 11px">
                 awspx db --load-zip sample.zip
