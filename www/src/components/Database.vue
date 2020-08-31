@@ -50,14 +50,14 @@
 
       <!-- Empty database helper -->
       <div v-else-if="page == 1">
-        <v-card-title class="ml-5">Hold up, this database appears to be empty...</v-card-title>
-        <v-card-subtitle class="ml-5">You'll need to populate it with something before continuing</v-card-subtitle>
+        <v-card-title class="justify-center">Hold up, this database appears to be empty...</v-card-title>
+        <v-card-subtitle class="text-center">You'll need to populate it with something before continuing</v-card-subtitle>
         <v-card-text>
           <v-row class="ma-2">
             <v-col />
             <v-col cols="11">
               <div class="mb-2">
-                To do this,
+                Either, 
                 <a
                   href="https://github.com/FSecureLABS/awspx/wiki/Data-Collection#ingestion"
                 >run the ingestor</a>:
@@ -65,7 +65,7 @@
 
               <v-card outlined color="#f6f8fa" class="pa-2" style="font-size: 11px">awspx ingest</v-card>
               <div class="mt-5 mb-2">
-                <i>or just play around with sample dataset now for now:</i>
+                <p class="text--secondary">or you load the sample dataset if you just want to play around:</p>
               </div>
               <v-card outlined color="#f6f8fa" class="pa-2" style="font-size: 11px">
                 awspx db --load-zip sample.zip
