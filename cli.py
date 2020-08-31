@@ -28,7 +28,9 @@ def handle_update(args):
 
     repo = git.Repo("/opt/awspx")
     head = repo.head.commit
+
     repo.remotes.origin.set_url("https://github.com/FSecureLABS/awspx.git")
+    repo.git.reset('--hard')
     repo.remotes.origin.pull()
 
     if head == repo.head.commit:
@@ -36,7 +38,7 @@ def handle_update(args):
         return
 
     console.task(f"Updating to {repo.head.commit}", os.system, args=[
-                 "cd /opt/awspx/www && npm install"],
+                 "cd /opt/awspx/www && npm install >/dev/null 2>&1"],
                  done=f"Updated to {repo.head.commit}")
 
 
