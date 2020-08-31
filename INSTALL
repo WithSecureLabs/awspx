@@ -96,8 +96,10 @@ function install(){
         -p 127.0.0.1:7687:7687 \
         -p 127.0.0.1:7373:7373 \
         -p 127.0.0.1:7474:7474 \
-        -v ${MOUNT}:/opt/awspx \
+        -v ${MOUNT}/data:/opt/awspx/data \
         --restart=always awspx:latest >/dev/null; then
+        
+        cp $(dirname $0)/data/sample.zip -f ${MOUNT}/data/. >/dev/null 2>&1
         
         echo -e "and you're all set!\n"
         
@@ -115,10 +117,10 @@ function hook(){
         [[ -z "$(pgrep npm)" ]] \
             && cd /opt/awspx/www \
             && nohup npm run serve>/dev/null 2>&1 &
-
+        
         # Start neo4j
-        nohup /docker-entrypoint.sh neo4j console &
-
+        nohup /docker-entrypoint.sh neo4j console 2>&1 &
+        
         # Start bash so /docker-entrypoint.sh doesn't terminate
         bash
     fi
@@ -137,7 +139,7 @@ function awspx(){
 }
 
 function main(){
-       
+    
     case "$(basename $0)" in
         INSTALL)
             detect_os
@@ -154,4 +156,4 @@ function main(){
     
 }
 
-main
+main $@

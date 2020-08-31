@@ -1,9 +1,7 @@
 FROM neo4j:3.5.13
 
-VOLUME /opt/awspx
 COPY . /opt/awspx
-
-WORKDIR /opt/awspx/www
+WORKDIR /opt/awspx
 
 ENV NEO4J_AUTH=neo4j/password
 ENV EXTENSION_SCRIPT=/opt/awspx/INSTALL
@@ -25,6 +23,7 @@ RUN apt -y update && apt install -y \
         rich \
     && npm install -g npm@latest 
 
-RUN npm install 
+RUN cd /opt/awspx/www && npm install 
 
+VOLUME /opt/awspx/data
 EXPOSE 7373 7474 7687 80 
