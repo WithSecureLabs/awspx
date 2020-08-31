@@ -51,7 +51,10 @@ def handle_profile(args, console=console):
 
     if args.create_profile:
         profile.create(args.create_profile)
-        console.notice(f"Saved profile '{args.create_profile}'")
+        if args.profile in Profile().credentials.sections():
+            console.notice(f"Saved profile '{args.create_profile}'")
+        else:
+            sys.exit()
 
     elif args.list_profiles:
         profile.list()
@@ -357,7 +360,7 @@ def main():
     db_group.add_argument('--load-zip', dest='load_zip', choices=sorted(Neo4j.zips),
                           help="Create/overwrite database using ZIP file content.")
 
-    # Add --verbose to ingest, attacks, db 
+    # Add --verbose to ingest, attacks, db
     for p in [ingest_parser, attacks_parser, db_parser]:
         p.add_argument('--verbose', dest='verbose', action='store_true', default=False,
                        help="Enable verbose output.")

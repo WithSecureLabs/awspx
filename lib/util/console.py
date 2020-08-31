@@ -154,6 +154,9 @@ class Console(Table):
 
         self.notice(message, silent=True)
 
+        if self._verbose:
+            return self
+
         service = self.__class__(name=message)
         service.add_column(message, justify="center")
         service.thread = self.thread
@@ -241,7 +244,7 @@ class Console(Table):
         for d in dictionaries:
             t.add_row(*d.values())
 
-        if self._verbose: 
+        if self._verbose:
             self.console.print(t)
         else:
             self.add_row(t)
