@@ -312,9 +312,9 @@ export default {
         const state = Vue.observable({ statement: "", active: false });
 
         const auth = Vue.observable({
-            uri: "bolt://localhost:7687",
+            uri: `bolt://${new URL(location.href).host}:7687`,
             username: "neo4j",
-            password: "neo4j"
+            password: "password"
         });
 
         Object.defineProperty(Vue.prototype, 'neo4j', {
