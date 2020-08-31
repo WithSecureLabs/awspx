@@ -4,12 +4,14 @@ import json
 import os
 import re
 import shutil
+import sys
 import subprocess
 import zlib
 from base64 import b64decode
 from datetime import datetime
 
-from botocore.exceptions import ClientError, PartialCredentialsError
+from botocore.exceptions import (ClientError,
+                                 PartialCredentialsError, ProfileNotFound)
 
 from lib.aws.actions import ACTIONS
 from lib.aws.policy import (BucketACL, IdentityBasedPolicy,
@@ -51,8 +53,9 @@ class IngestionManager(Elements):
             self.account = identity["Account"]
             self.console.spacer()
 
-        except (ClientError, PartialCredentialsError) as e:
-            self.console.critical(e)
+        except (ClientError, PartialCredentialsError, ProfileNotFound) as e:
+            self.console.error(e)
+            sys.exit(1)
 
         if len(only_arns) > 0:
             only_types = list(set(only_types + [RESOURCES.label(arn)
