@@ -1,170 +1,157 @@
 #!/bin/bash
 
-# By default awspx is only accessible at http://localhost 
+#####################################################################################################
+#                                                                                                   #
+# This script serves a couple of purposes, its behaviour will vary based on how it is named:        #
+#                                                                                                   #
+# - INSTALL              - will create the awspx container and copy this script to awspx            #
+# - awspx                - will pass arguments to cli.py in the awpx container                      #
+# - docker-entrypoint.sh - will start the webserver and neo4j (sourced by /docker-entrypoint.sh)    #
+#                                                                                                   #
+#####################################################################################################
 
-WEBPORT=${WEBPORT:-80}
-HOST=${HOST:-127.0.0.1}
+_OS_="UNKNOWN"
 
-realpath() {
-    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+function detect_os(){
+    
+    #MacOS
+    if [ "$(uname)" == "Darwin" ]; then
+        _OS_="MACOS"
+        
+        # Linux
+        elif [[ "$(uname)" =~ "Linux" ]]; then
+            _OS_="LINUX"
+            if [[ "$(whoami)" != "root" ]]; then
+                echo "[-] awspx must be run with root privileges."
+                exit 1
+            fi
+        # Unsupported
+    else
+        echo "[-] Platform: '$(uname)' is not supported"
+        exit 1
+    fi
+    
+    DOCKER_RUNNING="$(docker info >/dev/null 2>&1)"
+    
+    if [ "${?}" -ne 0 ]; then
+        echo "[-] \"docker\" must first be started."
+        exit 1
+    fi
 }
 
 function install(){
-
-    BASE="neo4j:3.5.13"
-    DEPS=("docker" "rsync")
-
-    SOURCE="$(dirname $(realpath $0))"
-
-    APT_DEPS=("nodejs" "npm" "python3-pip" "procps" "git")
-    PY_DEPS=("argparse" "awscli-local" "boto3" "neo4j"
-             "configparser" "git-python" "rich") 
-
-    # Ensure dependencies are met 
-    for dep in ${DEPS[*]}; do
-        if [ -z "$(which ${dep} 2>/dev/null)" ]; then
-            echo "[-] awspx requires \"$(basename ${dep})\" to function."
-            echo "    Ensure it has been installed before running this script."
-            exit 2 
-        fi
-    done
-
-    # Delete all containers named awspx (prompt for confirmation)
-    uid=($(docker ps -a -f name=awspx -q))
-    if [ -n "${uid}" ]; then 
-        echo "[!] An existing container named \"awspx\" was detected"
-        echo "    In order to continue, it must be deleted. All data will be lost." 
-        read -p "    Continue [y/n]? " response
-        [[ "${response}" == "Y" || "${response}" == "y" ]] || exit
-        docker stop awspx >/dev/null 2>&1
-        docker rm awspx >/dev/null 2>&1
-    fi 
-
-    # Update 
-    mkdir -p $MOUNT/data
-    rsync -avrt $SOURCE/ ${MOUNT}/. >/dev/null
-    rsync -avrt $0 /usr/local/bin/awspx >/dev/null
-    echo "" 
-    set -e 
-
-    # Create awspx container 
-    docker pull $BASE
-    docker run -itd \
-        --name awspx \
-        --hostname=awspx \
-        -p ${HOST}:${WEBPORT}:80 \
-        -p ${HOST}:7687:7687 \
-        -p ${HOST}:7373:7373 \
-        -p ${HOST}:7474:7474 \
-        -v ${MOUNT}:/opt/awspx \
-        --restart=always $BASE
-
-    # Modify entrypoint
-    HEADER=(
-        '#NEO4J_dbms_memory_heap_initial__size="2048m"'
-        '#NEO4J_dbms_memory_heap_max__size="2048m"'
-        '#NEO4J_dbms_memory_pagecache__size="2048m"'
-        "export HOST_MOUNT_DIR='${MOUNT}'"
-        'if [[ "${1}" == "neo4j" ]] && [[ -z "${2:-}" ]] &&  [[ -z "$(pgrep java)" ]]; then'
-        '[[ -z "$(pgrep npm)" ]] && cd /opt/awspx/www && nohup npm run serve>/dev/null 2>&1 &'
-        '/docker-entrypoint.sh neo4j init &'
-        'bash'
-        'exit'
-        'fi'
-        )
     
-    for i in `seq $((${#HEADER[@]} -1)) -1 0`; do
-        docker exec -it awspx sed -i "4i${HEADER[$i]}" /docker-entrypoint.sh
-    done
-
-    # Install dependencies
-    docker exec -it awspx \
-        apt -y update 
-    docker exec -it awspx \
-        apt install -y ${APT_DEPS[@]}
-    docker exec -it awspx \
-        pip3 install --upgrade ${PY_DEPS[@]}
-    docker exec -it awspx \
-        npm install -g npm@latest
-
-    # Set neo4j user:pass to neo4j:neo4j
-    docker exec -it awspx \
-        rm -f -- /var/lib/neo4j/data/dbms/auth
-    docker exec -it awspx \
-        neo4j-admin set-initial-password neo4j 
-
-    # Install npm packages (sometimes it fails the first time)
-    while :; do
-        docker exec -it awspx \
-            sh -c "cd /opt/awspx/www && npm install"
-        [[ $? -eq 0 ]] && break
-    done 
-
-    docker restart awspx >/dev/null 
-
-    set +e
-
     CLI="/usr/local/bin/awspx"
-    if !(which awspx >/dev/null 2>&1) ; then 
+    [[ $_OS_ == "MACOS" ]] \
+        && MOUNT="${HOME}/bin/awspx" \
+        || MOUNT="/opt/awspx"
+    
+    # Make sure this script exists somewhere in $PATH
+    if !(which awspx >/dev/null 2>&1) ; then
         read -p "[*] '/usr/local/bin' isn't in your \$PATH. Choose another location [y/n]? " response
         if [[ "${response}" == "Y" || "${response}" == "y" ]]; then
             select p in $(echo "${PATH}" | tr ':' '\n' | sort); do
                 case $p in
                     /*)
-                        ln -s /usr/local/bin/awspx $p/awspx >/dev/null 2>&1
+                        cp -f /usr/local/bin/awspx $p/awspx >/dev/null
                         CLI="awspx"
                         break
                     ;;
                     *) ;;
                 esac
-            done          
+            done
         fi
     else
         CLI="awspx"
     fi
+    
+    # Delete all containers named awspx (prompt for confirmation)
+    if [ -n "$(docker ps -a -f name=awspx -q)" ]; then
+        
+        echo -e "[!] An existing container named \"awspx\" was detected\n"
+        echo -e "    In order to continue, it must be deleted. All data will be lost."
+        read -p "    Continue [y/n]? " response
+        
+        [[ "${response}" == "Y" || "${response}" == "y" ]] \
+            || exit
+        
+        docker stop awspx >/dev/null 2>&1
+        docker rm awspx >/dev/null 2>&1
+        
+        echo ""
+    fi
+    
+    # Build image (TODO: Add to dockerhub)
+    echo -e "[*] Creating \"awspx\" image... "
+    docker build $(dirname $0) -t awspx:latest
+    echo ""
+    
+    # Create container
+    echo -en "[*] Creating \"awspx\" container... "
+    if docker run -itd \
+        --name awspx \
+        --hostname=awspx \
+        --env NEO4J_AUTH=neo4j/password \
+        -p 127.0.0.1:80:80 \
+        -p 127.0.0.1:7687:7687 \
+        -p 127.0.0.1:7373:7373 \
+        -p 127.0.0.1:7474:7474 \
+        -v ${MOUNT}:/opt/awspx \
+        --restart=always awspx:latest >/dev/null; then
+        
+        echo -e "and you're all set!\n"
+        
+        echo -e "    The web interface (http://localhost) will be available shortly..."
+        echo -e "    Run: \`${CLI} -h\` for a list of options."
+    fi
+    
+    echo ""
+}
 
-    echo -e "\n\n... and you're all set!\n"
+function hook(){
+    
+    if [ "$@" == "neo4j" ]; then
+        # Start web interface
+        [[ -z "$(pgrep npm)" ]] \
+            && cd /opt/awspx/www \
+            && nohup npm run serve>/dev/null 2>&1 &
 
-    echo -e "- Run: \`${CLI} -h\` for a list of options."
-    echo -e "- The web interface (http://${HOST}:${WEBPORT}) will be available shortly..."
-    echo -e "- For additional information, see https://github.com/FSecureLABS/awspx/wiki.\n"
+        # Start neo4j
+        nohup /docker-entrypoint.sh neo4j console &
 
-    echo -e "[+] Done"
-
-    }
+        # Start bash so /docker-entrypoint.sh doesn't terminate
+        bash
+    fi
+    
+}
 
 function awspx(){
+    
     docker exec -it \
-           -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-           -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-           -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
-           -e AWS_SECURITY_TOKEN=$AWS_SECURITY_TOKEN \
-           awspx /opt/awspx/cli.py $@
-    }
+        -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+        -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+        -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
+        -e AWS_SECURITY_TOKEN=$AWS_SECURITY_TOKEN \
+        awspx /opt/awspx/cli.py $@
+    
+}
 
-if [ "$(uname)" == "Darwin" ]; then
-    MOUNT="${HOME}/bin/awspx"
+function main(){
+       
+    case "$(basename $0)" in
+        INSTALL)
+            detect_os
+            install
+        ;;
+        docker-entrypoint.sh)
+            hook $@
+        ;;
+        awspx)
+            detect_os
+            awspx $@
+        ;;
+    esac
+    
+}
 
-# Linux
-elif [[ "$(uname)" =~ "Linux" ]]; then 
-    MOUNT="/opt/awspx"
-    if [[ "$(whoami)" != "root" ]]; then 
-        echo "[-] awspx must be run with root privileges."
-        exit 1
-    fi
-else 
-    echo "[-] Platform: '$(uname)' is not supported"
-    exit 1
-fi
-
-DOCKER_RUNNING="$(docker info >/dev/null 2>&1)"
-
-if [ "${?}" -ne 0 ]; then 
-    echo "[-] \"docker\" must first be started." 
-    exit 1 
-fi 
-
-case "$(basename $0)" in
-    awspx) awspx $@;;
-    *) install;;
-esac
+main

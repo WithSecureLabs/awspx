@@ -28,7 +28,8 @@ class Neo4j(object):
                  host="localhost",
                  port="7687",
                  username="neo4j",
-                 password="neo4j",
+                 password=str(os.environ['NEO4J_AUTH'][6:]
+                              if 'NEO4J_AUTH' in os.environ else "password"),
                  console=None):
 
         if console is None:
@@ -54,7 +55,7 @@ class Neo4j(object):
         max_retries = 10
 
         while retries < max_retries and not self.available():
-            subprocess.Popen(["nohup", "/docker-entrypoint.sh", "neo4j", "&"],
+            subprocess.Popen(["nohup", "/docker-entrypoint.sh", "neo4j", "console", "&"],
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
             time.sleep(1)
