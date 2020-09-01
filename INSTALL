@@ -19,12 +19,12 @@ function detect_os(){
         _OS_="MACOS"
         
         # Linux
-        elif [[ "$(uname)" =~ "Linux" ]]; then
-            _OS_="LINUX"
-            if [[ "$(whoami)" != "root" ]]; then
-                echo "[-] awspx must be run with root privileges."
-                exit 1
-            fi
+    elif [[ "$(uname)" =~ "Linux" ]]; then
+        _OS_="LINUX"
+        if [[ "$(whoami)" != "root" ]]; then
+            echo "[-] awspx must be run with root privileges."
+            exit 1
+        fi
         # Unsupported
     else
         echo "[-] Platform: '$(uname)' is not supported"
@@ -48,12 +48,12 @@ function install(){
     
     # Make sure this script exists somewhere in $PATH
     if !(which awspx >/dev/null 2>&1) ; then
-        read -p "[*] '/usr/local/bin' isn't in your \$PATH. Choose another location [y/n]? " response
+        read -p "[*] '/usr/local/bin' isn't in your \$PATH. Choose another location to save \"awspx\" [y/n]? " response
         if [[ "${response}" == "Y" || "${response}" == "y" ]]; then
             select p in $(echo "${PATH}" | tr ':' '\n' | sort); do
                 case $p in
                     /*)
-                        cp -f /usr/local/bin/awspx $p/awspx >/dev/null
+                        cp -f $0 $p/awspx >/dev/null
                         CLI="awspx"
                         break
                     ;;
@@ -78,14 +78,29 @@ function install(){
         docker stop awspx >/dev/null 2>&1
         docker rm awspx >/dev/null 2>&1
         
-        echo ""
     fi
     
-    # Build image (TODO: Add to dockerhub)
-    echo -e "[*] Creating \"awspx\" image... "
-    docker build $(dirname $0) -t awspx:latest
     echo ""
+
+    # Build or pull awspx
+    case $1 in
+        build|BUILD) 
+            echo -e "[*] Creating \"awspx\" image...\n"
+            docker build $(dirname $0) -t beatro0t/awspx:latest
+            ;;
+        *)
+            echo -e "[*] Pulling \"awspx\" image... \n"
+            docker pull beatro0t/awspx:latest
+            ;;
+    esac
     
+    if [ $? -ne 0 ]; then
+        echo -e "\n[-] Installation failed"
+        exit 1
+    fi
+
+    echo ""
+
     # Create container
     echo -en "[*] Creating \"awspx\" container... "
     if docker run -itd \
@@ -97,7 +112,7 @@ function install(){
         -p 127.0.0.1:7373:7373 \
         -p 127.0.0.1:7474:7474 \
         -v ${MOUNT}/data:/opt/awspx/data \
-        --restart=always awspx:latest >/dev/null; then
+        --restart=always beatro0t/awspx:latest >/dev/null; then
         
         cp $(dirname $0)/data/sample.zip -f ${MOUNT}/data/. >/dev/null 2>&1
         
@@ -143,7 +158,7 @@ function main(){
     case "$(basename $0)" in
         INSTALL)
             detect_os
-            install
+            install $@
         ;;
         docker-entrypoint.sh)
             hook $@
