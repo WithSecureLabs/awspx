@@ -64,17 +64,17 @@
             <v-col />
             <v-col cols="11">
               <div class="mb-2">
-                Either,
+                You can run the
                 <a
                   href="https://github.com/FSecureLABS/awspx/wiki/Data-Collection#ingestion"
-                >run the ingestor</a>:
+                >ingestor</a> (to load an AWS account to explore):
               </div>
 
               <v-card outlined color="#f6f8fa" class="pa-2" style="font-size: 11px">awspx ingest</v-card>
               <div class="mt-5 mb-2">
                 <p
                   class="text--secondary"
-                >or load the sample dataset if you just want to play around:</p>
+                >or load the sample dataset (if you just want to play around):</p>
               </div>
               <v-card outlined color="#f6f8fa" class="pa-2" style="font-size: 11px">
                 awspx db --load-zip sample.zip
