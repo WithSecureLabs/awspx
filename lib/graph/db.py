@@ -40,28 +40,21 @@ class Neo4j(object):
         self.username = username
         self.password = password
 
-        try:
-            self.open()
-
-        except exceptions.AuthError as e:
-            self.console.error(str(e))
-
-        except exceptions.ServiceUnavailable as e:
-            self.console.error(str(e))
-
     def _start(self):
 
         retries = 0
-        max_retries = 10
+        max_retries = 60
 
         while retries < max_retries and not self.available():
-            subprocess.Popen(["nohup", "/docker-entrypoint.sh", "neo4j", "console", "&"],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
+
+            if retries == 0:
+                subprocess.Popen(["nohup", "/docker-entrypoint.sh", "neo4j", "console", "&"],
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
             time.sleep(1)
             retries += 1
 
-        if not self.running():
+        if not self.available():
             self.console.critical("Neo4j failed to start")
             return False
         elif retries == 0:
@@ -230,6 +223,9 @@ class Neo4j(object):
         } for db in self.databases])
 
     def run(self, cypher):
+
+        if not self.available():
+            self._start()
 
         try:
             with self.driver.session() as session:
