@@ -1176,7 +1176,7 @@ class Attacks:
     def compute(self, max_iterations=5, max_search_depth=""):
 
         converged = False
-        db = Neo4j()
+        db = Neo4j(console=self.console)
 
         self.console.task("Removing all existing attack patterns",
                           db.run,  args=["MATCH (p:Pattern) DETACH DELETE p"],
