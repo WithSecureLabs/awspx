@@ -520,6 +520,9 @@ class Policy:
         actions = Elements()
         for _, policy in self.documents.items():
             actions.update(policy.resolve())
+
+        console.info(f"{self.__class__.__name__} {self.resource} "
+                     f"resolved to {len(actions)} Action(s)")
         return actions
 
 
@@ -531,9 +534,9 @@ class IdentityBasedPolicy(Policy):
     def __init__(self, resource, resources):
 
         super().__init__(resource, resources)
+
         key = list(filter(lambda k: k == "Document" or k == "Documents",
                           self.resource.properties().keys()))
-
         if len(key) != 1:
             return
 
