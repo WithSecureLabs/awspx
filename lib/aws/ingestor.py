@@ -16,10 +16,12 @@ from botocore.exceptions import (ClientError,
 from lib.aws.actions import ACTIONS
 from lib.aws.policy import (BucketACL, IdentityBasedPolicy,
                             ObjectACL, ResourceBasedPolicy)
+
 from lib.aws.resources import RESOURCES
 from lib.graph.base import Elements, Node
 from lib.graph.edges import (Action, Associative,
                              Transitive, Trusts)
+
 from lib.graph.nodes import Generic, Resource
 
 
@@ -381,6 +383,53 @@ class IngestionManager(Elements):
             self.console.info(f"Added {element.label()}: ({element})")
 
 
+class Client(object):
+
+    def __init__(self, client, console=None):
+
+        self.client = client
+        self.console = console
+
+    def __iter__(self):
+        try:
+            for i in self.client.__iter__():
+                yield i
+        except ClientError as e:
+            if e.response['Error']['Code'] in ['AccessDenied', 'AccessDeniedException']:
+                self.console.warn(str(e))
+            else:
+                raise e
+
+    def __getattr__(self, attr):
+
+        method = self.client.__getattribute__(attr)
+
+        if callable(method):
+
+            def hook(*args, **kwargs):
+                result = []
+
+                try:
+                    result = method(*args, **kwargs)
+
+                    if attr in ['get_paginator', 'paginate']:
+                        result = self.__class__(result, console=self.console)
+
+                except ClientError as e:
+
+                    if e.response['Error']['Code'] in ['AccessDenied', 'AccessDeniedException']:
+                        self.console.warn(str(e))
+                    else:
+                        raise e
+
+                return result
+
+            return hook
+
+        else:
+            return method
+
+
 class Ingestor(Elements):
 
     types = []
@@ -403,6 +452,10 @@ class Ingestor(Elements):
 
         self._only_arns = only_arns
         self._skip_arns = skip_arns
+
+        self.client = Client(self.session.client(
+            self.__class__.__name__.lower()),
+            console=self.console)
 
         if load_resources:
             available_resources = self.session.get_available_resources()
@@ -431,6 +484,7 @@ class Ingestor(Elements):
         # Remove types that dont match user specifications
         self.types = [t for t in self.types if t not in skip_types
                       and (len(only_types) == 0 or t in only_types)]
+
         self.load_generics()
 
         if load_resources and len(self.types) > 0:
@@ -543,7 +597,7 @@ class Ingestor(Elements):
                     done=f"Added {rt}"
                 ):
 
-                    for cm in operation():
+                    for cm in Client(operation(), console=self.console):
 
                         collection_managers.append(cm)
 
@@ -746,8 +800,6 @@ class IAM(Ingestor):
     def __init__(self, *args, **kwargs):
 
         super().__init__(**kwargs, load_resources=False)
-
-        self.client = self.session.client("iam")
 
         self.get_account_authorization_details()
         self.list_user_mfa_devices()
@@ -955,7 +1007,6 @@ class EC2(Ingestor):
     def __init__(self, **kwargs):
 
         super().__init__(**kwargs)
-        self.client = self.session.client("ec2")
 
         if not self.quick:
             self.get_instance_user_data()
@@ -1005,8 +1056,6 @@ class S3(Ingestor):
     def __init__(self, **kwargs):
 
         super().__init__(**kwargs)
-
-        self.client = self.session.client('s3')
 
         if not self.quick:
             self.get_bucket_policies()
@@ -1114,7 +1163,6 @@ class Lambda(Ingestor):
 
         super().__init__(**kwargs, load_resources=False)
 
-        self.client = self.session.client('lambda')
         self.list_functions()
 
     def list_functions(self):
