@@ -331,7 +331,7 @@ class Console(Table):
 
     def _add(self, message, iterables=[], override=None):
 
-        key = Text(message)
+        key = Text(message, overflow='ellipsis', no_wrap=True)
         busy = Text()
 
         if override is None:
