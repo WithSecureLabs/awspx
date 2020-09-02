@@ -30,7 +30,7 @@ class Log(Handler):
     levels = {
         "CRITICAL": Style(color="red", bold=True, reverse=True),
         "ERROR":  Style(color="red", bold=True),
-        "WARNING":  Style(color="dark_red", bold=True),
+        "WARNING":  Style(color="dark_red"),
         "NOTICE":  Style(color="yellow"),
         "INFO":  Style(dim=True),
         "DEBUG":  Style(color="green", dim=True),
@@ -131,7 +131,7 @@ class Console(Table):
     def warn(self, message):
         self.logger.warn(message)
         if not self._verbose:
-            self._annotate(message, "red")
+            self._annotate(message, "dark_red")
 
     def error(self, message):
         self.logger.error(message)
