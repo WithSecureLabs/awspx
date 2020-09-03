@@ -18,13 +18,13 @@ from lib.util.console import console
 
 class Statement:
 
-    def __init__(self, statement: dict, resource: Element, resources: Elements):
+    def __init__(self, statement, resource, resources):
 
         # TODO: policy statements do not appear to strictly adhere to the JSON
         # format and may include duplicate keys. Duplicate keys will be ignored.
 
-        self._resources = resources
         self._statement = statement
+        self._resources = resources
         self._resource = resource
 
         self._explicit_principals = None
@@ -37,7 +37,6 @@ class Statement:
         try:
 
             if not isinstance(statement, dict):
-
                 raise ValueError
 
             self._statement = statement
@@ -120,7 +119,6 @@ class Statement:
 
                 # We haven't seen this node before. It may belong to another account,
                 # or it belongs to a service that was not loaded.
-
                 if node is None:
 
                     name = principal
@@ -340,9 +338,6 @@ class Statement:
 
         self._explicit_resources = Elements(resources)
 
-    def __str__(self):
-        return str(self._statement)
-
     def principals(self):
 
         if self._explicit_principals is None:
@@ -448,8 +443,9 @@ class Document:
 
     def __init__(self, document, resource, resources):
 
-        self.document = {}
         self.statements = []
+        self.resource = resource
+        self.document = {}
 
         if not (isinstance(document, dict)
                 and "Version" in document
@@ -457,26 +453,16 @@ class Document:
                 and "Statement" in document):
             return
 
-        self.resource = resource
-        self.document = document
+        self.document = json.loads(json.dumps(document))
 
-        # TODO: We're going to end up with things that weren't here before
-        self._document = json.dumps(
-            self.document,
-            indent=2,
-            default=str)
-
-        if not isinstance(document["Statement"], list):
-            document["Statement"] = [document["Statement"]]
+        if not isinstance(self.document["Statement"], list):
+            self.document["Statement"] = [self.document["Statement"]]
 
         for statement in self.document["Statement"]:
             self.statements.append(Statement(
                 statement=statement,
                 resource=self.resource,
                 resources=resources))
-
-    def __str__(self):
-        return self._document
 
     def __len__(self):
         return len(self.statements)
@@ -504,13 +490,6 @@ class Policy:
         self.documents = {}
         self.resource = resource
         self.resources = resources
-
-    def __str__(self):
-
-        return json.dumps({
-            k: json.loads(str(v))
-            for k, v in self.documents.items()
-        }, indent=2)
 
     def __len__(self):
         return len(self.documents)
@@ -559,11 +538,13 @@ class ResourceBasedPolicy(Policy):
         for k, v in resource.properties().items():
 
             if len(keys) == 0 or k in keys:
+
                 document = Document(v, resource, resources)
 
                 if len(document) > 0:
-                    self.documents[k] = Document(
-                        resource.properties()[k], resource, resources)
+                    self.documents[k] = Document(resource.properties()[k],
+                                                 resource,
+                                                 resources)
 
     def principals(self):
 
@@ -614,13 +595,11 @@ class BucketACL(ResourceBasedPolicy):
         for key, acls in resource.properties().items():
 
             # Property is not a valid ACL
-
             if not (isinstance(acls, list)
                     and all(["Grantee" in x and "Permission" for x in acls])):
                 continue
 
             # Construct a policy from ACL
-
             for (grantee, permission) in map(lambda x: (x["Grantee"], x["Permission"]), acls):
 
                 statement = {
@@ -628,7 +607,6 @@ class BucketACL(ResourceBasedPolicy):
                 }
 
                 # Handle Principal
-
                 if grantee["Type"] not in ["CanonicalUser", "Group"]:
                     raise ValueError
 
@@ -641,31 +619,25 @@ class BucketACL(ResourceBasedPolicy):
                     group = grantee["URI"].split('/')[-1]
 
                     # Any AWS account can access this resource
-
                     if group == "AuthenticatedUsers":
                         statement["Principal"] = {"AWS": "*"}
 
                     # Anyone (not neccessarily AWS)
-
                     elif group == "AllUsers":
                         statement["Principal"] = {"AWS": "*"}
 
                     # Service
-
                     elif group == "LogDelivery":
                         statement["Principal"] = {"Service": grantee["URI"]}
 
                     # Specific AWS resource
-
                     else:
                         statement["Principal"] = {"AWS": grantee["URI"]}
 
                 # Handle Actions
-
                 statement["Action"] = self.AccessControlList[permission]
 
                 # Handle Resources (Bucket and Objects in Bucket)
-
                 statement["Resource"] = [resource.id(), resource.id() + "/*"]
 
                 statements.append(statement)
