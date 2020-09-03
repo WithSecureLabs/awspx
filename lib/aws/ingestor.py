@@ -1,618 +1,1004 @@
-import copy
+import boto3
+import csv
 import json
+import os
 import re
+import shutil
 import sys
+import subprocess
 import zlib
 from base64 import b64decode
-from functools import reduce
+from datetime import datetime
 
-import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import (ClientError,
+                                 PartialCredentialsError, ProfileNotFound)
+
 from lib.aws.actions import ACTIONS
-from lib.aws.policy import BucketACL, ObjectACL, IdentityBasedPolicy, ResourceBasedPolicy
+from lib.aws.policy import (BucketACL, IdentityBasedPolicy,
+                            ObjectACL, ResourceBasedPolicy)
+
 from lib.aws.resources import RESOURCES
 from lib.graph.base import Elements, Node
-from lib.graph.db import Neo4j
-from lib.graph.edges import Action, Associative, Transitive, Trusts
+from lib.graph.edges import (Action, Associative,
+                             Transitive, Trusts)
+
 from lib.graph.nodes import Generic, Resource
+
+
+class IngestionManager(Elements):
+
+    zip = None
+
+    def __init__(self, session, console=None,
+                 services=[], db="default.db",
+                 quick=False, skip_actions=False,
+                 only_types=[], skip_types=[],
+                 only_arns=[], skip_arns=[]):
+
+        try:
+
+            if console is None:
+                from lib.util.console import console
+            self.console = console
+
+            identity = self.console.task(
+                "Awaiting response to sts:GetCallerIdentity",
+                session.client('sts').get_caller_identity,
+                done=lambda r: '\n'.join([
+                    f"Identity: {r['Arn']}",
+                    f"Services: {', '.join([s.__name__ for s in services])}",
+                    f"Database: {db}",
+                    f"Account:  {r['Account']}",
+                    f"Region:   {session.region_name}",
+                ]))
+
+            self.account = identity["Account"]
+            self.console.spacer()
+
+        except (ClientError, PartialCredentialsError, ProfileNotFound) as e:
+            self.console.error(e)
+            sys.exit(1)
+
+        if len(only_arns) > 0:
+            only_types = list(set(only_types + [RESOURCES.label(arn)
+                                                for arn in only_arns]))
+
+        for ingestor in services:
+
+            elements = ingestor(session=session, console=self.console,
+                                account=self.account, quick=quick,
+                                only_types=only_types, skip_types=skip_types,
+                                only_arns=only_arns, skip_arns=skip_arns)
+
+            super().update(elements)
+            elements.destroy()
+
+        self.load_transitives()
+
+        if not skip_actions:
+            self.load_actions()
+
+        self.zip = self.save(db)
+
+        self.console.spacer()
+
+    def load_transitives(self):
+
+        resources = self.get("Resource")
+        groups = resources.get("AWS::Iam::Group")
+        roles = resources.get("AWS::Iam::Role")
+        policies = resources.get("AWS::Iam::Policy")
+        clusters = resources.get("AWS::Eks::Cluster")
+        instance_profiles = resources.get("AWS::Iam::InstanceProfile")
+
+        for resource in self.console.tasklist(
+            "Adding Transitive relationships",
+            iterables=resources,
+            done="Added Transitive relationships",
+        ):
+
+            if resource.label() in ["AWS::Iam::User", "AWS::Iam::Group", "AWS::Iam::Role"]:
+
+                # (User|Group|Role) --> (Policy)
+                if "AttachedManagedPolicies" in resource.properties():
+
+                    policy_arns = [policy["PolicyArn"]
+                                   for policy in resource.get("AttachedManagedPolicies")]
+
+                    for policy in filter(lambda r: r.id() in policy_arns,
+                                         policies):
+
+                        self.add(Transitive(properties={"Name": "Attached"},
+                                            source=resource, target=policy))
+
+                        policy_arns = [p for p in policy_arns
+                                       if p != str(policy)]
+
+                    if not len(policy_arns) > 0:
+                        del resource.properties()["AttachedManagedPolicies"]
+
+                # (User)-->(Group)
+                if (resource.label() in ["AWS::Iam::User"]
+                        and "GroupList" in resource.properties()):
+
+                    group_names = resource.get("GroupList")
+
+                    for group in filter(
+                            lambda r: r.get("Name") in group_names,
+                            groups):
+
+                        self.add(Transitive(properties={"Name": "Attached"},
+                                            source=resource, target=group))
+
+                        group_names = [g for g in group_names
+                                       if g != str(group)]
+
+                    if not len(group_names) > 0:
+                        del resource.properties()["GroupList"]
+
+            # (Instance) --> (Instance Profile)
+            if (resource.label() in ["AWS::Ec2::Instance"]
+                    and "IamInstanceProfile" in resource.properties()):
+
+                instance_profile = next((i for i in instance_profiles
+                                         if i.get("Name") == resource.get("IamInstanceProfile")["Arn"]
+                                         ), None)
+
+                if instance_profile is not None:
+
+                    self.add(Transitive({"Name": "Attached"},
+                                        source=resource, target=instance_profile))
+
+                    del resource.properties()["IamInstanceProfile"]
+
+            # (InstanceProfile) --> (Role)
+            if (resource.label() in ["AWS::Iam::InstanceProfile"]
+                    and "Roles" in resource.properties()):
+
+                role_arns = list(map(lambda r: r["Arn"],
+                                     resource.get("Roles")))
+
+                for role in filter(
+                        lambda r: r.id() in role_arns,
+                        roles):
+
+                    self.add(Transitive(properties={"Name": "Attached"},
+                                        source=resource, target=role))
+
+                    role_arns = [r for r in role_arns if r != str(role)]
+
+                if not len(role_arns) > 0:
+                    del resource.properties()["Roles"]
+
+            # (Function) --> (Role)
+            if (resource.label() in ["AWS::Lambda::Function"]
+                    and "Role" in resource.properties()):
+
+                role_arns = [resource.get("Role")]
+                for role in filter(
+                        lambda r: r.id() in role_arns,
+                        roles):
+
+                    self.add(Transitive(properties={"Name": "Attached"},
+                                        source=resource, target=role))
+
+                    role_arns = [r for r in role_arns if r != str(role)]
+
+                if not len(role_arns) > 0:
+                    del resource.properties()["Roles"]
+
+            # (Cluster) --> (Role)
+            if (resource.label() in ["AWS::Eks::Cluster"]
+                    and "Role" in resource.properties()):
+
+                role = next((r for r in roles
+                             if str(r) == resource.get("Role")
+                             ), None)
+
+                if role is not None:
+
+                    self.add(Transitive(properties={"Name": "Attached"},
+                                        source=resource, target=role))
+
+                    del resource.properties()["Role"]
+
+            if resource.label() in ["AWS::Eks::FargateProfile"]:
+
+                # (Fargate Profile) --> (Role)
+                if "PodExecutionRole" in resource.properties():
+
+                    role = next((r for r in roles
+                                 if str(r) == resource.get("PodExecutionRole")
+                                 ), None)
+
+                    if role is not None:
+
+                        self.add(Transitive(properties={"Name": "Attached"},
+                                            source=resource, target=role))
+
+                        del resource.properties()["PodExecutionRole"]
+
+                # (Cluster) --> (Fargate Profile)
+                if "Cluster" in resource.properties():
+
+                    cluster = next((c for c in clusters
+                                    if c.get("Name") == resource.get("Cluster")
+                                    ), None)
+
+                    if cluster is not None:
+
+                        self.add(Transitive(properties={"Name": "Attached"},
+                                            source=cluster, target=resource))
+
+                        del resource.properties()["Cluster"]
+
+            if resource.label() in ["AWS::Eks::Nodegroup"]:
+
+                # (Node Group) --> (Role)
+                if "NodeRole" in resource.properties():
+
+                    role = next((r for r in roles
+                                 if str(r) == resource.get("NodeRole")
+                                 ), None)
+
+                    if role is not None:
+
+                        self.add(Transitive(properties={"Name": "Attached"},
+                                            source=resource, target=role))
+
+                        del resource.properties()["NodeRole"]
+
+                # (Cluster) --> (Node Group)
+                if "Cluster" in resource.properties():
+
+                    cluster = next((c for c in clusters
+                                    if c.get("Name") == resource.get("Cluster")
+                                    ), None)
+
+                    if cluster is not None:
+
+                        self.add(Transitive(properties={"Name": "Attached"},
+                                            source=cluster, target=resource))
+
+                        del resource.properties()["Cluster"]
+
+    def load_actions(self):
+
+        self.add(Node(labels=["CatchAll"], properties={
+            "Name": "CatchAll",
+            "Description": "A sinkhole for actions affecting unknown resource types."
+        }))
+
+        # Resource types Actions affect
+        resources = Elements(e for e in self if any([l in [
+            "Resource", "Generic", "CatchAll"
+        ] for l in e.labels()]))
+
+        # IAM entities
+        entities = Elements(e for e in self.get("Resource")
+                            if e.label() in ['AWS::Iam::User', 'AWS::Iam::Role'])
+
+        for resource in self.console.tasklist(
+            "Resolving Policy information",
+            iterables=self.get("Resource"),
+            done="Added Action relationships"
+
+        ):
+
+            # Identity-based policies (inline and managed)
+            if resource.label() in [
+                "AWS::Iam::User",  "AWS::Iam::Group", "AWS::Iam::Role",
+                "AWS::Iam::Policy"
+            ]:
+
+                self.update(IdentityBasedPolicy(
+                    resource, resources).resolve())
+
+            # Resource-based policies
+            if resource.label() in [
+                "AWS::S3::Bucket", "AWS::S3::Object",
+            ]:
+                resource_based_policy = ResourceBasedPolicy(
+                    resource=resource, resources=resources,
+                    keys="Policy")
+
+                self.update(resource_based_policy.principals())
+                self.update(resource_based_policy.resolve())
+
+            # Assume role policy documents
+            if resource.label() in ["AWS::Iam::Role"]:
+
+                resource_based_policy = ResourceBasedPolicy(
+                    resource=resource,
+                    resources=resources,
+                    keys="Trusts"
+                )
+
+                # Skip AWS::Domain principals
+                self.update(Elements(principal
+                                     for principal in resource_based_policy.principals()
+                                     if not principal.type("AWS::Domain")))
+
+                # Only actions beginning with sts:AssumeRole are valid
+                for action in [action for action in resource_based_policy.resolve()
+                               if str(action).startswith("sts:AssumeRole")]:
+
+                    # This role trusts all IAM entities within this account
+                    if (action.source().type("AWS::Account")
+                            and action.source().id().split(':')[4] == self.account):
+
+                        self.update(Elements(Trusts(properties=action.properties(),
+                                                    source=action.target(),
+                                                    target=entity)
+                                             for entity in entities))
+
+                    else:
+                        # Skip AWS::Domain actions
+                        if action.source().type("AWS::Domain"):
+                            continue
+
+                        self.add(action)
+                        self.add(Trusts(properties=action.properties(),
+                                        source=action.target(),
+                                        target=action.source()))
+
+            # ACLs (bucket & objects)
+            if resource.label() in ["AWS::S3::Bucket", "AWS::S3::Object"]:
+
+                acl = BucketACL(resource, resources) \
+                    if resource.label() == "AWS::S3::Bucket" \
+                    else ObjectACL(resource, resources)
+
+                self.update(acl.principals())
+                self.update(acl.resolve())
+
+    def save(self, db="default.db", path="/opt/awspx/data"):
+
+        archive = None
+        edge_files = []
+        node_files = []
+
+        if not db.endswith(".db"):
+            db = "%s.db" % db
+
+        directory = f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{db.split('.')[0]}"
+        labels = sorted(list(set([
+            next((l for l in e.labels()
+                  if l not in ["External", "Generic", "Resource"]),
+                 "Node")
+            for e in self])))
+
+        os.mkdir(f"{path}/{directory}")
+
+        def stringify(s, t):
+            return json.dumps(s, default=str) \
+                if t == "list" or t == "dict" \
+                else str(s)
+
+        for label in self.console.tasklist(
+            "Saving ingested data",
+            labels,
+            done=f"Saved ingested data to {directory}.zip"
+        ):
+
+            filename = "%s.csv" % label
+            elements = self.get(label)
+
+            if len(elements) == 0:
+                continue
+
+            header = sorted(list(set([
+                (f, e.get(f).__class__.__name__)
+                for e in elements for f in e.properties().keys()])))
+
+            # We default to type: 'str' in cases where key names collide accross types
+
+            header = list(set([
+                (f, 'str' if [k for k, _ in header].count(f) > 1 else t)
+                for (f, t) in header]))
+
+            if type(next(iter(elements))) is Node or Node in type(next(iter(elements))).__bases__:
+
+                prefix = [":ID"]
+                suffix = [":LABEL"]
+                data = [[e.id()] + [stringify(e.get(f), _)
+                                    if f in e.properties()
+                                    else '' for (f, _) in header]
+                        + [";".join(e.labels())] for e in elements]
+
+                node_files.append(filename)
+
+            else:
+
+                prefix = [":START_ID"]
+                suffix = [":END_ID", ":TYPE"]
+
+                data = [[e.source().id()] + [stringify(e.get(f), _)
+                                             if f in e.properties()
+                                             else '' for (f, _) in header]
+                        + [e.target().id(), label] for e in elements if e.target() is not None]
+
+                edge_files.append(filename)
+
+            data.insert(0, prefix + [
+                "%s:%s" % (k, {
+                    t:           t,
+                    "NoneType": "string",
+                    "dict":     "string",
+                    "list":     "string",
+                    "int":      "string",
+                    "datetime": "string",
+                    "bool":     "string",
+                    "str":      "string"
+                }[t]) for (k, t) in header] + suffix)
+
+            with open(f"{path}/{directory}/{filename}", mode='w') as elements:
+
+                c = csv.writer(
+                    elements,
+                    delimiter=',',
+                    quotechar='"',
+                    quoting=csv.QUOTE_MINIMAL)
+
+                for row in data:
+                    c.writerow(row)
+
+            if label == labels[-1]:
+
+                shutil.make_archive(f"{path}/{directory}",
+                                    'zip', f"{path}/{directory}")
+
+                subprocess.Popen(["rm", "-rf", f"{path}/{directory}"])
+
+                archive = f"{path}/{directory}.zip"
+
+        return archive
+
+    def update(self, elements):
+
+        for element in elements:
+            self.add(element)
+
+    def add(self, element):
+
+        length = len(self)
+        super().add(element)
+
+        if len(self) == length:
+            return
+
+        if "TRANSITIVE" in element.labels():
+
+            self.console.info(f"Added {element.label().capitalize()} relationship: "
+                              f"({element.source()}) → ({element.target()})")
+
+        elif any([e in ["ACTION", "TRUSTS"] for e in element.labels()]):
+            pass
+
+        else:
+            self.console.info(f"Added {element.label()}: ({element})")
+
+
+class Client(object):
+
+    def __init__(self, client, console=None):
+
+        self.client = client
+        self.console = console
+
+    def __iter__(self):
+        try:
+            for i in self.client.__iter__():
+                yield i
+        except ClientError as e:
+            if e.response['Error']['Code'] in ['AccessDenied', 'AccessDeniedException']:
+                self.console.warn(str(e))
+            else:
+                raise e
+
+    def __getattr__(self, attr):
+
+        method = self.client.__getattribute__(attr)
+
+        if callable(method):
+
+            def hook(*args, **kwargs):
+                result = []
+
+                try:
+                    result = method(*args, **kwargs)
+
+                    if attr in ['get_paginator', 'paginate']:
+                        result = self.__class__(result, console=self.console)
+
+                except ClientError as e:
+
+                    if e.response['Error']['Code'] in ['AccessDenied', 'AccessDeniedException']:
+                        self.console.warn(str(e))
+                    else:
+                        raise e
+
+                return result
+
+            return hook
+
+        else:
+            return method
 
 
 class Ingestor(Elements):
 
-    run = []
-    associates = []
+    types = []
+    associations = []
 
-    def __init__(self, session, account="000000000000", default=True, verbose=True, quick=False,
-                 only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
+    _only_types = []
+    _skip_types = []
+    _only_arns = []
+    _skip_arns = []
 
+    def __init__(self, session, account, console,
+                 load_resources=True, quick=False,
+                 only_types=[], skip_types=[],
+                 only_arns=[], skip_arns=[]):
+
+        self.console = console.item(f"Ingesting {self.__class__.__name__}")
         self.session = session
-        self.account_id = account
-        self.run_all = len(self.run) == 0
-        self._verbose = verbose
-        self._load_generics()
+        self.account = account
+        self.quick = quick
 
-        if default and len(self.run) > 0:
+        self._only_arns = only_arns
+        self._skip_arns = skip_arns
 
-            self.run = [t for t in self.run
-                        if (len(skip_types) == 0 or t not in skip_types)
-                        and (len(only_types) == 0 or t in only_types)]
+        self.client = Client(self.session.client(
+            self.__class__.__name__.lower()),
+            console=self.console)
 
-            self.only_arns = only_arns
-            self.skip_arns = skip_arns
-
-            print("[*] Commencing {resources} ingestion\n".format(
-                ingestor=self.__class__.__name__,
-                resources=', '.join([
-                    r if (i == 0 or i % 3 > 0)
-                    else f'\n{" " * 15}{r}'
-                    for i, r in enumerate(self.run)])
-            ))
-
-            self._load_resources()
-            self._load_associations()
-
-    def _print(self, *messages):
-        if not self._verbose:
-            sys.stdout.write("\033[F\033[K")
-        print(''.join([str(m) for m in messages]))
-
-    def _print_stats(self):
-        self._print(f"[+] {self.__class__.__name__} ingested ",
-                    f"{len(self.get('Resource'))} resources, ",
-                    f"{len(self.get('Generic'))} generic resources were added\n")
-
-    def _resolve_arn_selection(self, only_arns=[], skip_arns=[]):
-        """
-        Set only/except ARNS for this ingestor.
-        """
-
-        if only_arns and skip_arns:
-            print("[!] Can't specify both --only-arns and --skip-arns.")
-            return False
-
-        self.only_arns = self._filter_arns(only_arns)
-        self.skip_arns = self._filter_arns(skip_arns)
-
-        return True
-
-    def _filter_arns(self, arns):
-        """ From a list of ARNs, return only those relevant to this ingestor's service. """
-        return [a for a in arns if self.__class__.__name__.lower() == a.split(":")[2].lower()]
-
-    def _load_resources(self, boto_base_resource=None, awspx_base_resource=None):
-
-        if boto_base_resource is None:
-            boto_base_resource = self.session.resource(
-                self.__class__.__name__.lower())
-
-        for rt in self._get_collections(boto_base_resource):
-            self._load_resource_collection(
-                rt,
-                boto_base_resource,
-                awspx_base_resource
-            )
-
-    # Needs to be recursive
-    def _load_resource_collection(self,
-                                  collection,
-                                  boto_base_resource=None,
-                                  awspx_base_resource=None):
-
-        resources = []
-
-        label = "AWS::{service}::{type}".format(
-            service=self.__class__.__name__.capitalize(),
-            type=getattr(
-                boto_base_resource,
-                collection
-            )._model.resource.type
-        )
-
-        # Known cases of misaligned naming conventions (boto and lib.aws.RESOURCES)
-        if label.endswith("Version"):
-            label = label[:-7]
-        elif label == "AWS::Ec2::KeyPairInfo":
-            label = "AWS::Ec2::KeyPair"
-
-        # Skip excluded types or types unknown to us
-        if label not in RESOURCES.types \
-                or (not self.run_all and label not in self.run):
-            return
-
-        try:
-            # Note: Depending on the stage at which the exception is thrown, we
-            # may miss certain resources.
-
-            resources = [r for r in getattr(
-                boto_base_resource,
-                collection).all()]
-
-        except Exception as e:
-            self._print(f"[!] Couldn't load {collection} of {boto_base_resource} "
-                        "-- probably due to a resource based policy or something.")
-
-        for resource in resources:
-
-            # Get properties
-            properties = resource.meta.data
-
-            if properties is None:
-                continue
-
-            # Get Arn and Name
-            arn = self._get_resource_arn(resource, boto_base_resource)
-            name = self._get_resource_name(resource)
-
-            # Include or exclude this ARN
-            if self.only_arns and arn not in self.only_arns:
-                continue
-            elif self.skip_arns and arn in self.skip_arns:
-                continue
-
-            properties["Arn"] = arn
-            properties["Name"] = name
-
-            if not (properties["Arn"] and properties["Name"]):
-                print(label)
-                print(json.dumps(properties, indent=2, default=str))
-                raise ValueError
-
-            # Create resource
-            r = Resource(labels=[label], properties=properties)
-            if r not in self:
-                self._print(f"[*] Adding {r}")
-                self.add(r)
-
-            # Add associative relationship with parent
-            if awspx_base_resource:
-                assocs = [set(a) for a in self.associates]
-                if {awspx_base_resource.labels()[0], r.labels()[0]} in assocs \
-                        or not self.associates:
-                    e = Associative(properties={"Name": "Attached"},
-                                    source=r, target=awspx_base_resource)
-                    oe = Associative(properties={"Name": "Attached"},
-                                     source=awspx_base_resource, target=r)
-                    if not (e in self or oe in self):
-                        self.add(e)
-
-            # Load resources from this one's collections
-            if self._get_collections(resource):
-                self._load_resources(resource, r)
-
-            # Return when we've seen all explicit resources
-            if self.only_arns and all([
-                    r in map(lambda x: x.id(), self)
-                    for r in self.only_arns]):
+        if load_resources:
+            available_resources = self.session.get_available_resources()
+            if self.__class__.__name__.lower() not in available_resources:
+                self.console.critical(f"'{self.__class__.__name__}' is not a supported boto resource. "
+                                      "This means you'll need to write a custom ingestor (see Lambda for a practical example). "
+                                      f"For future reference, boto supports: {', '.join(available_resources)}.")
                 return
 
-    def _get_resource_arn(self, resource, base_resource):
+        # If no resources to ingest have been specified, assume all
+        if len(self.types) == 0:
+            self.types = [t for t in RESOURCES if t.upper().startswith(
+                "AWS::%s::" % self.__class__.__name__.upper())]
 
-        resource_type = resource.__class__.__name__.split(".")[-1]
-        properties = resource.meta.data
-        keys = properties.keys()
-        label = self._get_resource_type_label(resource_type)
-        arn = None
+        # There must be nothing specified for this service
+        if len(self.types) == 0:
+            self.console.critical(f"No {self.__class__.__name__.capitalize()} resources were found in 'lib.aws.resources.py'. "
+                                  "You'll need to add them before this ingestor will work.")
+            return
 
-        if "Arn" in keys:
-            arn = properties["Arn"]
-        elif f"{resource_type}Arn" in keys:
-            arn = properties[f"{resource_type}Arn"]
-        elif f"{resource_type}Id" in keys and properties[f"{resource_type}Id"].startswith("arn:aws"):
-            arn = properties[f"{resource_type}Id"]
-        elif label in RESOURCES.keys():
-            parent = base_resource.meta.data if base_resource.meta.data is not None else {}
-            combined = {**parent, **properties}
-            arn = RESOURCES.definition(label).format(
-                Region=self.session.region_name,
-                Account=self.account_id,
-                **combined)
+        # Ensure ingested resources conform to RESOURCES casing
+        self.types = [r for r in map(lambda r: next(
+            (t for t in RESOURCES if t.upper() == r.upper()), None), self.types)
+            if r is not None]
 
-        if isinstance(arn, str) \
-                and re.compile("arn:aws:([a-zA-Z0-9]+):([a-z0-9-]*):(\d{12}|aws)?:(.*)"
-                               ).match(arn) is not None:
-            return arn
+        # Remove types that dont match user specifications
+        self.types = [t for t in self.types if t not in skip_types
+                      and (len(only_types) == 0 or t in only_types)]
 
-        return None
+        self.load_generics()
 
-    def _get_resource_name(self, resource):
+        if load_resources and len(self.types) > 0:
+            self.load_resources()
+            self.load_associatives()
 
-        resource_type = resource.__class__.__name__.split(".")[-1]
-        properties = resource.meta.data
-        keys = properties.keys()
+    def load_generics(self, types=None):
 
-        if "Name" in keys:
-            return properties["Name"]
-        elif f"{resource_type}Name" in keys:
-            return properties[f"{resource_type}Name"]
-        elif "Id" in keys and not properties["Id"].startswith("arn:aws"):
-            return properties["Id"]
-        elif f"{resource_type}Id" in keys and not properties[f"{resource_type}Id"].startswith("arn:aws"):
-            return properties[f"{resource_type}Id"]
-        elif "Key" in keys:
-            return properties["Key"]
-        else:
-            # Irregular variants: e.g. KeyName for KeyPairs
-            key = [k for k in
-                   [k for k in keys if "Name" in k]
-                   if k.replace("Name", "") in resource_type
-                   ][0]
-            return properties[key]
-
-    def _get_resource_type_label(self, resource_type):
-
-        return "AWS::%s::%s" % (
-            self.__class__.__name__.capitalize(),
-            resource_type.replace("Info", "").replace("Version", "").replace("Summary", ""))
-
-    def _load_generics(self, types=None):
-
-        labels = [t for t in types if t in RESOURCES]  \
-            if types is not None else \
-            [t for t in RESOURCES if t.startswith(
-                "AWS::%s::" % self.__class__.__name__.capitalize())]
-
-        for k in labels:
-
+        for k in self.console.tasklist(
+            f"Adding Generic resources",
+            self.types,
+            done=f"Added Generic resources"
+        ):
             self.add(Generic(properties={
-                "Name": "$%s" % k.split(':')[-1],
+                "Name": f"${k.split(':')[-1]}",
                 "Arn":  RESOURCES.definition(k)
             }, labels=[k]))
 
-    def _load_associations(self):
+    def load_resources(self):
 
-        if len(self.associates) == 0:
-            return
+        def get_resource_type_model(collection):
 
-        edges = Elements()
-        self._print(f"[*] Adding {self.__class__.__name__} "
-                    "associative relationships")
+            service = self.__class__.__name__.capitalize()
+            resource_model = collection.meta.resource_model._resource_defs
+            remap = {k: k for k in resource_model.keys()}
 
-        for resource in self.get("Resource"):
+            # Map model types to RESOURCE definitions
+            for rt in resource_model.keys():
 
-            references = {}
-            label = [l for l in resource.labels() if l != "Resource"][0]
+                for resource_type in sorted([k for k in resource_model.keys()
+                                             if rt.startswith(k)], key=len, reverse=True):
 
-            # Find references to other resources in the form of a dictionary (refs)
+                    remap[rt] = f"AWS::{service}::{resource_type}"
 
-            self._references(resource.properties(), references)
+                    if remap[rt] in RESOURCES.types.keys():
+                        break
 
-            # Create an edge, for all known associations (as defined by self.rels).
+            model = {k: {remap[getattr(collection, k)._model.resource.type]: {}}
+                     for k in [attr for attr in dir(collection)
+                               if boto3.resources.collection.CollectionManager
+                               in getattr(collection, attr).__class__.__bases__]
+                     }
 
-            for rel in [r for r in self.associates if r[0] == label or r[1] == label]:
+            # Update model to include reflect resources which themselves
+            # are CollectionManager(s).
+            for rt in resource_model.keys():
 
-                i = 1 if label == rel[0] else 0
+                for rm in boto3.resources.factory.ResourceModel(
+                        rt, resource_model[rt],
+                        resource_model).collections:
 
-                # Get a list of foreign keys that we must be capable of referencing
-                # in order to create an association
-
-                fk = [a for a in re.compile(
-                    "{([A-Za-z]+)}").findall(RESOURCES.definition(rel[i]))
-                    if a not in ["Account", "Region"]]
-
-                if not all([k in references.keys() for k in fk]):
-                    continue
-
-                # TODO: Handle Types that make use of more than one
-                # variable identifier
-
-                if len(fk) != 1:
-                    raise NotImplementedError
-
-                fk = fk[0]
-
-                for v in list(references[fk]):
-
-                    # Find the first resource matching the reference
-
-                    r = next((r for r in self if re.compile(
-                        RESOURCES.definition(rel[i]).format(
-                            Account=self.account_id,
-                            Region=self.session.region_name,
-                            **{
-                                **{x: list(y)[0] for x, y in references.items() if len(y) == 1},
-                                **{fk: v}
-                            })
-                    ).match(str(r.id())) is not None), None)
-
-                    if r is None:
-                        # print("Failed to match (%s: %s) against any resources" % (k, v))
-                        # print("Its likely that the resource was missed during ingestion")
+                    # Explicitly skip Version objects
+                    if rm._definition["resource"]["type"].endswith("Version"):
                         continue
 
-                    # Delete the properties that are responsible for the edge's existence.
+                    # Remap model key (only once)
+                    if rt in remap:
+                        rt = remap[rt]
 
-                    properties = self._extract_property_value(
-                        resource.properties(), fk)
+                    resource_type = remap[rm._definition["resource"]["type"]]
+                    operation = rm.name
 
-                    # Even though direction is irrelavent when dealing with Associative
-                    # edges, neo4j is directed. We need to ensure the direction is kept
-                    # in order to eliminate duplicate edges.
+                    # Skip this operation if another method producing this resource
+                    # type is available from the root collection
+                    if resource_type in [list(i.keys())[0]
+                                         for i in model.values()]:
+                        continue
 
-                    (source, target) = (resource, r) if i == 1 else (r, resource)
+                    for k, v in model.items():
 
-                    edge = Associative(
-                        properties={"Name": "Attached"}, source=source, target=target)
-                    opposite_edge = Associative(
-                        properties={"Name": "Attached"}, source=target, target=source)
+                        if rt in v.keys():
+                            v[rt][operation] = {resource_type: {}}
+                            break
 
-                    if (edge not in self and opposite_edge not in self) and edge not in edges:
-                        edges.add(edge)
+            return model
 
-        self.update(edges)
+        def run_ingestor(collections, model):
 
-    def _extract_property_value(self, properties, key, depth=None):
+            if not len(collections) > 0:
+                return
 
-        def get_dereference_indexes(properties, value, keys=[]):
+            for attr, v in model.items():
 
-            if isinstance(properties, dict):
+                label = list(v.keys())[0]
+                collection_managers = []
 
-                for k, v in properties.items():
-                    if k == value:
-                        return keys + [value]
+                if len(self.types) > 0 and label not in self.types:
 
-                    r = get_dereference_indexes(
-                        v, value, keys + [k])
-                    if r is not None:
-                        return r
+                    collateral = [
+                        rt for rt in [list(k.keys())[0] for k in list(v.values())[0].values()]
+                        if rt in self.types
+                        and rt not in [list(k.keys())[0] for k in model.values()]
+                    ]
 
-                return None
+                    self.console.debug(''.join((
+                        f"Skipped {label} ingestion ",
+                        f"({', '.join(collateral)} will also be skipped)." if len(collateral) > 0 else "")))
 
-            elif isinstance(properties, list):
+                    continue
 
-                for i in range(len(properties)):
+                rt = ''.join(''.join([f" {c}" if c.isupper() else c for c in getattr(
+                    collections[0], attr)._model.request.operation]).split()[1:])
 
-                    r = get_dereference_indexes(
-                        properties[i], value, keys + [i])
-                    if r is not None:
-                        return r
+                for operation, collection in self.console.tasklist(
+                    f"Adding {rt}",
+                    iterables=map(lambda c: (
+                        getattr(c, attr).all, c), collections),
+                    wait=f"Awaiting response to {self.__class__.__name__.lower()}:"
+                    f"{getattr(collections[0], attr)._model.request.operation}",
+                    done=f"Added {rt}"
+                ):
 
-            return None
+                    for cm in Client(operation(), console=self.console):
 
-        dereferences = get_dereference_indexes(properties, key)
+                        collection_managers.append(cm)
 
-        # Key not present in properties
+                        if cm.meta.data is None:
 
-        if dereferences is None or len(dereferences) == 0:
-            return {}
+                            self.console.warn(f"Skipping ServiceResource {cm}: "
+                                              "it has no properties")
+                            continue
 
-        # Set the depth to max
+                        cm.meta.data["Name"] = [getattr(cm, i)
+                                                for i in cm.meta.identifiers
+                                                ][-1] if "Name" not in cm.meta.data.keys() \
+                            else cm.meta.data["Name"]
 
-        if depth is None:
-            depth = len(dereferences) - 1
+                        properties = {
+                            **cm.meta.data,
+                            **dict(collection.meta.data
+                                   if collection is not None
+                                   and not collection.__class__.__name__.endswith("ServiceResource")
+                                   and collection.meta.data is not None
+                                   else {}),
+                        }
 
-        depth *= -1
+                        try:
+                            cm.meta.data["Arn"] = RESOURCES.definition(label).format(
+                                Region=self.session.region_name,
+                                Account=self.account,
+                                **properties)
 
-        backup = copy.deepcopy(reduce(lambda x, y: x[y],
-                                      dereferences[:depth] if depth != 0 else dereferences,
-                                      properties))
+                        except KeyError as p:
 
-        reduce(lambda x, y: x[y], dereferences[:depth-1],
-               properties).pop(dereferences[depth-1])
+                            self.console.warn(f"Failed to construct resource ARN: defintion for type '{label}' is malformed - "
+                                              f"boto collection '{cm.__class__.__name__}' does not have property {p}, "
+                                              f"maybe you meant one of the following instead? {', '.join(properties.keys())}")
+                            continue
 
-        return backup
+                        # Add Resource
+                        resource = Resource(labels=[label],
+                                            properties=cm.meta.data)
+                        self.add(resource)
 
-    def _get_collections(self, resource):
+                for _, attrs in v.items():
+                    run_ingestor(collection_managers, attrs)
 
-        return [attribute for attribute in dir(resource)
-                if boto3.resources.collection.CollectionManager
-                in getattr(resource, attribute).__class__.__bases__]
+        service = self.__class__.__name__.lower()
+        collection = self.session.resource(service)
+        model = get_resource_type_model(collection)
 
-    def _references(self, value, references={}, key=None):
+        run_ingestor([collection], model)
 
-        if isinstance(value, list):
-            [self._references(v, references)
-             for v in value]
+    def load_associatives(self):
 
-        elif isinstance(value, dict):
-            [self._references(v, references, k)
-             for k, v in value.items()]
+        if len(self.associations) == 0:
+            return
 
-        elif key is not None \
-                and key != "Arn" \
-                and key != "Name" \
-                and isinstance(value, str) \
-                and len(value) > 0 \
-                and (key.endswith("Id") or key.endswith("Arn") or key.endswith("Name")):
+        def set_references(references, item, key=None):
 
-            if key not in references:
-                references[key] = set()
+            if isinstance(item, list):
+                [set_references(references, i) for i in item]
 
-            references[key].update([value])
+            elif isinstance(item, dict):
+                [set_references(references, v, k) for k, v in item.items()]
 
-    def _handle_resource_selection(self, only, skip):
+            elif (key is not None
+                  and any([isinstance(item, t) for t in [str, int, bool]])
+                  and len(str(item)) > 0):
 
-        for resource in self.get("Resource"):
-            if (len(only) > 0 and str(resource) not in only) \
-                    or str(resource) in skip:
-                self.remove(resource)
+                if key not in references:
+                    references[key] = set()
+
+                references[key].update([item])
+
+        for resource in self.console.tasklist(
+            f"Adding Associative relationships",
+            self.get("Resource"),
+            done="Added Associative relationships"
+        ):
+
+            # Extract reference key-value pairs from this resource's
+            # properties (if we need to)
+            prop_refs = {}
+
+            # Extract reference key-value pairs from this resource's ARN:
+            regex = re.compile(RESOURCES[resource.label()])
+            matches = regex.match(resource.id())
+            arn_refs = {k: set([matches.group(k)])
+                        for k in regex.groupindex.keys()
+                        } if matches is not None else {}
+
+            # For each of the resource types associated with this resource type
+            for rt in [[rt for rt in association if rt != resource.label()][0]
+                       for association in self.associations
+                       if resource.label() in association]:
+
+                refs = {}
+                required = list(re.compile(RESOURCES[rt]).groupindex.keys())
+
+                # We have all the information we need using just the ARN
+                if all([k in arn_refs for k in required]):
+                    refs = arn_refs
+                else:
+                    # Check the resource's properties (once)
+                    if len(prop_refs) == 0:
+                        set_references(prop_refs,
+                                       resource.properties())
+
+                    # Use property and ARN refs (ARN values take precedence)
+                    refs = {
+                        **{k: v for k, v in prop_refs.items()
+                           if k in required},
+                        **{k: v for k, v in arn_refs.items()
+                           if k in required},
+                    }
+
+                    # There isn't enough information to create a reference ARN
+                    if not all([k in refs for k in required]):
+                        continue
+
+                # Hopefully, this never happens
+                if not all([len(v) == 1 for v in refs.values()]):
+                    continue
+
+                # Construct a reference ARN and get the associated resource
+                arn = RESOURCES.types[rt].format(
+                    **{k: list(v)[0] for k, v in refs.items()})
+
+                associate = next((r for r in self
+                                  if r.id() == arn), None)
+
+                if associate is None:
+                    # self.console.debug(f"Couldn't create association: resource ({arn}), "
+                    #                    f"referenced by {resource}, doesn't exist ")
+                    continue
+
+                (source, target) = sorted((resource, associate),
+                                          key=lambda r: r.id())
+
+                self.add(Associative(properties={"Name": "Attached"},
+                                     source=source, target=target))
+
+    def update(self, elements):
+        for element in elements:
+            self.add(element)
+
+        if any(r in element.labels() for r in ["Resource", "Generic"]):
+
+            if element.label() not in self.types:
+                self.console.debug(f"Not adding {element}: "
+                                   f"type ({element.label()}) does not match user specifications")
+                return
+
+            if "Resource" in element.labels() and \
+                ((len(self._only_arns) > 0 and element.id() not in self._only_arns)
+                 or (len(self._skip_arns) > 0 and element.id() in self._skip_arns)):
+                self.console.debug(f"Not adding {element}: "
+                                   "ARN does not match user specifications")
+                return
+
+        length = len(self)
+        super().add(element)
+
+        if len(self) == length:
+            return
+
+        elif "Resource" in element.labels():
+            self.console.info(
+                f"Added {element.label().split(':')[-1]} ({element})")
+        elif "Generic" in element.labels():
+            self.console.info(
+                f"Added Generic {element.label().split(':')[-1]} ({element})")
+
+        elif any([e in ["ASSOCIATIVE", "TRANSITIVE"] for e in element.labels()]):
+            self.console.info(f"Added {element.label().capitalize()} relationship: "
+                              f"({element.source()}) → ({element.target()})")
+
+    def destroy(self):
+        associatives = len(self.get("ASSOCIATIVE"))
+        resources = len(self.get("Resource"))
+        generics = len(self.get("Generic"))
+
+        self.console.notice(f"Added {resources} Resource(s), {generics} Generic(s), "
+                            f"and {associatives} Associative relationship(s)")
+        del self
 
 
 class IAM(Ingestor):
 
-    run = ["AWS::Iam::User", "AWS::Iam::Role", "AWS::Iam::Group",
-           "AWS::Iam::Policy", "AWS::Iam::InstanceProfile"]
+    associations = [
+        ("AWS::Iam::User", "AWS::Iam::VirtualMfaDevice")
+    ]
 
-    def __init__(self, session, resources=None, db="default.db", verbose=False, quick=False,
-                 only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
+    def __init__(self, *args, **kwargs):
 
-        self._db = db
-        self._verbose = verbose
-        self.account_id = "000000000000"
+        super().__init__(**kwargs, load_resources=False)
 
-        if resources is not None:
-            self += resources
+        self.get_account_authorization_details()
+        self.list_user_mfa_devices()
+        self.load_associatives()
+
+        if not self.quick:
+            self.get_login_profile()
+            self.list_access_keys()
+
+    def get_account_authorization_details(self):
+
+        resources = [str(f"{t}s" if t != "Policy" else "Policies")
+                     for t in [t.split(':')[-1] for t in self.types]
+                     if t in ["User", "Group", "Role", "Policy", "InstanceProfile"]]
+
+        if not len(resources) > 0:
             return
 
-        super().__init__(session=session, default=False, verbose=verbose, quick=False)
+        elif len(resources) > 1:
+            resources[-1] = f"and {resources[-1]}"
 
-        self.client = self.session.client("iam")
+        resources = ', '.join(resources)
 
-        self.run = [r for r in self.run
-                    if (len(only_types) == 0 or r in only_types)
-                    and r not in skip_types]
+        def get_aad_resources(item, label):
 
-        print("[*] Commencing {resources} ingestion\n".format(
-            resources=', '.join([r if (i == 0 or i % 3 > 0) else f'\n{" " * 15}{r}'
-                                 for i, r in enumerate(self.run)])))
+            resources = []
+            properties = {}
 
-        self.get_account_authorization_details(only_arns, skip_arns)
+            for k in sorted(item.keys()):
 
-        if not quick:
-
-            if "AWS::Iam::User" in self.run:
-                self.get_login_profile()
-                self.list_access_keys()
-
-        # Set IAM entities
-        self.entities = (
-            self.get('AWS::Iam::User')
-            + self.get('AWS::Iam::Role')
-        ).get("Resource")
-
-        # Set Account
-        for a in set([e.account() for e in self.entities.get("Resource")]):
-            self.account_id = a
-            break
-
-        self._print_stats()
-
-    def get_account_authorization_details(self, only_arns, skip_arns):
-
-        elements = Elements()
-        edges = {
-            "Groups": [],
-            "Policies": [],
-            "InstanceProfiles": []
-        }
-
-        self._print("[*] Awaiting response to iam:GetAccountAuthorizationDetails "
-                    "(this can take a while)")
-
-        def get_aad_element(label, entry):
-
-            properties = dict()
-            for pk, pv in sorted(entry.items()):
-
-                if pk.endswith("PolicyList"):
+                 # Rename PolicyLists to Documents
+                if k.endswith("PolicyList"):
                     properties["Documents"] = [{
                         p["PolicyName"]: p["PolicyDocument"]
-                        for p in pv}]
+                        for p in item[k]}]
 
-                elif pk == "AssumeRolePolicyDocument":
-                    properties["Trusts"] = pv
+                # Rename AssumeRolePolicyDocument to Trusts
+                elif k == "AssumeRolePolicyDocument":
+                    properties["Trusts"] = item[k]
 
-                elif pk in ["GroupList", "InstanceProfileList", "AttachedManagedPolicies"]:
-                    continue
+                # Add instance profiles
+                elif k == "InstanceProfileList":
+                    [resources.extend(get_aad_resources(instance_profile, "InstanceProfile"))
+                     for instance_profile in item[k]]
 
-                elif pk == "PolicyVersionList":
+                # Rename PolicyVersionList to Document
+                elif k == "PolicyVersionList":
 
                     properties["Document"] = [{
-                        "DefaultVersion": [p
-                                           for p in pv
-                                           if p["IsDefaultVersion"]
+                        "DefaultVersion": [p for p in item[k] if p["IsDefaultVersion"]
                                            ][0]["Document"]
                     }]
 
+                # Remove label from property key
+                elif label in k:
+                    properties[k.replace(label, "")] = item[k]
+
+                # No change
                 else:
-                    properties[pk.replace(label, "")] = pv
+                    properties[k] = item[k]
 
-            element = Resource(
-                properties=properties,
-                labels=["Resource", f"AWS::Iam::{label}"])
+            # Add Resource
+            resources.append(Resource(
+                labels=[f"AWS::Iam::{label}"],
+                properties=properties))
 
-            if f"AWS::Iam::Group" in self.run and "GroupList" in entry.keys():
+            return resources
 
-                edges["Groups"].extend([(element, g)
-                                        for g in entry["GroupList"]])
+        for page in self.console.tasklist(
+            f"Adding {resources}",
+            iterables=self.client.get_paginator(
+                "get_account_authorization_details").paginate(),
+            wait="Awaiting response to iam:GetAccountAuthorizationDetails",
+            done=f"Added {resources}"
+        ):
 
-            if f"AWS::Iam::InstanceProfile" in self.run \
-                    and "InstanceProfileList" in entry.keys():
+            account_authorization_details = [
+                (k.replace("DetailList", "").replace("Policies", "Policy"), detail)
+                for k, v in page.items() if isinstance(v, list)
+                for detail in v]
 
-                edges["InstanceProfiles"].extend([(get_aad_element("InstanceProfile", ip), element)
-                                                  for ip in entry["InstanceProfileList"]])
-
-            if f"AWS::Iam::Policy" in self.run \
-                    and "AttachedManagedPolicies" in entry.keys():
-                edges["Policies"].extend([(element, p["PolicyArn"])
-                                          for p in entry["AttachedManagedPolicies"]])
-
-            if (str(f"AWS::Iam::{label}") in self.run
-                and (len(skip_arns) == 0 or properties["Arn"] not in skip_arns)
-                and (len(only_arns) == 0 or properties["Arn"] in only_arns)
-                    and element not in elements):
-                self._print(f"[*] Adding {element}")
-                elements.add(element)
-
-            return element
-
-        account_authorization_details = [aad for aad in self.client.get_paginator(
-            "get_account_authorization_details"
-        ).paginate()]
-
-        account_authorization_details = [
-            (label.replace("DetailList", "").replace("Policies", "Policy"), entry)
-            for aad in account_authorization_details
-            for (label, v) in aad.items() if isinstance(v, list)
-            for entry in v]
-
-        for label, entry in account_authorization_details:
-            get_aad_element(label, entry)
-
-        # Ensure edge nodes exist
-        for k, v in edges.items():
-            edges[k] = list(filter(
-                lambda e: e[0] is not None and e[1] is not None,
-                [e if type(e[1]) == Resource
-                 else (e[0], next((t for t in elements
-                                   if (k == "Groups" and str(t).endswith(str(e[1])))
-                                   or str(t) == str(e[1])
-                                   ), None))
-                 for e in v]))
-
-        # (:User|Group|Role)-[:TRANSITIVE{Attached}]->(:Policy)
-        for (s, t) in edges["Policies"]:
-            elements.add(Transitive(
-                properties={"Name": "Attached"},
-                source=s,
-                target=t
-            ))
-
-        # # (:User)-[:TRANSITIVE{MemberOf}]->(:Group)
-        for (s, t) in edges["Groups"]:
-            elements.add(Transitive(
-                properties={"Name": "MemberOf"},
-                source=s,
-                target=t
-            ))
-
-        # (:InstanceProfile)-[:TRANSITIVE{Attached}]->(:Role)
-        for (s, t) in edges["InstanceProfiles"]:
-            del s.properties()["Roles"]
-            elements.add(Transitive(
-                properties={"Name": "Attached"},
-                source=s,
-                target=t))
-
-        self.update(elements)
+            for label, item in account_authorization_details:
+                for resource in get_aad_resources(item, label):
+                    self.add(resource)
 
     def get_login_profile(self):
 
-        for user in self.get("AWS::Iam::User").get("Resource"):
+        for user in self.console.tasklist(
+                "Updating User login profile information",
+                iterables=self.get("AWS::Iam::User").get("Resource"),
+                done="Updated User login profile information"
+        ):
 
             try:
                 login_profile = self.client.get_login_profile(
                     UserName=user.get("Name"))["LoginProfile"]
                 del login_profile["UserName"]
                 user.set("LoginProfile", login_profile)
-                self._print("[+] Updated login profile "
-                            f"information for {user}")
+                self.console.info(
+                    f"Updated User ({user}) login profile information")
 
             except self.client.exceptions.NoSuchEntityException:
                 pass
 
     def list_access_keys(self):
 
-        for user in self.get("AWS::Iam::User").get("Resource"):
+        for user in self.console.tasklist(
+            "Updating User access key information",
+            iterables=self.get("AWS::Iam::User").get("Resource"),
+            done="Updated User access key information",
+        ):
 
             try:
                 access_keys = self.client.list_access_keys(
@@ -628,255 +1014,53 @@ class IAM(Ingestor):
                     }
 
                 user.set("AccessKeys", access_keys)
-                self._print(f"[+] Updated access key information for {user}")
+                self.console.info(
+                    f"Updated User ({user}) access key information")
 
             except self.client.exceptions.NoSuchEntityException:
                 pass
 
-    def post(self, skip_all_actions=False):
-        if not skip_all_actions:
-            self.add(Node(
-                properties={
-                    "Name": "CatchAll",
-                    "Description": "Pseudo-Endpoint for actions that don't specify an affected resource type."
-                },
-                labels=["CatchAll"]))
-            self.resolve()
-        self.transitive()
-        return self.save(self._db)
-
-    def transitive(self):
-
-        instances = self.get(
-            "AWS::Ec2::Instance").get(
-            "Resource")
-
-        functions = self.get(
-            "AWS::Lambda::Function").get(
-            "Resource")
-
-        roles = self.get(
-            "AWS::Iam::Role").get(
-            "Resource")
-
-        instance_profiles = self.get(
-            "AWS::Iam::InstanceProfile").get(
-            "Resource")
-
-        clusters = self.get(
-            "AWS::Eks::Cluster").get(
-            "Resource")
-
-        fargate_profiles = self.get(
-            "AWS::Eks::FargateProfile").get(
-            "Resource")
-
-        nodegroups = self.get(
-            "AWS::Eks::Nodegroup").get(
-            "Resource")
-
-        # Instance - [TRANSITIVE] -> Iam Instance Profile
-
-        for instance in instances:
-
-            if "IamInstanceProfile" not in instance.properties():
-                continue
-
-            target = next((ip for ip in instance_profiles
-                           if ip.id() == instance.properties()["IamInstanceProfile"]["Arn"]),
-                          None)
-
-            del instance.properties()["IamInstanceProfile"]
-
-            self.add(Transitive(
-                {"Name": "Attached"}, source=instance, target=target))
-
-        # Lambda - [TRANSITIVE] -> Role
-
-        for function in functions:
-
-            if "Role" not in function.properties():
-                continue
-
-            role = next((r for r in roles
-                         if r.id() == function.properties()["Role"]),
-                        None)
-
-            del function.properties()["Role"]
-
-            self.add(Transitive(
-                {"Name": "Attached"}, source=function, target=role))
-
-        # Cluster - [TRANSITIVE] -> Role
-
-        for cluster in clusters:
-
-            if "RoleArn" not in cluster.properties():
-                continue
-
-            role = next((r for r in roles
-                         if r.id() == cluster.properties()["RoleArn"]),
-                        None)
-
-            del cluster.properties()["RoleArn"]
-
-            self.add(Transitive(
-                {"Name": "Attached"}, source=cluster, target=role))
-
-        # Fargate Profiles - [TRANSITIVE] -> Role
-
-        for fargate_profile in fargate_profiles:
-
-            if "PodExecutionRoleArn" not in fargate_profile.properties():
-                continue
-
-            role = next((r for r in roles
-                         if r.id() == fargate_profile.properties()["PodExecutionRoleArn"]),
-                        None)
-
-            del fargate_profile.properties()["PodExecutionRoleArn"]
-
-            self.add(Transitive(
-                {"Name": "Attached"}, source=fargate_profile, target=role))
-
-        # Node Group Roles - [TRANSITIVE] -> Role
-
-        for nodegroup in nodegroups:
-
-            if "NodeRole" not in nodegroup.properties():
-                continue
-
-            role = next((r for r in roles
-                         if r.id() == nodegroup.properties()["NodeRole"]),
-                        None)
-
-            del nodegroup.properties()["NodeRole"]
-
-            self.add(Transitive(
-                {"Name": "Attached"}, source=nodegroup, target=role))
-
-    def resolve(self):
-
-        IDP = [
-            "AWS::Iam::User",
-            "AWS::Iam::Role",
-            "AWS::Iam::Group",
-            "AWS::Iam::Policy"
-        ]
-
-        RBP = {
-            "AWS::S3::Bucket": "Policy",
-            "AWS::S3::Object": "Policy",
-            "AWS::Iam::Role": "Trusts"
-        }
-
-        (principals, actions, trusts) = (Elements(), Elements(), Elements())
-        resources = self.get("Resource") + \
-            self.get("Generic") + self.get("CatchAll")
-
-        print("[*] Resolving actions and resources\n")
-
-        # Resolve actions
-        for resource in self.get("Resource"):
-
-            self._print(f"[*] Processing {resource}")
-
-            # Identity Based Policies (Inline and Managed)
-
-            if resource.labels()[0] in IDP:
-
-                count = len(actions)
-                actions.update(IdentityBasedPolicy(
-                    resource, resources).resolve())
-
-                diff = len(actions) - count
-                if diff > 0:
-                    self._print(f"[+] Identity based Policy ({resource}) "
-                                f"resolved to {diff} action(s)")
-
-            if resource.labels()[0] in RBP.keys():
-
-                # Bucket & Object ACLs
-
-                if resource.type("AWS::S3::Bucket") or resource.type("AWS::S3::Object"):
-
-                    count = len(actions)
-                    if resource.type("AWS::S3::Bucket"):
-                        acl = BucketACL(resource, resources)
-                    elif resource.type("AWS::S3::Object"):
-                        acl = ObjectACL(resource, resources)
-
-                    principals.update(acl.principals())
-                    actions.update(acl.resolve())
-
-                    diff = len(actions) - count
-                    if diff > 0:
-                        self._print(f"[+] ACL for {resource} "
-                                    f"resolved to {diff} action(s)")
-
-                # Resource Based Policies
-
-                rbp = ResourceBasedPolicy(
-                    resource,
-                    resources,
-                    keys=[RBP[resource.labels()[0]]])
-
-                if len(rbp.principals()) > 0:
-
-                    count = len(actions)
-                    resolved = rbp.resolve()
-
-                    principals.update([p for p in rbp.principals()
-                                       if p not in principals and
-                                       str(p) != RESOURCES.types["AWS::Account"].format(Account=self.account_id)])
-
-                    # TODO: This code should be moved to 'ResourceBasedPolicy' and override resolve().
-
-                    # For Roles, actions imply a TRUSTS relationship. Only those beginning
-                    # with sts:Assume are considered valid.
-
-                    for action in [a for a in resolved
-                                   if "AWS::Iam::Role" not in resource.labels() or
-                                   str(a).startswith("sts:AssumeRole")]:
-
-                        if action.source().type("AWS::Account") \
-                                and action.source().properties()["Arn"].split(':')[4] == self.account_id:
-
-                            if "AWS::Iam::Role" in resource.labels():
-
-                                trusts.update([Trusts(properties=action.properties(),
-                                                      source=action.target(),
-                                                      target=e)
-                                               for e in self.entities])
-
-                            # This case appears redundant for Buckets
-
-                        else:
-                            if not action.source().type("AWS::Domain"):
-                                actions.add(action)
-
-                            if "AWS::Iam::Role" in resource.labels():
-                                trusts.add(Trusts(properties=action.properties(),
-                                                  source=action.target(),
-                                                  target=action.source()))
-
-                    diff = len(actions) - count
-                    if diff > 0:
-                        self._print(f"[+] Resource based policy ({resource}) "
-                                    f"resolved to {diff} action(s)")
-
-        self.update(principals)
-        self.update(actions)
-        self.update(trusts)
-
-        sys.stdout.write("\033[F\033[K")
-        print(f"[+] Produced {len(principals)} "
-              f"new principals and {len(actions)} actions\n")
+    def list_user_mfa_devices(self):
+
+        if not any([r in self.types for r in [
+            "AWS::Iam::MfaDevice",
+            "AWS::Iam::VirtualMfaDevice"
+        ]]):
+            return
+
+        for user in self.console.tasklist(
+                "Adding MfaDevices",
+                iterables=self.get("AWS::Iam::User").get("Resource"),
+                wait="Awaiting response to iam:ListMFADevices",
+                done="Added MFA devices",
+        ):
+
+            for mfa_device in self.client.list_mfa_devices(
+                UserName=user.get("Name")
+            )["MFADevices"]:
+
+                label = RESOURCES.label(mfa_device["SerialNumber"])
+                mfa_device["Arn"] = mfa_device["SerialNumber"]
+                mfa_device["Name"] = mfa_device["Arn"].split('/')[-1] if label == "AWS::Iam::MfaDevice" \
+                    else "Virtual Device" if label == "AWS::Iam::VirtualMfaDevice" \
+                    else "Device"
+
+                if label is None:
+                    continue
+
+                del mfa_device["SerialNumber"]
+
+                resource = Resource(
+                    labels=[label],
+                    properties=mfa_device
+                )
+
+                self.add(resource)
 
 
 class EC2(Ingestor):
 
-    run = [
+    types = [
         'AWS::Ec2::DhcpOptions',
         # 'AWS::Ec2::Image',
         'AWS::Ec2::Instance',
@@ -894,7 +1078,7 @@ class EC2(Ingestor):
         'AWS::Ec2::VpcPeeringConnection',
     ]
 
-    associates = [
+    associations = [
         ("AWS::Ec2::Instance", "AWS::Ec2::NetworkInterface"),
         ("AWS::Ec2::Instance", "AWS::Ec2::KeyPair"),
         ("AWS::Ec2::Instance", "AWS::Ec2::Volume"),
@@ -908,41 +1092,31 @@ class EC2(Ingestor):
         ("AWS::Ec2::Vpc", "AWS::Ec2::Subnet"),
     ]
 
-    def __init__(self, session, account="000000000000", verbose=False, quick=False,
-                 only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
+    def __init__(self, **kwargs):
 
-        super().__init__(session=session, account=account, verbose=verbose, quick=quick,
-                         only_types=only_types, skip_types=skip_types,
-                         only_arns=only_arns, skip_arns=skip_arns)
+        super().__init__(**kwargs)
 
-        if not quick:
+        if not self.quick:
             self.get_instance_user_data()
-
-        super()._print_stats()
 
     def get_instance_user_data(self):
 
-        client = self.session.client(self.__class__.__name__.lower())
-
-        for instance in self.get("AWS::Ec2::Instance").get("Resource"):
+        for instance in self.console.tasklist(
+            "Updating Instance user data information",
+            iterables=self.get("AWS::Ec2::Instance").get("Resource"),
+            wait="Awaiting response to ec2:DescribeInstanceAttribute",
+            done="Updated Instance user data information"
+        ):
 
             name = instance.get("Name")
 
             try:
-                client.describe_instance_attribute(
-                    Attribute="userData", DryRun=True, InstanceId=name)
+                response = self.client.describe_instance_attribute(Attribute="userData",
+                                                                   DryRun=False,
+                                                                   InstanceId=name)
             except ClientError as e:
-                if 'DryRunOperation' not in str(e):
-                    self._print(
-                        "[!] EC2: Not authorised to get instance user data.")
-
-            try:
-                response = client.describe_instance_attribute(Attribute="userData",
-                                                              DryRun=False,
-                                                              InstanceId=name)
-            except ClientError as e:
-                self._print("[!] Couldn't get user data for "
-                            f"{name} -- it may no longer exist.")
+                self.console.error(f"Couldn't get user data for {name} "
+                                   "- it may no longer exist.")
 
             if 'UserData' in response.keys() and 'Value' in response['UserData'].keys():
                 userdata = b64decode(response['UserData']['Value'])
@@ -953,376 +1127,325 @@ class EC2(Ingestor):
                     userdata = userdata.decode('utf-8')
 
                 instance.set("UserData", {"UserData": userdata})
-                self._print(f"[+] Updated instance user data for {instance}")
+                self.console.info(f"Updated Instance ({instance}) user data")
 
 
 class S3(Ingestor):
 
-    run = [
+    types = [
         'AWS::S3::Bucket',
         'AWS::S3::Object',
     ]
 
-    def __init__(self, session, account="000000000000", verbose=False, quick=False,
-                 only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
+    associations = [
+        ('AWS::S3::Bucket', 'AWS::S3::Object')
+    ]
 
-        super().__init__(session=session, account=account, verbose=verbose, quick=quick,
-                         only_types=only_types, skip_types=skip_types,
-                         only_arns=only_arns, skip_arns=skip_arns)
+    def __init__(self, **kwargs):
 
-        self.client = self.session.client('s3')
+        super().__init__(**kwargs)
 
-        if not quick:
+        if not self.quick:
             self.get_bucket_policies()
             self.get_bucket_acls()
             self.get_public_access_blocks()
             self.get_object_acls()
 
-        self._print_stats()
-
     def get_bucket_policies(self):
 
-        sr = self.session.resource(self.__class__.__name__.lower())
-
-        for bucket in self.get("AWS::S3::Bucket").get("Resource"):
+        for bucket in self.console.tasklist(
+            "Updating Bucket policy information",
+            iterables=self.get("AWS::S3::Bucket").get("Resource"),
+            wait="Awaiting response to s3:GetBucketPolicy",
+            done="Updated Bucket policy information"
+        ):
             try:
-                bucket.set("Policy", json.loads(sr.BucketPolicy(
-                    bucket.get('Name')).policy))
-                self._print(f"[+] Updated bucket policy for {bucket}")
-            # No policy for this bucket
-            except:
-                pass
+                policy = self.client.get_bucket_policy(
+                    Bucket=bucket.get('Name'))["Policy"]
+
+                bucket.set("Policy", json.loads(policy))
+                self.console.info(f"Updated Bucket ({bucket}) policy")
+
+            except ClientError as e:
+                self.console.debug("Failed to update Bucket policy "
+                                   f"({bucket}): {str(e)}")
+
+    def get_public_access_blocks(self):
+
+        for bucket in self.console.tasklist(
+            "Updating Bucket public access block information",
+            iterables=self.get("AWS::S3::Bucket").get("Resource"),
+            wait="Awaiting response to s3:GetPublicAccessBlock",
+            done="Updated Bucket public access block information"
+        ):
+
+            # https://docs.aws.amazon.com/AmazonS3/latest/dev/access-control-block-public-access.html
+            # Implicitly affects Bucket ACLs and Policies (values returned by associated get requests
+            # specify what is being enforced rather than actual values)
+
+            try:
+                public_access_block = self.client.get_public_access_block(
+                    Bucket=bucket.get("Name")
+                )["PublicAccessBlockConfiguration"]
+
+                bucket.set("PublicAccessBlock", public_access_block)
+                self.console.info(
+                    f"Updated Bucket ({bucket}) public access block")
+
+            except ClientError as e:
+                self.console.debug("Failed to update Bucket public access block "
+                                   f"({bucket}): {str(e)}")
 
     def get_bucket_acls(self):
 
-        sr = self.session.resource(self.__class__.__name__.lower())
-
-        for bucket in self.get("AWS::S3::Bucket").get("Resource"):
+        for bucket in self.console.tasklist(
+            "Updating Bucket ACL information",
+            iterables=self.get("AWS::S3::Bucket").get("Resource"),
+            wait="Awaiting response to s3:GetBucketACL",
+            done="Updated Bucket ACL information",
+        ):
             try:
-                bucket.set("ACL", sr.BucketAcl(bucket.get('Name')).grants)
-                self._print(f"[+] Updated bucket acl for {bucket}")
+                acl = self.client.get_bucket_acl(Bucket=bucket.get('Name'))
+                bucket.set("ACL", {
+                    "Owner": acl["Owner"],
+                    "Grants": acl["Grants"]
+                })
+                self.console.info(f"Updated Bucket ({bucket}) ACL")
+
             except ClientError as e:
-                if "AccessDenied" in str(e):
-                    self._print(
-                        f"[!] Access denied when getting ACL for {bucket}")
-                else:
-                    self._print("[!]", e)
+                self.console.debug("Failed to update Bucket ACL "
+                                   f"({bucket}): {str(e)}")
 
     def get_object_acls(self):
 
-        sr = self.session.resource(self.__class__.__name__.lower())
-
-        for obj in self.get("AWS::S3::Object").get("Resource"):
+        for obj in self.console.tasklist(
+            "Updating Object ACL information",
+            iterables=self.get("AWS::S3::Object").get("Resource"),
+            wait="Awaiting response to s3:GetObjectACL",
+            done="Updated Object ACL information"
+        ):
             try:
                 arn = obj.get("Arn")
                 bucket, *key = arn.split(':::')[1].split('/')
                 key = "/".join(key)
-                obj.set("ACL", sr.ObjectAcl(bucket, key).grants)
-                self._print(f"[+] Updated object acl for {obj}")
+
+                acl = self.client.get_object_acl(Bucket=bucket, Key=key)
+                obj.set("ACL", {
+                    "Owner": acl["Owner"],
+                    "Grants": acl["Grants"]
+                })
+                self.console.info(f"Updated Object ({obj}) ACL")
+
             except ClientError as e:
-                if "AccessDenied" in str(e):
-                    self._print(
-                        f"[!] Access denied when getting ACL for {obj}")
-                else:
-                    self._print("[!]", e)
-
-    def get_public_access_blocks(self):
-
-        for bucket in self.get("AWS::S3::Bucket").get("Resource"):
-
-            try:
-                # https://docs.aws.amazon.com/AmazonS3/latest/dev/access-control-block-public-access.html
-                # Implicitly affects Bucket ACLs and Policies (values returned by associated get requests
-                # specify what is being enforced rather than actual values)
-
-                bucket.set("PublicAccessBlock",
-                           self.client.get_public_access_block(
-                               Bucket=bucket.get("Name")
-                           )["PublicAccessBlockConfiguration"])
-
-            except Exception:
-                pass
+                self.console.debug("Failed to update Object ACL "
+                                   f"({obj}): {str(e)}")
 
 
 class Lambda(Ingestor):
 
-    run = [
+    types = [
         'AWS::Lambda::Function',
     ]
 
-    def __init__(self, session, account="000000000000", verbose=False, quick=False,
-                 only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
+    def __init__(self, *args, **kwargs):
 
-        super().__init__(session=session, default=False, verbose=verbose, quick=quick)
-
-        self.run = [t for t in self.run
-                    if (len(skip_types) == 0 or t not in skip_types)
-                    and (len(only_types) == 0 or t in only_types)]
-
-        if len(self.run) == 0:
-            return
+        super().__init__(**kwargs, load_resources=False)
 
         self.client = self.session.client('lambda')
-
-        print("[*] Commencing {resources} ingestion\n".format(
-            ingestor=self.__class__.__name__,
-            resources=', '.join([
-                r if (i == 0 or i % 3 > 0)
-                else f'\n{" " * 15}{r}'
-                for i, r in enumerate(self.run)])
-        ))
-
         self.list_functions()
-        self._handle_resource_selection(only_arns, skip_arns)
-
-        super()._print_stats()
 
     def list_functions(self):
 
-        functions = Elements()
-        self._print("[*] Awaiting response to lambda:ListFunctions"
-                    "(this can take a while)")
+        if 'AWS::Lambda::Function' not in self.types:
+            return
 
-        for function in [f
-                         for r in self.client.get_paginator("list_functions").paginate()
-                         for f in r["Functions"]]:
+        functions = Elements()
+
+        for function in [f for r in self.console.tasklist(
+            "Adding Functions",
+            iterables=self.client.get_paginator("list_functions").paginate(),
+            wait="Awaiting response to lambda:ListFunctions",
+            done="Added Functions"
+        ) for f in r["Functions"]]:
 
             function["Name"] = function["FunctionName"]
             function["Arn"] = function["FunctionArn"]
             del function["FunctionName"]
             del function["FunctionArn"]
 
-            f = Resource(
+            function = Resource(
                 properties=function,
                 labels=["AWS::Lambda::Function"])
 
-            if f not in functions:
-                self._print(f"[*] Adding {f}")
-                functions.add(f)
-
-        self.update(functions)
+            self.add(function)
 
 
 class EKS(Ingestor):
 
     run = [
-        'AWS::Eks::Cluster', "AWS::Eks::FargateProfile", "AWS::Eks::Nodegroup"
+        'AWS::Eks::Cluster',
+        "AWS::Eks::FargateProfile",
+        "AWS::Eks::Nodegroup"
     ]
 
-    associates = [
-        ("AWS::Eks::Cluster", "AWS::Eks::FargateProfile"),
-        ("AWS::Eks::Cluster", "AWS::Eks::Nodegroup")]
+    associations = []
 
-    def __init__(self, session, account="000000000000", verbose=False, quick=False,
-                 only_types=[], skip_types=[], only_arns=[], skip_arns=[]):
+    def __init__(self, *args, **kwargs):
 
-        super().__init__(session=session, default=False, verbose=verbose, quick=quick)
+        super().__init__(**kwargs, load_resources=False)
 
-        self.run = [t for t in self.run
-                    if (len(skip_types) == 0 or t not in skip_types)
-                    and (len(only_types) == 0 or t in only_types)]
+        self.list_clusters()
+        self.list_nodegroups()
+        self.list_fargate_profiles()
 
-        if len(self.run) == 0:
-            return
-
-        self.client = self.session.client('eks')
-
-        print("[*] Commencing {resources} ingestion\n".format(
-            ingestor=self.__class__.__name__,
-            resources=', '.join([
-                r if (i == 0 or i % 3 > 0)
-                else f'\n{" " * 15}{r}'
-                for i, r in enumerate(self.run)])
-        ))
-
-        if 'AWS::Eks::Cluster' in self.run:
-            self.list_clusters()
-
-        if 'AWS::Eks::Nodegroup' in self.run:
-            self.list_nodegroups()
-
-        if 'AWS::Eks::FargateProfile' in self.run:
-            self.list_fargate_profiles()
-
-        if not quick:
+        if not self.quick:
             self.describe_clusters()
             self.describe_nodegroups()
             self.describe_fargate_profiles()
 
-        # else: # Role relationships are excluded, along with various properties.
-
-        self._handle_resource_selection(only_arns, skip_arns)
-        self._print_stats()
-
     def list_clusters(self):
 
-        self._print(
-            "[*] Awaiting response to eks:ListClusters (this can take a while)")
+        for page in self.console.tasklist(
+            "Adding Clusters",
+            iterables=self.client.get_paginator("list_clusters").paginate(),
+            wait="Awaiting response to eks:ListClusters",
+            done="Added Clusters"
+        ):
 
-        clusters = [j for k in [c["clusters"] for c in self.client.get_paginator(
-            "list_clusters").paginate()] for j in k]
+            for cluster in page["clusters"]:
 
-        label = "AWS::Eks::Cluster"
-        for cluster in clusters:
+                arn = RESOURCES.definition("AWS::Eks::Cluster").format(
+                    Region=self.session.region_name,
+                    Account=self.account,
+                    Cluster=cluster
+                )
 
-            arn = RESOURCES.definition(label).format(
-                Region=self.session.region_name,
-                Account=self.account_id,
-                Cluster=cluster
-            )
-
-            cluster = Resource(properties={
-                "Name": cluster,
-                "Arn": arn
-            }, labels=[label])
-
-            self._print(f"[*] Adding {cluster}")
-            self.add(cluster)
+                self.add(Resource(properties={
+                    "Name": cluster,
+                    "Arn": arn
+                }, labels=["AWS::Eks::Cluster"]))
 
     def list_nodegroups(self):
 
-        clusters = self.get("AWS::Eks::Cluster").get("Resource")
+        for cluster in self.console.tasklist(
+            "Adding Nodegroups",
+            iterables=self.get("AWS::Eks::Cluster").get("Resource"),
+            wait="Awaiting response to eks:ListNodegroups",
+            done="Added Nodegroups"
+        ):
 
-        for cluster in clusters:
+            for page in self.client.get_paginator("list_nodegroups").paginate(
+                    clusterName=cluster.get("Name")):
 
-            self._print("[*] Awaiting response to eks:ListNodegroups "
-                        "(this can take a while)")
+                for nodegroup in page["nodegroups"]:
 
-            nodegroups = [j for k in [
-                ng["nodegroups"] for ng in self.client.get_paginator(
-                    "list_nodegroups").paginate(clusterName=cluster.properties()["Name"])
-            ] for j in k]
+                    arn = RESOURCES.definition("AWS::Eks::Nodegroup").format(
+                        Region=self.session.region_name,
+                        Account=self.account,
+                        Cluster=cluster.get("Name"),
+                        Nodegroup=nodegroup,
+                        NodegroupId="{NodegroupId}"
+                    )
 
-            for nodegroup in nodegroups:
+                    nodegroup = Resource(properties={
+                        "Name": nodegroup,
+                        "Arn": arn,
+                        "Cluster": cluster.get("Name")
+                    }, labels=["AWS::Eks::Nodegroup"])
 
-                arn = RESOURCES.definition("AWS::Eks::Nodegroup").format(
-                    Region=self.session.region_name,
-                    Account=self.account_id,
-                    Cluster=cluster.properties()["Name"],
-                    Nodegroup=nodegroup,
-                    NodegroupId="{NodegroupId}"
-                )
-
-                nodegroup = Resource(properties={
-                    "Name": nodegroup,
-                    "Arn": arn,
-                    "Cluster": cluster.properties()["Name"]
-                }, labels=["AWS::Eks::Nodegroup"])
-
-                transitive = Transitive(
-                    properties={
-                        "Name": "Attached"
-                    }, source=cluster, target=nodegroup)
-
-                self._print(f"[*] Adding {nodegroup}")
-                self.add(nodegroup)
-                self.add(transitive)
+                    self.add(nodegroup)
 
     def list_fargate_profiles(self):
 
-        clusters = self.get("AWS::Eks::Cluster").get("Resource")
+        for cluster in self.console.tasklist(
+            "Adding Fargate Profiles",
+            iterables=self.get("AWS::Eks::Cluster").get("Resource"),
+            wait="Awaiting response to eks:ListFargateProfiles",
+            done="Added Fargate Profiles"
+        ):
 
-        for cluster in clusters:
+            for page in self.client.get_paginator("list_fargate_profiles").paginate(
+                    clusterName=cluster.get("Name")):
 
-            self._print("[*] Awaiting response to eks:ListFargateProfiles "
-                        "(this can take a while)")
+                for fargate_profile in page["fargateProfileNames"]:
 
-            fargate_profiles = [j for k in
-                                [fp["fargateProfileNames"]
-                                 for fp in self.client.get_paginator("list_fargate_profiles").paginate(
-                                    clusterName=cluster.properties()["Name"])]
-                                for j in k]
+                    arn = RESOURCES.definition("AWS::Eks::FargateProfile").format(
+                        Region=self.session.region_name,
+                        Account=self.account,
+                        Cluster=cluster.get("Name"),
+                        FargateProfile=fargate_profile,
+                        FargateProfileId="{FargateProfileId}"
+                    )
 
-            for fargate_profile in fargate_profiles:
+                    fargate_profile = Resource(properties={
+                        "Name": fargate_profile,
+                        "Arn": arn,
+                        "Cluster": cluster.get("Name")
+                    }, labels=["AWS::Eks::FargateProfile"])
 
-                arn = RESOURCES.definition("AWS::Eks::FargateProfile").format(
-                    Region=self.session.region_name,
-                    Account=self.account_id,
-                    Cluster=cluster.properties()["Name"],
-                    FargateProfile=fargate_profile,
-                    FargateProfileId="{FargateProfileId}"
-                )
+                    self.add(fargate_profile)
 
-                fargate_profile = Resource(properties={
-                    "Name": fargate_profile,
-                    "Arn": arn,
-                    "Cluster": cluster.properties()["Name"]
-                }, labels=["AWS::Eks::FargateProfile"])
+    def _update_resource_properties(self, resource, properties):
 
-                transitive = Transitive(
-                    properties={
-                        "Name": "Attached"
-                    }, source=cluster, target=fargate_profile)
+        for k, v in properties.items():
 
-                self._print(f"[*] Adding {fargate_profile}")
-                self.add(fargate_profile)
-                self.add(transitive)
+            # Strip label
+            key = re.compile(resource.label().split(
+                ':')[-1], re.IGNORECASE).sub('', k)
+
+            # CamelCase
+            key = ''.join([w.capitalize()
+                           for w in re.sub(r'(?<!^)(?=[A-Z])', ' ', key).split()])
+
+            # Strip keywords
+            for w in ["Arn", "Name"]:
+                if key != w and key.endswith(w):
+                    key = key.replace(w, "")
+
+            resource.set(key, v)
 
     def describe_clusters(self):
 
-        clusters = self.get("AWS::Eks::Cluster").get("Resource")
+        for cluster in self.console.tasklist(
+            "Updating Cluster infomation",
+            iterables=self.get("AWS::Eks::Cluster").get("Resource"),
+            wait="Awaiting response to eks:DescribeCluster",
+            done="Updated Cluster information"
+        ):
 
-        for cluster in clusters:
+            properties = self.client.describe_cluster(
+                name=cluster.get("Name"))["cluster"]
 
-            properties = {f"{k[0].upper()}{k[1:]}": v
-                          for k, v in self.client.describe_cluster(
-                              name=cluster.properties()["Name"])["cluster"].items()}
-
-            for k, v in properties.items():
-                cluster.set(k, v)
-
-            self._print(f"[+] Updated cluster {cluster}")
+            self._update_resource_properties(cluster, properties)
 
     def describe_nodegroups(self):
 
-        for nodegroup in self.get("AWS::Eks::Nodegroup").get("Resource"):
-
-            cluster = nodegroup.properties()["Cluster"]
-            del nodegroup.properties()["Cluster"]
+        for nodegroup in self.console.tasklist(
+            "Updating Nodegroups",
+            iterables=self.get("AWS::Eks::Nodegroup").get("Resource"),
+            wait="Awaiting response to eks:DescribeNodegroup",
+            done="Updated Nodegroups"
+        ):
 
             properties = self.client.describe_nodegroup(
-                clusterName=cluster,
-                nodegroupName=nodegroup.properties()["Name"]
+                clusterName=nodegroup.get("Cluster"),
+                nodegroupName=nodegroup.get("Name")
             )["nodegroup"]
 
-            properties = {f"{k[0].upper()}{k[1:]}".replace(
-                "Nodegroup", "Nodegroup"): v for k, v in properties.items()}
-
-            properties["Name"] = properties["NodegroupName"]
-            properties["Arn"] = properties["NodegroupArn"]
-
-            del properties["ClusterName"]
-            del properties["NodegroupName"]
-            del properties["NodegroupArn"]
-
-            for k, v in properties.items():
-                nodegroup.set(k, v)
-
-            self._print(f"[+] Updated nodegroup {nodegroup}")
+            self._update_resource_properties(nodegroup, properties)
 
     def describe_fargate_profiles(self):
 
-        for fargate_profile in self.get("AWS::Eks::FargateProfile").get("Resource"):
+        for fargate_profile in self.console.tasklist(
+            "Updating Fargate Profiles",
+            iterables=self.get("AWS::Eks::FargateProfile").get("Resource"),
+            wait="Awaiting response to eks:DescribeFargateProfile",
+            done="Updated Fargate Profiles"
+        ):
 
-            cluster = fargate_profile.properties()["Cluster"]
-            del fargate_profile.properties()["Cluster"]
+            properties = self.client.describe_fargate_profile(
+                clusterName=fargate_profile.get("Cluster"),
+                fargateProfileName=fargate_profile.get("Name")
+            )["fargateProfile"]
 
-            properties = {
-                f"{k[0].upper()}{k[1:]}": v
-                for k, v in self.client.describe_fargate_profile(
-                    clusterName=cluster,
-                    fargateProfileName=fargate_profile.properties()["Name"]
-                )["fargateProfile"].items()
-            }
-
-            properties["Name"] = properties["FargateProfileName"]
-            properties["Arn"] = properties["FargateProfileArn"]
-
-            del properties["ClusterName"]
-            del properties["FargateProfileName"]
-            del properties["FargateProfileArn"]
-
-            for k, v in properties.items():
-                fargate_profile.set(k, v)
-
-            self._print(f"[+] Updated fargate profile {fargate_profile}")
+            self._update_resource_properties(fargate_profile, properties)

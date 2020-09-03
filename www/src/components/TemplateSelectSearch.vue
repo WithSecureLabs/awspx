@@ -34,12 +34,9 @@ export default {
     img(item) {
       if (!Object.keys(item).includes("type")) return this.icons.AWS.Resource;
 
-      return item.type
-        .split("::")
-        .reduce(
-          (o, i) => (i in o ? o[i] : this.icons.AWS.Resource),
-          this.icons
-        );
+      return item.type.split("::").reduce((o, k) => {
+        return Object.keys(o).includes(k) ? o[k] : this.icons.AWS.Resource;
+      }, this.icons);
     }
   }
 };

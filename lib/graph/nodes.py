@@ -23,6 +23,9 @@ class Resource(Node):
                          key)
 
     def account(self):
+        if "Arn" not in self.properties() or len(self.properties()["Arn"].split(':')) < 5:
+            return None
+
         return str(self.properties()["Arn"].split(':')[4])
 
 

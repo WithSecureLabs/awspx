@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="loading || populated" id="search">
+    <div id="search">
       <!-- Search expansion -->
       <v-card
         v-show="!show"
@@ -59,6 +59,14 @@ export default {
     TemplateAutocomplete
   },
   props: {
+    resources: {
+      type: Array,
+      default: []
+    },
+    actions: {
+      type: Array,
+      default: []
+    },
     show: {
       type: Boolean,
       default: true
@@ -75,81 +83,16 @@ export default {
 
   data: function() {
     return {
-      actions: [],
-      resources: [],
       search: {
         label: "",
         input: "",
         value: []
       },
-      populated: true,
-      hover: false,
-      loading: true
+      hover: false
     };
   },
 
-  methods: {
-    init() {
-      const types = ["Admin", "External", "Resource", "CatchAll", "Generic"];
-      this.loading = true;
-
-      Promise.all([
-        this.neo4j
-          .run(
-            "MATCH ()-[action:ACTION]->() " +
-              "RETURN action ORDER BY action.Name"
-          )
-          .then(actions => {
-            this.actions = actions.Text.map(result => {
-              return JSON.parse(result["action"]);
-            });
-          }),
-        this.neo4j
-          .run("MATCH (r) WHERE NOT (r:Pattern OR r:`AWS::Domain`) RETURN r")
-          .then(elements => {
-            this.resources = elements.Graph.map(r => {
-              const id =
-                typeof r.data.properties.Arn !== "undefined"
-                  ? r.data.properties.Arn
-                  : r.data.name;
-
-              const classification = r.classes
-                .filter(c => types.indexOf(c) != -1)
-                .concat("")[0];
-
-              return {
-                name: r.data.name,
-                id: id,
-                type: r.data.name === "Effective Admin" ? "Admin" : r.data.type,
-                class:
-                  r.data.name === "Effective Admin" ? "Admin" : classification,
-                element: r
-              };
-            }).sort((a, b) => {
-              let c = types.indexOf(a.class) - types.indexOf(b.class);
-              if (c !== 0) return c;
-              else return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1;
-              return c;
-            });
-          })
-      ]).finally(() => {
-        const count = this.resources.filter(r => r.class === "Resource").length;
-        this.search.label = `Search ${count} Resources  (+${this.resources.length - count} others)`;
-        this.loading = false;
-      });
-    }
-  },
-
   watch: {
-    resources() {
-      this.populated = this.resources.length + this.actions.length > 0;
-    },
-    actions() {
-      this.populated = this.resources.length + this.actions.length > 0;
-    },
-    populated(value) {
-      this.$emit("populated", value);
-    },
     "search.value"(n, o) {
       if (n.length === o.length) {
         return;
@@ -158,6 +101,13 @@ export default {
           "add",
           n.filter(e => !o.includes(e)).map(e => e.element)
         );
+    },
+    resources() {
+      const count = this.resources.filter(r => r.class === "Resource").length;
+      this.search.value = [];
+      this.search.label =
+        `Search ${count} Resources  ` +
+        `(+${this.resources.length - count} others)`;
     }
   },
 
@@ -208,10 +158,6 @@ export default {
       query = query.join(" ");
       return query;
     }
-  },
-
-  mounted() {
-    this.init();
   }
 };
 </script>

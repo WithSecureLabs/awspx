@@ -1,10 +1,6 @@
 
-import csv
-import hashlib
 import json
 import os
-import subprocess
-import shutil
 from datetime import datetime
 
 from lib.aws.actions import ACTIONS
@@ -58,6 +54,11 @@ class Element:
 
     def properties(self):
         return self._properties
+
+    def label(self):
+        return [l for l in self.labels()
+                if l != self.__class__.__name__
+                ][0]
 
     def labels(self):
         return sorted(list(self._labels))
@@ -154,98 +155,6 @@ class Elements(set):
 
     def get(self, label):
         return Elements(filter(lambda r: r.type(label), self))
-
-    def save(self, db="default.db", path="/opt/awspx/data"):
-
-        edge_files = []
-        node_files = []
-
-        if not db.endswith(".db"):
-            db = "%s.db" % db
-
-        def stringify(s, t): return json.dumps(
-            s, default=str) if t == "list" or t == "dict" else str(s)
-
-        directory = f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{db.split('.')[0]}"
-        labels = sorted(list(set([
-            next((l for l in e.labels()
-                  if l not in ["External", "Generic", "Resource"]),
-                 "Node")
-            for e in self])))
-
-        os.mkdir(f"{path}/{directory}")
-
-        for label in labels:
-
-            filename = "%s.csv" % label
-            elements = self.get(label)
-
-            if len(elements) == 0:
-                continue
-
-            header = sorted(list(set([
-                (f, e.get(f).__class__.__name__)
-                for e in elements for f in e.properties().keys()])))
-
-            # We default to type: 'str' in cases where key names collide accross types
-
-            header = list(set([
-                (f, 'str' if [k for k, _ in header].count(f) > 1 else t)
-                for (f, t) in header]))
-
-
-            if type(next(iter(elements))) is Node or Node in type(next(iter(elements))).__bases__:
-
-                prefix = [":ID"]
-                suffix = [":LABEL"]
-                data = [[e.id()] + [stringify(e.properties()[f], _)
-                                    if f in e.properties()
-                                    else '' for (f, _) in header]
-                        + [";".join(e.labels())] for e in elements]
-
-                node_files.append(filename)
-
-            else:
-
-                prefix = [":START_ID"]
-                suffix = [":END_ID", ":TYPE"]
-
-                data = [[e.source().id()] + [stringify(e.properties()[f], _)
-                                             if f in e.properties()
-                                             else '' for (f, _) in header]
-                        + [e.target().id(), label] for e in elements if e.target() is not None]
-
-                edge_files.append(filename)
-
-            data.insert(0,
-                        prefix + ["%s:%s" % (k, {
-                            t:           t,
-                            "NoneType": "string",
-                            "dict":     "string",
-                            "list":     "string",
-                            "int":      "string",
-                            "datetime": "string",
-                            "bool":     "string",
-                            "str":      "string"
-                        }[t]) for (k, t) in header] + suffix)
-
-            with open('%s/%s/%s' % (path, directory, filename), mode='w') as elements:
-
-                c = csv.writer(
-                    elements,
-                    delimiter=',',
-                    quotechar='"',
-                    quoting=csv.QUOTE_MINIMAL)
-
-                for row in data:
-                    c.writerow(row)
-
-        shutil.make_archive(f"{path}/{directory}",
-                            'zip', f"{path}/{directory}")
-
-        subprocess.Popen(["rm", "-rf", f"{path}/{directory}"])
-
-        return f"{path}/{directory}.zip"
 
     def __repr__(self):
         return str([str(e) for e in self])

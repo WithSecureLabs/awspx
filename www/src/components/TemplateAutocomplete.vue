@@ -14,7 +14,7 @@
       class="ma-0 pa-0 my-3"
       @click="menu = !menu"
       :disabled="disabled"
-      :cache-items="true"
+      :cache-items="false"
       :items="resources"
       :loading="loading"
       :filter="filter"

@@ -5888,7 +5888,7 @@ ACTIONS = {
   "iam:CreateVirtualMFADevice": {
     "Access": "Write",
     "Affects": {
-      "AWS::Iam::Mfa": {
+      "AWS::Iam::VirtualMfaDevice": {
         "Condition Keys": [],
         "Dependant Actions": []
       }
@@ -6142,7 +6142,7 @@ ACTIONS = {
   "iam:DeleteVirtualMFADevice": {
     "Access": "Write",
     "Affects": {
-      "AWS::Iam::Mfa": {
+      "AWS::Iam::VirtualMfaDevice": {
         "Condition Keys": [],
         "Dependant Actions": []
       },

@@ -108,9 +108,9 @@ export default {
             selector: 'node.AWS',
             style: {
                 'background-image': function (n) {
-                    return n.data().type.split('::').reduce(
-                        (o, i) => (i in o) ? o[i] : icons.AWS.Resource, icons);
-
+                    return n.data().type.split('::').reduce((o, k) => {
+                        return Object.keys(o).includes(k) ? o[k] : icons.AWS.Resource
+                    }, icons)
                 },
             }
         },

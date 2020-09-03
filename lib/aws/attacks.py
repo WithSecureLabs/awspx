@@ -1,739 +1,693 @@
-#!/usr/bin/python3
 
 import copy
 import json
 import re
-import sys
 import time
 
 from lib.graph.db import Neo4j
 
 
+definitions = {
+
+    "CreatePolicyVersion": {
+
+        "Description": "Overwrite the default version of the "
+        "target managed policy:",
+
+        "Commands": [
+            "aws create-policy-version "
+            "--policy-arn ${AWS::Iam::Policy}.Arn "
+            "--set-as-default "
+            "--policy-document file://<(cat <<EOF\n"
+            "{\n"
+            "    \"Version\": \"2012-10-17\",\n"
+            "    \"Statement\": [\n"
+            "        {\n"
+            "            \"Sid\": \"Admin\",\n"
+            "            \"Effect\": \"Allow\",\n"
+            "            \"Action\": \"*\",\n"
+            "            \"Resource\": \"*\"\n"
+            "        }]\n"
+            "}\n"
+            "EOF\n"
+            ")"
+
+        ],
+
+        "Attack": {
+
+            "Depends": "AWS::Iam::Policy",
+
+            "Requires": [
+                "iam:CreatePolicyVersion"
+            ],
+
+            "Affects": "AWS::Iam::Policy",
+
+            "Grants": "Admin"
+
+        }
+    },
+
+    "AssociateInstanceProfile": {
+
+        "Description": "Associate the specified EC2 instance with "
+        "the target instance profile: ",
+
+        "Commands": [
+            "aws ec2 associate-iam-instance-profile "
+            "--iam-instance-profile Name=${AWS::Iam::InstanceProfile} "
+            "--instance-id ${AWS::Ec2::Instance}"
+        ],
+
+        "Attack": {
+
+            "Depends": "AWS::Ec2::Instance",
+
+            "Requires": [
+                "ec2:AssociateIamInstanceProfile"
+            ],
+
+            "Affects": "AWS::Ec2::Instance",
+
+            "Grants": "AWS::Iam::InstanceProfile",
+
+            "Cypher": [
+                "(${AWS::Ec2::Instance}) WHERE NOT EXISTS((${AWS::Iam::InstanceProfile})-[:TRANSITIVE]->(:`AWS::Iam::Role`)) "
+                "OR EXISTS((${AWS::Iam::InstanceProfile})-[:TRANSITIVE]->(:`AWS::Iam::Role`)<-[:ACTION{Name:'iam:PassRole', Effect:'Allow'}]-(${}))"
+            ]
+
+        }
+    },
+
+    "AssumeRole": {
+
+        "Description": "Retrieve a set of temporary security credentials "
+        "from assuming the target role:",
+
+        "Commands": [
+            "aws sts assume-role "
+            "--role-arn ${AWS::Iam::Role}.Arn "
+            "--role-session-name AssumeRole"
+        ],
+
+        "Attack": {
+
+            "Requires": [
+                "sts:AssumeRole"
+            ],
+
+            "Affects": "AWS::Iam::Role",
+
+            "Cypher": [
+                "(${})<-[:TRUSTS{Name:'sts:AssumeRole'}]-(${AWS::Iam::Role})"
+            ]
+
+        }
+    },
+
+    "AddRoleToInstanceProfile": {
+
+        "Description": "Add the target role to "
+        "the specified instance profile:",
+
+        "Commands": [
+            "aws iam add-role-to-instance-profile"
+            "--instance-profile-name ${AWS::Iam::InstanceProfile} "
+            "--role-name ${AWS::Iam::Role}"],
+
+        "Attack": {
+
+            "Depends": "AWS::Iam::InstanceProfile",
+
+            "Requires": [
+                "iam:AddRoleToInstanceProfile"
+            ],
+
+            "Affects": "AWS::Iam::InstanceProfile",
+
+            "Grants": "AWS::Iam::Role",
+
+            "Cypher": [
+                "(${AWS::Iam::Role})-[:TRUSTS]->({Name:'ec2.amazonaws.com'}) "
+                "WHERE (${})-[:TRANSITIVE|ATTACK*0..]->()-[:ACTION{Effect:'Allow', Name:'iam:RemoveRoleFromInstanceProfile'}]->(${AWS::Iam::InstanceProfile}) "
+                "OR (${})-[:TRANSITIVE|ATTACK*0..]->()-[:ACTION{Effect:'Allow', Name:'iam:DeleteInstanceProfile'}]->(${AWS::Iam::InstanceProfile}) "
+                "OR NOT EXISTS((${AWS::Iam::InstanceProfile})-[:TRANSITIVE]->(${AWS::Iam::Role})) "
+            ]
+        }
+    },
+
+    "AddUserToGroup": {
+
+        "Description": "Add the specified user to the target group:",
+
+        "Commands": [
+            "aws iam add-user-to-group "
+            "--user-name ${AWS::Iam::User} "
+            "--group-name ${AWS::Iam::Group}"
+        ],
+
+        "Attack": {
+
+            "Depends": "AWS::Iam::User",
+
+            "Requires": [
+                "iam:AddUserToGroup"
+            ],
+
+            "Affects": "AWS::Iam::Group"
+
+        }
+    },
+
+    "AttachGroupPolicy": {
+
+        "Description": "Attach the target managed "
+        "policy to the specified group:",
+
+        "Commands": [
+            "aws iam attach-group-policy "
+            "--group-name ${AWS::Iam::Group} "
+            "--policy-arn ${AWS::Iam::Policy}.Arn",
+        ],
+
+        "Attack": {
+
+            "Depends": "AWS::Iam::Group",
+
+            "Requires": [
+                "iam:AttachGroupPolicy",
+            ],
+
+            "Affects": "AWS::Iam::Group",
+
+            "Grants": "AWS::Iam::Policy"
+
+        }
+    },
+
+    "AttachRolePolicy": {
+
+        "Description": "Attach the target managed "
+        "policy to the specified role:",
+
+        "Commands": [
+            "aws iam attach-role-policy "
+            "--role-name ${AWS::Iam::Role} "
+            "--policy-arn ${AWS::Iam::Policy}.Arn"
+        ],
+
+        "Attack": {
+
+            "Depends": "AWS::Iam::Role",
+
+            "Requires": [
+                "iam:AttachRolePolicy"
+            ],
+
+            "Affects": "AWS::Iam::Role",
+
+            "Grants": "AWS::Iam::Policy"
+        }
+
+    },
+
+    "AttachUserPolicy": {
+
+        "Description": "Attach the target managed "
+        "policy to the specified user.",
+
+        "Commands": [
+            "aws iam attach-user-policy "
+            "--user-name ${AWS::Iam::User} "
+            "--policy-arn ${AWS::Iam::Policy}.Arn",
+        ],
+
+        "Attack": {
+
+            "Depends": "AWS::Iam::User",
+
+            "Requires": [
+                "iam:AttachUserPolicy",
+            ],
+
+            "Affects": "AWS::Iam::User",
+
+            "Grants": "AWS::Iam::Policy"
+
+        }
+    },
+
+    "CreateGroup": {
+
+        "Description": "Create a new group and add the specified user to it:",
+
+        "Options": ["CreateAction"],
+
+        "Commands": [
+            "aws iam create-group --group-name ${AWS::Iam::Group}",
+
+            "aws iam add-user-to-group "
+            "--user-name ${AWS::Iam::User} "
+            "--group-name ${AWS::Iam::Group}"
+        ],
+
+        "Attack": {
+
+            "Depends": "AWS::Iam::User",
+
+            "Requires": [
+                "iam:CreateGroup",
+                "iam:AddUserToGroup",
+            ],
+
+            "Affects": "AWS::Iam::Group"
+
+        },
+    },
+
+    "CreateInstance": {
+
+        "Description": "Launch a new EC2 instance:",
+
+        "Options": ["CreateAction"],
+
+        "Commands": [
+            "aws ec2 run-instances "
+            "--count 1 "
+            "--instance-type t2.micro"
+            "--image-id $AmiId",
+        ],
+
+        "Attack": {
+
+            "Requires": [
+                "ec2:RunInstances"
+            ],
+
+            "Affects": "AWS::Ec2::Instance",
+
+        }
+    },
+
+    "CreateInstanceProfile": {
+
+        "Description": "Create a new instance profile",
+
+        "Options": ["CreateAction"],
+
+        "Commands": [
+            "aws iam create-instance-profile "
+            "--instance-profile-name ${AWS::Iam::InstanceProfile}"
+        ],
+
+
+        "Attack": {
+
+            "Requires": [
+                "iam:CreateInstanceProfile"
+            ],
+
+            "Affects": "AWS::Iam::InstanceProfile",
+
+        }
+    },
+
+    "CreatePolicy": {
+
+        "Description": "Create a new managed policy:",
+
+        "Options": ["CreateAction"],
+
+        "Commands": [
+            "aws iam create-policy "
+            "--policy-name ${AWS::Iam::Policy} "
+            "--policy-document file://<(cat <<EOF\n"
+            "{\n"
+            "    \"Version\": \"2012-10-17\",\n"
+            "    \"Statement\": [\n"
+            "        {\n"
+            "            \"Sid\": \"Admin\",\n"
+            "            \"Effect\": \"Allow\",\n"
+            "            \"Action\": \"*\",\n"
+            "            \"Resource\": \"*\"\n"
+            "        }]\n"
+            "}\n"
+            "EOF\n"
+            ")"
+        ],
+
+        "Attack": {
+
+            "Requires": [
+                "iam:CreatePolicy",
+            ],
+
+            "Affects": "AWS::Iam::Policy",
+
+        },
+    },
+
+    "CreateRole": {
+
+        "Description": "Create a new role to assume:",
+
+        "Options": ["CreateAction"],
+
+        "Commands": [
+            "aws iam create-role --role-name ${AWS::Iam::Role} "
+            "--assume-role-policy-document file://<(cat <<EOF\n"
+            "{\n"
+            "  \"Version\": \"2012-10-17\",\n"
+            "  \"Statement\": [\n"
+            "    {\n"
+            "      \"Effect\": \"Allow\",\n"
+            "      \"Action\": \"sts:AssumeRole\",\n"
+            "      \"Principal\": {\n"
+            "        \"AWS\": \"*\"\n"
+            "      }\n"
+            "    }\n"
+            "  ]\n"
+            "}\n"
+            "EOF\n"
+            ")"
+        ],
+
+        # TODO: If this attack incorporates an instance profile then the Principal entry
+        # in Commands should be Service: ec2.amazonaws.com.
+        "Attack": {
+
+            "Requires": [
+                "iam:CreateRole",
+            ],
+
+            "Affects": "AWS::Iam::Role",
+
+        },
+
+        "Grants": "AssumeRole"
+    },
+
+    "CreateUserLoginProfile": {
+
+        "Description": "Create a new user:",
+
+        "Options": ["CreateAction"],
+
+        "Commands": [
+            "aws iam create-user --user-name ${AWS::Iam::User}",
+            "aws iam create-login-profile --user-name ${AWS::Iam::User} "
+            "--password $Password"
+        ],
+
+        "Attack": {
+
+            "Requires": [
+                "iam:CreateUser",
+                "iam:CreateLoginProfile"
+            ],
+
+            "Affects": "AWS::Iam::User",
+
+        }
+    },
+
+    "PutGroupPolicy": {
+
+        "Description": "Add a new administrative inline policy document to the target group:",
+
+        "Commands": [
+            "aws iam put-group-policy --group-name ${AWS::Iam::Group} "
+            "--policy-name Admin "
+            "--policy-document file://<(cat <<EOF\n"
+            "{\n"
+            "    \"Version\": \"2012-10-17\",\n"
+            "    \"Statement\": [\n"
+            "        {\n"
+            "            \"Sid\": \"Admin\",\n"
+            "            \"Effect\": \"Allow\",\n"
+            "            \"Action\": \"*\",\n"
+            "            \"Resource\": \"*\"\n"
+            "        }]\n"
+            "}\n"
+            "EOF\n"
+            ")"
+        ],
+
+        "Attack": {
+
+            "Depends": "AWS::Iam::Group",
+
+            "Requires": [
+                "iam:PutGroupPolicy"
+            ],
+
+            "Affects": "AWS::Iam::Group",
+
+            "Grants": "Admin"
+
+        },
+    },
+
+    "PutRolePolicy": {
+
+        "Description": "Add a new administrative inline policy document to the target role:",
+
+        "Commands": [
+            "aws iam put-role-policy --role-name ${AWS::Iam::Role} "
+            "--policy-name Admin "
+            "--policy-document file://<(cat <<EOF\n"
+            "{\n"
+            "    \"Version\": \"2012-10-17\",\n"
+            "    \"Statement\": [\n"
+            "        {\n"
+            "            \"Sid\": \"Admin\",\n"
+            "            \"Effect\": \"Allow\",\n"
+            "            \"Action\": \"*\",\n"
+            "            \"Resource\": \"*\"\n"
+            "        }]\n"
+            "}\n"
+            "EOF\n"
+            ")"
+        ],
+
+        "Attack": {
+
+            "Depends": "AWS::Iam::Role",
+
+            "Requires": [
+                "iam:PutRolePolicy"
+            ],
+
+            "Affects": "AWS::Iam::Role",
+
+            "Grants": "Admin"
+
+        },
+    },
+
+    "PutUserPolicy": {
+
+        "Description": "Add a new administrative inline policy document to the target user:",
+
+        "Commands": [
+            "aws iam put-user-policy --user-name ${AWS::Iam::User} "
+            "--policy-name Admin "
+            "--policy-document file://<(cat <<EOF\n"
+            "{\n"
+            "    \"Version\": \"2012-10-17\",\n"
+            "    \"Statement\": [\n"
+            "        {\n"
+            "            \"Sid\": \"Admin\",\n"
+            "            \"Effect\": \"Allow\",\n"
+            "            \"Action\": \"*\",\n"
+            "            \"Resource\": \"*\"\n"
+            "        }]\n"
+            "}\n"
+            "EOF\n"
+            ")"
+        ],
+
+        "Attack": {
+
+            "Depends": "AWS::Iam::User",
+
+            "Requires": [
+                "iam:PutUserPolicy"
+            ],
+
+            "Affects": "AWS::Iam::User",
+
+            "Grants": "Admin"
+
+        },
+    },
+
+    "UpdateRole": {
+
+        "Description": "Update the assume-role policy document of "
+        "the target role and assume it thereafter:",
+
+        "Commands": [
+            "aws iam create-role --role-name ${AWS::Iam::Role} "
+            "--assume-role-policy-document file://<(cat <<EOF\n"
+            "{\n"
+            "  \"Version\": \"2012-10-17\",\n"
+            "  \"Statement\": [\n"
+            "    {\n"
+            "      \"Effect\": \"Allow\",\n"
+            "      \"Action\": \"sts:AssumeRole\",\n"
+            "      \"Principal\": {\n"
+            "        \"AWS\": [\n"
+            "          \"${}.Arn\"\n"
+            "        ]\n"
+            "      }\n"
+            "    }\n"
+            "  ]\n"
+            "}\n"
+            "EOF\n"
+            ")",
+
+            "aws sts assume-role "
+            "--role-arn ${AWS::Iam::Role}.Arn "
+            "--role-session-name AssumeRole"
+        ],
+
+        "Attack": {
+
+            "Requires": [
+                "iam:UpdateAssumeRolePolicy"
+            ],
+
+            "Affects": "AWS::Iam::Role"
+
+        }
+    },
+
+    "UpdateUserLoginProfile": {
+
+        "Description": "Reset the target user's console password and login as them:",
+
+        "Commands": [
+            "aws iam update-login-profile "
+            "--user-name ${AWS::Iam::User} "
+            "--password $Password "
+        ],
+
+        "Attack": {
+
+            "Requires": [
+                "iam:UpdateLoginProfile"
+            ],
+
+            "Affects": "AWS::Iam::User"
+
+        }
+    },
+
+    "SetUserLoginProfile": {
+
+        "Description": "Set a console password for the target user and login as them, nothing has been set before:",
+
+        "Commands": [
+            "aws iam create-login-profile "
+            "--user-name ${AWS::Iam::User} "
+            "--password $Password "
+        ],
+
+        "Attack": {
+
+            "Requires": [
+                "iam:CreateLoginProfile"
+            ],
+
+            "Affects": "AWS::Iam::User",
+
+            "Cypher": [
+                "${AWS::Iam::User}.LoginProfile IS NULL"
+            ]
+        }
+    },
+
+    "CreateUserAccessKey": {
+
+        "Description": "Create an access key for the target user and authenticate as them using the API:",
+
+        "Commands": [
+            "aws iam create-access-key "
+            "--user-name ${AWS::Iam::User} "
+        ],
+
+        "Attack": {
+
+            "Requires": [
+                "iam:CreateAccessKey"
+            ],
+
+            "Affects": "AWS::Iam::User",
+
+            "Cypher": [
+                "(COALESCE(SIZE(SPLIT("
+                "${AWS::Iam::User}.AccessKeys,"
+                "'Status')), 1) - 1) < 2",
+            ]
+
+        }
+    },
+
+    "ReplaceUserAccessKey": {
+
+        "Description": "Create, or replace, an access key for the target user and authenticate as them using the API:",
+
+        "Commands": [
+            "aws iam delete-access-key "
+            "--user-name ${AWS::Iam::User} "
+            "--access-key-id $AccessKeyId",
+            "aws iam create-access-key "
+            "--user-name ${AWS::Iam::User} "
+        ],
+
+        "Attack": {
+
+            "Requires": [
+                "iam:DeleteAccessKey",
+                "iam:CreateAccessKey"
+            ],
+
+            "Affects": "AWS::Iam::User",
+
+            "Cypher": [
+                "(SIZE(SPLIT("
+                "${AWS::Iam::User}.AccessKeys,"
+                "'Status')) - 1) > 0",
+            ]
+
+        }
+    },
+
+}
+
+
 class Attacks:
 
-    definitions = {
+    definitions = definitions
+    stats = []
 
-        "CreatePolicyVersion": {
+    def __init__(self, skip_attacks=[], only_attacks=[], skip_conditional_actions=True, console=None):
 
-            "Description": "Overwrite the default version of the "
-            "target managed policy:",
+        if console is None:
+            from lib.util.console import console
+        self.console = console
 
-            "Commands": [
-                "aws create-policy-version "
-                "--policy-arn ${AWS::Iam::Policy}.Arn "
-                "--set-as-default "
-                "--policy-document file://<(cat <<EOF\n"
-                "{\n"
-                "    \"Version\": \"2012-10-17\",\n"
-                "    \"Statement\": [\n"
-                "        {\n"
-                "            \"Sid\": \"Admin\",\n"
-                "            \"Effect\": \"Allow\",\n"
-                "            \"Action\": \"*\",\n"
-                "            \"Resource\": \"*\"\n"
-                "        }]\n"
-                "}\n"
-                "EOF\n"
-                ")"
+        self.ignore_actions_with_conditions = skip_conditional_actions
+        self.definitions = {k: v for k, v in self.definitions.items()
+                            if k not in skip_attacks
+                            and (only_attacks == [] or k in only_attacks)}
 
-            ],
-
-            "Attack": {
-
-                "Depends": "AWS::Iam::Policy",
-
-                "Requires": [
-                    "iam:CreatePolicyVersion"
-                ],
-
-                "Affects": "AWS::Iam::Policy",
-
-                "Grants": "Admin"
-
-            }
-        },
-
-        "AssociateInstanceProfile": {
-
-            "Description": "Associate the specified EC2 instance with "
-            "the target instance profile: ",
-
-            "Commands": [
-                "aws ec2 associate-iam-instance-profile "
-                "--iam-instance-profile Name=${AWS::Iam::InstanceProfile} "
-                "--instance-id ${AWS::Ec2::Instance}"
-            ],
-
-            "Attack": {
-
-                "Depends": "AWS::Ec2::Instance",
-
-                "Requires": [
-                    "ec2:AssociateIamInstanceProfile"
-                ],
-
-                "Affects": "AWS::Ec2::Instance",
-
-                "Grants": "AWS::Iam::InstanceProfile",
-
-                "Cypher": [
-                    "(${AWS::Ec2::Instance}) WHERE NOT EXISTS((${AWS::Iam::InstanceProfile})-[:TRANSITIVE]->(:`AWS::Iam::Role`)) "
-                    "OR EXISTS((${AWS::Iam::InstanceProfile})-[:TRANSITIVE]->(:`AWS::Iam::Role`)<-[:ACTION{Name:'iam:PassRole', Effect:'Allow'}]-(${}))"
-                ]
-
-            }
-        },
-
-        "AssumeRole": {
-
-            "Description": "Retrieve a set of temporary security credentials "
-            "from assuming the target role:",
-
-            "Commands": [
-                "aws sts assume-role "
-                "--role-arn ${AWS::Iam::Role}.Arn "
-                "--role-session-name AssumeRole"
-            ],
-
-            "Attack": {
-
-                "Requires": [
-                    "sts:AssumeRole"
-                ],
-
-                "Affects": "AWS::Iam::Role",
-
-                "Cypher": [
-                    "(${})<-[:TRUSTS{Name:'sts:AssumeRole'}]-(${AWS::Iam::Role})"
-                ]
-
-            }
-        },
-
-        "AddRoleToInstanceProfile": {
-
-            "Description": "Add the target role to "
-            "the specified instance profile:",
-
-            "Commands": [
-                "aws iam add-role-to-instance-profile"
-                "--instance-profile-name ${AWS::Iam::InstanceProfile} "
-                "--role-name ${AWS::Iam::Role}"],
-
-            "Attack": {
-
-                "Depends": "AWS::Iam::InstanceProfile",
-
-                "Requires": [
-                    "iam:AddRoleToInstanceProfile"
-                ],
-
-                "Affects": "AWS::Iam::InstanceProfile",
-
-                "Grants": "AWS::Iam::Role",
-
-                "Cypher": [
-                    "(${AWS::Iam::Role})-[:TRUSTS]->({Name:'ec2.amazonaws.com'}) "
-                    "WHERE (${})-[:TRANSITIVE|ATTACK*0..]->()-[:ACTION{Effect:'Allow', Name:'iam:RemoveRoleFromInstanceProfile'}]->(${AWS::Iam::InstanceProfile}) "
-                    "OR (${})-[:TRANSITIVE|ATTACK*0..]->()-[:ACTION{Effect:'Allow', Name:'iam:DeleteInstanceProfile'}]->(${AWS::Iam::InstanceProfile}) "
-                    "OR NOT EXISTS((${AWS::Iam::InstanceProfile})-[:TRANSITIVE]->(${AWS::Iam::Role})) "
-                ]
-            }
-        },
-
-        "AddUserToGroup": {
-
-            "Description": "Add the specified user to the target group:",
-
-            "Commands": [
-                "aws iam add-user-to-group "
-                "--user-name ${AWS::Iam::User} "
-                "--group-name ${AWS::Iam::Group}"
-            ],
-
-            "Attack": {
-
-                "Depends": "AWS::Iam::User",
-
-                "Requires": [
-                    "iam:AddUserToGroup"
-                ],
-
-                "Affects": "AWS::Iam::Group"
-
-            }
-        },
-
-        "AttachGroupPolicy": {
-
-            "Description": "Attach the target managed "
-            "policy to the specified group:",
-
-            "Commands": [
-                "aws iam attach-group-policy "
-                "--group-name ${AWS::Iam::Group} "
-                "--policy-arn ${AWS::Iam::Policy}.Arn",
-            ],
-
-            "Attack": {
-
-                "Depends": "AWS::Iam::Group",
-
-                "Requires": [
-                    "iam:AttachGroupPolicy",
-                ],
-
-                "Affects": "AWS::Iam::Group",
-
-                "Grants": "AWS::Iam::Policy"
-
-            }
-        },
-
-        "AttachRolePolicy": {
-
-            "Description": "Attach the target managed "
-            "policy to the specified role:",
-
-            "Commands": [
-                "aws iam attach-role-policy "
-                "--role-name ${AWS::Iam::Role} "
-                "--policy-arn ${AWS::Iam::Policy}.Arn"
-            ],
-
-            "Attack": {
-
-                "Depends": "AWS::Iam::Role",
-
-                "Requires": [
-                    "iam:AttachRolePolicy"
-                ],
-
-                "Affects": "AWS::Iam::Role",
-
-                "Grants": "AWS::Iam::Policy"
-            }
-
-        },
-
-        "AttachUserPolicy": {
-
-            "Description": "Attach the target managed "
-            "policy to the specified user.",
-
-            "Commands": [
-                "aws iam attach-user-policy "
-                "--user-name ${AWS::Iam::User} "
-                "--policy-arn ${AWS::Iam::Policy}.Arn",
-            ],
-
-            "Attack": {
-
-                "Depends": "AWS::Iam::User",
-
-                "Requires": [
-                    "iam:AttachUserPolicy",
-                ],
-
-                "Affects": "AWS::Iam::User",
-
-                "Grants": "AWS::Iam::Policy"
-
-            }
-        },
-
-        "CreateGroup": {
-
-            "Description": "Create a new group and add the specified user to it:",
-
-            "Options": ["CreateAction"],
-
-            "Commands": [
-                "aws iam create-group --group-name ${AWS::Iam::Group}",
-
-                "aws iam add-user-to-group "
-                "--user-name ${AWS::Iam::User} "
-                "--group-name ${AWS::Iam::Group}"
-            ],
-
-            "Attack": {
-
-                "Depends": "AWS::Iam::User",
-
-                "Requires": [
-                    "iam:CreateGroup",
-                    "iam:AddUserToGroup",
-                ],
-
-                "Affects": "AWS::Iam::Group"
-
-            },
-        },
-
-        "CreateInstance": {
-
-            "Description": "Launch a new EC2 instance:",
-
-            "Options": ["CreateAction"],
-
-            "Commands": [
-                "aws ec2 run-instances "
-                "--count 1 "
-                "--instance-type t2.micro"
-                "--image-id $AmiId",
-            ],
-
-            "Attack": {
-
-                "Requires": [
-                    "ec2:RunInstances"
-                ],
-
-                "Affects": "AWS::Ec2::Instance",
-
-            }
-        },
-
-        "CreateInstanceProfile": {
-
-            "Description": "Create a new instance profile",
-
-            "Options": ["CreateAction"],
-
-            "Commands": [
-                "aws iam create-instance-profile "
-                "--instance-profile-name ${AWS::Iam::InstanceProfile}"
-            ],
-
-
-            "Attack": {
-
-                "Requires": [
-                    "iam:CreateInstanceProfile"
-                ],
-
-                "Affects": "AWS::Iam::InstanceProfile",
-
-            }
-        },
-
-        "CreatePolicy": {
-
-            "Description": "Create a new managed policy:",
-
-            "Options": ["CreateAction"],
-
-            "Commands": [
-                "aws iam create-policy "
-                "--policy-name ${AWS::Iam::Policy} "
-                "--policy-document file://<(cat <<EOF\n"
-                "{\n"
-                "    \"Version\": \"2012-10-17\",\n"
-                "    \"Statement\": [\n"
-                "        {\n"
-                "            \"Sid\": \"Admin\",\n"
-                "            \"Effect\": \"Allow\",\n"
-                "            \"Action\": \"*\",\n"
-                "            \"Resource\": \"*\"\n"
-                "        }]\n"
-                "}\n"
-                "EOF\n"
-                ")"
-            ],
-
-            "Attack": {
-
-                "Requires": [
-                    "iam:CreatePolicy",
-                ],
-
-                "Affects": "AWS::Iam::Policy",
-
-            },
-        },
-
-        "CreateRole": {
-
-            "Description": "Create a new role to assume:",
-
-            "Options": ["CreateAction"],
-
-            "Commands": [
-                "aws iam create-role --role-name ${AWS::Iam::Role} "
-                "--assume-role-policy-document file://<(cat <<EOF\n"
-                "{\n"
-                "  \"Version\": \"2012-10-17\",\n"
-                "  \"Statement\": [\n"
-                "    {\n"
-                "      \"Effect\": \"Allow\",\n"
-                "      \"Action\": \"sts:AssumeRole\",\n"
-                "      \"Principal\": {\n"
-                "        \"AWS\": \"*\"\n"
-                "      }\n"
-                "    }\n"
-                "  ]\n"
-                "}\n"
-                "EOF\n"
-                ")"
-            ],
-
-            # TODO: If this attack incorporates an instance profile then the Principal entry
-            # in Commands should be Service: ec2.amazonaws.com.
-            "Attack": {
-
-                "Requires": [
-                    "iam:CreateRole",
-                ],
-
-                "Affects": "AWS::Iam::Role",
-
-            },
-
-            "Grants": "AssumeRole"
-        },
-
-        # "CreateSnapshot": {
-
-        #     "Description": "Create a snapshot of the target volume "
-        #     "and gain read access to it by launching a new EC2 instance that mounts it:",
-
-        #     "Commands": [
-        #         "aws ec2 create-snapshot ${AWS::Ec2::Volume}",
-        #         "aws ec2 run-instances "
-        #         "--block-device-mapping \"DeviceName=/dev/sda2,Ebs={SnapshotId=${AWS::Ec2::Volume}}\""
-        #     ],
-
-        #     "Attack": {
-
-        #         "Requires": [
-        #             "ec2:CreateSnapshot",
-        #             "ec2:RunInstances"
-        #         ],
-
-        #         "Affects": "AWS::Ec2::Volume",
-
-        #     }
-        # },
-
-        "CreateUserLoginProfile": {
-
-            "Description": "Create a new user:",
-
-            "Options": ["CreateAction"],
-
-            "Commands": [
-                "aws iam create-user --user-name ${AWS::Iam::User}",
-                "aws iam create-login-profile --user-name ${AWS::Iam::User} "
-                "--password $Password"
-            ],
-
-            "Attack": {
-
-                "Requires": [
-                    "iam:CreateUser",
-                    "iam:CreateLoginProfile"
-                ],
-
-                "Affects": "AWS::Iam::User",
-
-            }
-        },
-
-        "PutGroupPolicy": {
-
-            "Description": "Add a new administrative inline policy document to the target group:",
-
-            "Commands": [
-                "aws iam put-group-policy --group-name ${AWS::Iam::Group} "
-                "--policy-name Admin "
-                "--policy-document file://<(cat <<EOF\n"
-                "{\n"
-                "    \"Version\": \"2012-10-17\",\n"
-                "    \"Statement\": [\n"
-                "        {\n"
-                "            \"Sid\": \"Admin\",\n"
-                "            \"Effect\": \"Allow\",\n"
-                "            \"Action\": \"*\",\n"
-                "            \"Resource\": \"*\"\n"
-                "        }]\n"
-                "}\n"
-                "EOF\n"
-                ")"
-            ],
-
-            "Attack": {
-
-                "Depends": "AWS::Iam::Group",
-
-                "Requires": [
-                    "iam:PutGroupPolicy"
-                ],
-
-                "Affects": "AWS::Iam::Group",
-
-                "Grants": "Admin"
-
-            },
-        },
-
-        "PutRolePolicy": {
-
-            "Description": "Add a new administrative inline policy document to the target role:",
-
-            "Commands": [
-                "aws iam put-role-policy --role-name ${AWS::Iam::Role} "
-                "--policy-name Admin "
-                "--policy-document file://<(cat <<EOF\n"
-                "{\n"
-                "    \"Version\": \"2012-10-17\",\n"
-                "    \"Statement\": [\n"
-                "        {\n"
-                "            \"Sid\": \"Admin\",\n"
-                "            \"Effect\": \"Allow\",\n"
-                "            \"Action\": \"*\",\n"
-                "            \"Resource\": \"*\"\n"
-                "        }]\n"
-                "}\n"
-                "EOF\n"
-                ")"
-            ],
-
-            "Attack": {
-
-                "Depends": "AWS::Iam::Role",
-
-                "Requires": [
-                    "iam:PutRolePolicy"
-                ],
-
-                "Affects": "AWS::Iam::Role",
-
-                "Grants": "Admin"
-
-            },
-        },
-
-        "PutUserPolicy": {
-
-            "Description": "Add a new administrative inline policy document to the target user:",
-
-            "Commands": [
-                "aws iam put-user-policy --user-name ${AWS::Iam::User} "
-                "--policy-name Admin "
-                "--policy-document file://<(cat <<EOF\n"
-                "{\n"
-                "    \"Version\": \"2012-10-17\",\n"
-                "    \"Statement\": [\n"
-                "        {\n"
-                "            \"Sid\": \"Admin\",\n"
-                "            \"Effect\": \"Allow\",\n"
-                "            \"Action\": \"*\",\n"
-                "            \"Resource\": \"*\"\n"
-                "        }]\n"
-                "}\n"
-                "EOF\n"
-                ")"
-            ],
-
-            "Attack": {
-
-                "Depends": "AWS::Iam::User",
-
-                "Requires": [
-                    "iam:PutUserPolicy"
-                ],
-
-                "Affects": "AWS::Iam::User",
-
-                "Grants": "Admin"
-
-            },
-        },
-
-        "UpdateRole": {
-
-            "Description": "Update the assume-role policy document of "
-            "the target role and assume it thereafter:",
-
-            "Commands": [
-                "aws iam create-role --role-name ${AWS::Iam::Role} "
-                "--assume-role-policy-document file://<(cat <<EOF\n"
-                "{\n"
-                "  \"Version\": \"2012-10-17\",\n"
-                "  \"Statement\": [\n"
-                "    {\n"
-                "      \"Effect\": \"Allow\",\n"
-                "      \"Action\": \"sts:AssumeRole\",\n"
-                "      \"Principal\": {\n"
-                "        \"AWS\": [\n"
-                "          \"${}.Arn\"\n"
-                "        ]\n"
-                "      }\n"
-                "    }\n"
-                "  ]\n"
-                "}\n"
-                "EOF\n"
-                ")",
-
-                "aws sts assume-role "
-                "--role-arn ${AWS::Iam::Role}.Arn "
-                "--role-session-name AssumeRole"
-            ],
-
-            "Attack": {
-
-                "Requires": [
-                    "iam:UpdateAssumeRolePolicy"
-                ],
-
-                "Affects": "AWS::Iam::Role"
-
-            }
-        },
-
-        "UpdateUserLoginProfile": {
-
-            "Description": "Reset the target user's console password and login as them:",
-
-            "Commands": [
-                "aws iam update-login-profile "
-                "--user-name ${AWS::Iam::User} "
-                "--password $Password "
-            ],
-
-            "Attack": {
-
-                "Requires": [
-                    "iam:UpdateLoginProfile"
-                ],
-
-                "Affects": "AWS::Iam::User"
-
-            }
-        },
-
-        "SetUserLoginProfile": {
-
-            "Description": "Set a console password for the target user and login as them, nothing has been set before:",
-
-            "Commands": [
-                "aws iam create-login-profile "
-                "--user-name ${AWS::Iam::User} "
-                "--password $Password "
-            ],
-
-            "Attack": {
-
-                "Requires": [
-                    "iam:CreateLoginProfile"
-                ],
-
-                "Affects": "AWS::Iam::User",
-
-                "Cypher": [
-                    "${AWS::Iam::User}.LoginProfile IS NULL"
-                ]
-            }
-        },
-
-        "CreateUserAccessKey": {
-
-            "Description": "Create an access key for the target user and authenticate as them using the API:",
-
-            "Commands": [
-                "aws iam create-access-key "
-                "--user-name ${AWS::Iam::User} "
-            ],
-
-            "Attack": {
-
-                "Requires": [
-                    "iam:CreateAccessKey"
-                ],
-
-                "Affects": "AWS::Iam::User",
-
-                "Cypher": [
-                    "(COALESCE(SIZE(SPLIT("
-                    "${AWS::Iam::User}.AccessKeys,"
-                    "'Status')), 1) - 1) < 2",
-                ]
-
-            }
-        },
-
-        "ReplaceUserAccessKey": {
-
-            "Description": "Create, or replace, an access key for the target user and authenticate as them using the API:",
-
-            "Commands": [
-                "aws iam delete-access-key "
-                "--user-name ${AWS::Iam::User} "
-                "--access-key-id $AccessKeyId",
-                "aws iam create-access-key "
-                "--user-name ${AWS::Iam::User} "
-            ],
-
-            "Attack": {
-
-                "Requires": [
-                    "iam:DeleteAccessKey",
-                    "iam:CreateAccessKey"
-                ],
-
-                "Affects": "AWS::Iam::User",
-
-                "Cypher": [
-                    "(SIZE(SPLIT("
-                    "${AWS::Iam::User}.AccessKeys,"
-                    "'Status')) - 1) > 0",
-                ]
-
-            }
-        },
-
-    }
-
-    @staticmethod
-    def _admin_cypher():
-
-        return (
-            "MERGE (admin:Admin:`AWS::Iam::Policy`{"
-            "Name: 'Effective Admin', "
-            "Description: 'Pseudo-Policy representing full and unfettered access.', "
-            "Arn: 'arn:aws:iam::${Account}:policy/Admin', "
-            'Document: \'[{"DefaultVersion": {"Version": "2012-10-17", '
-            '"Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"'
-            '}]}}]\''
-            '}) '
-        )
-
-        # Replace the above with the following to create ACTIONs from :Admin
-        # return (
-        #     "MERGE (admin:Admin:`AWS::Iam::Policy) "
-        #     "WITH admin "
-        #     "MATCH ()-[action:ACTION]->(target:Generic) "
-        #     "WHERE NOT (admin:Resource OR admin:Generic) "
-
-        #     "WITH admin, [_ IN LABELS(target) WHERE _ =~ 'AWS::.*'][0] AS type, "
-        #     "COLLECT([action.Name, action.Access, action.Description, action.Reference]) AS actions "
-
-        #     "MATCH (resource:Resource) WHERE ANY(_ IN LABELS(resource) WHERE type = _) "
-
-        #     "WITH admin, resource, actions "
-        #     "UNWIND actions AS action "
-
-        #     "WITH admin, resource, action[0] AS name, action[1] AS access, "
-        #     "COALESCE(action[2],'') AS description, COALESCE(action[3],'') AS reference "
-        #     "MERGE (admin)-[:ACTION{Name:name, Access: access, Description: description, "
-        #     "Effect: 'Allow', Reference: reference}]->(resource)"
-        # )
-
-    @staticmethod
     def _pattern_cypher(
+            self,
             name,
             definition,
-            ignore_actions_with_conditions=True,
             max_search_depth=""):
 
         definition = copy.deepcopy(definition)
@@ -786,7 +740,7 @@ class Attacks:
                 elif placeholder == '':
                     substitute = "source"
                 else:
-                    # print(f"[-] Unknown placeholder: \'{placeholder}\'")
+                    self.console.debug(f"Unknown placeholder: '{placeholder}'")
                     continue
 
                 placeholder = f"${{{placeholder}}}"
@@ -844,7 +798,8 @@ class Attacks:
 
         def process_cypher():
 
-            WITH = ["source", "edge", "options", "target", "path", "grants"]
+            WITH = ["source", "edge", "options",
+                    "target", "path", "grants", "admin"]
             CONSTRAINTS = attack["Cypher"]
             UNWIND = []
 
@@ -895,10 +850,10 @@ class Attacks:
         # - searching further would be redundant.
 
         CYPHER += (
-            "OPTIONAL MATCH (admin)-[:ATTACK*0..2]->(:Admin) "
-            "OPTIONAL MATCH admins=()-[:TRANSITIVE|ATTACK*0..{depth}]->(admin) "
-            "WITH COALESCE([_ IN NODES(admins) WHERE NOT (_:Pattern OR _:Admin)], []) AS admins "
-            "WITH REDUCE(collection=[], _ IN COLLECT(admins)|collection + _) AS admin, "
+            "OPTIONAL MATCH (admin)-[:ATTACK|TRANSITIVE*0..]->(:Admin), "
+            "(default:Admin{{Arn:'arn:aws:iam::${{Account}}:policy/Admin'}}) "
+            "WHERE NOT (admin:Pattern OR admin:Admin) "
+            "WITH COLLECT(DISTINCT COALESCE(admin, default)) AS admin, "
             "[[NULL, []]] AS options, [NULL, []] AS grants "
         )
 
@@ -915,7 +870,7 @@ class Attacks:
 
             CYPHER += (
                 "MATCH path=(source)-"
-                "[:TRANSITIVE|ATTACK|CREATE*0..{depth}]->(option:`{option_type}`) "
+                "[:TRANSITIVE|ATTACK*0..{depth}]->()-[:CREATE*0..1]->(option:`{option_type}`) "
                 "WHERE NOT source IN admin AND NOT option IN NODES(path)[1..-1] "
                 "AND (source:Resource OR source:External) AND (option:Resource OR option:Generic) "
 
@@ -947,11 +902,11 @@ class Attacks:
             CYPHER += ''.join((
 
                 "OPTIONAL MATCH (grant:`{grants}`) WHERE NOT grant:Generic ",
-                str("AND grant:Resource " if attack["Grants"]
-                    != "Admin" else ""),
-                "OPTIONAL MATCH creation=(c)-[:TRANSITIVE|ATTACK|CREATE*..{depth}]",
-                "->(generic:Generic:`{grants}`) ",
-                "WHERE c = source ",
+                str("AND grant:Resource " if attack["Grants"] != "Admin"
+                    else ""),
+                "OPTIONAL MATCH creation=shortestPath((source)-"
+                "[:TRANSITIVE|ATTACK|CREATE*..{depth}]->(generic:Generic:`{grants}`)) ",
+                "WHERE source <> generic ",
 
                 "WITH DISTINCT source, options, admin, ",
                 "grant, generic, REDUCE(commands=[], _ IN EXTRACT(",
@@ -987,14 +942,16 @@ class Attacks:
 
                 "WHERE NOT source:Pattern ",
                 "AND ALL(_ IN REVERSE(TAIL(REVERSE(NODES(path)))) WHERE NOT _ IN admin) ",
-                "AND edge.Condition = '[]' " if ignore_actions_with_conditions else "",
-                # TODO: This is is just a quick for target types that are dependant on being reachable transitively.
+                "AND edge.Condition = '[]' " if self.ignore_actions_with_conditions else "",
+
+                # TODO: This is just a quick fix for target types that are dependant on being reachable transitively.
                 # As is, it will still produce false positives - just less than before.
+
                 'AND target IN [_ IN options|_[0]] ' if "Depends" in attack and attack["Depends"] == attack["Affects"] else "",
 
                 "%s" % process_cypher() if "Cypher" in attack else "",
 
-                "WITH source, target, [] AS commands, options, grants ",
+                "WITH source, target, [] AS commands, options, grants, admin ",
             ))
         else:
 
@@ -1010,29 +967,28 @@ class Attacks:
                 "WHERE NOT source:Pattern",
                 "AND ALL(_ IN REVERSE(TAIL(REVERSE(NODES(path)))) WHERE NOT _ IN admin)",
                 "AND edge.Name IN {requires} AND edge.Effect = 'Allow' ",
-                "AND edge.Condition = '[]' " if ignore_actions_with_conditions else "",
+                "AND edge.Condition = '[]' " if self.ignore_actions_with_conditions else "",
                 'AND target IN [_ IN options|_[0]] ' if "Depends" in attack and attack["Depends"] == attack["Affects"] else "",
-
                 "%s" % process_cypher() if "Cypher" in attack else "",
 
-                "WITH COLLECT([source, edge.Name, target, path, options, grants]) AS results",
+                "WITH COLLECT([source, edge.Name, target, path, options, grants]) AS results, admin",
 
                 "UNWIND results AS result",
                 "WITH results, result[0] AS source,",
-                "result[1] AS edge, result[2] AS target",
+                "result[1] AS edge, result[2] AS target, admin",
 
                 # Eliminate all source nodes that incorporate other source nodes
                 # producing the same edge to the same target. Nodes are validated
                 # by counting the number of distinct edges produced.
 
                 "WITH results, source,",
-                "SIZE(COLLECT(DISTINCT edge)) AS size, target",
+                "SIZE(COLLECT(DISTINCT edge)) AS size, target, admin",
                 "WHERE size = {size}",
 
                 "WITH results, target, ",
-                "COLLECT(DISTINCT source) AS sources ",
+                "COLLECT(DISTINCT source) AS sources, admin ",
                 "WITH results, ",
-                "COLLECT(DISTINCT [target, sources]) AS pairs ",
+                "COLLECT(DISTINCT [target, sources]) AS pairs, admin ",
 
                 "UNWIND pairs AS pair ",
                 "UNWIND results AS result ",
@@ -1040,19 +996,19 @@ class Attacks:
                 "WITH results, ",
                 "result[0] AS source, result[2] AS target, ",
                 "pair[0] AS t, pair[1] AS s, ",
-                "TAIL(REVERSE(TAIL(NODES(result[3])))) AS intermediaries ",
+                "TAIL(REVERSE(TAIL(NODES(result[3])))) AS intermediaries, admin ",
                 "WHERE ALL(_ IN intermediaries WHERE NOT _ IN s) ",
                 "AND target = t ",
 
-                "WITH source, target, results ",
+                "WITH source, target, results, admin ",
                 "UNWIND results AS result "
-                "WITH source, target, result "
+                "WITH source, target, result, admin "
                 "WHERE result[0] = source "
                 "AND result[2] = target "
 
                 "WITH result[0] AS source, result[2] AS target, ",
                 "result[3] AS path, result[4] AS options, ",
-                "result[5] AS grants ",
+                "result[5] AS grants, admin ",
 
                 # Attack path weight: Each outcome is representative of a distinct
                 # requirement that must be satisfied for the associated path to be traversed.
@@ -1062,15 +1018,15 @@ class Attacks:
 
                 "WITH source, target, options, grants,",
                 "FILTER(_ IN RELS(path) WHERE STARTNODE(_):Pattern) AS dependencies,",
-                "LAST(EXTRACT(_ IN RELS(path)|_.Name)) AS outcome",
+                "LAST(EXTRACT(_ IN RELS(path)|_.Name)) AS outcome, admin",
 
-                # [source, target, options, outcome, commands, grants]
+                # [source, target, options, outcome, commands, grants, admin]
 
                 "WITH COLLECT([source, target, options, outcome,",
                 "REDUCE(commands=[], _ IN dependencies|",
                 "CASE WHEN _ IN commands THEN commands ",
                 "ELSE commands + _.Commands END), grants]",
-                ") AS results",
+                ") AS results, admin",
 
                 # Attack the combined minimum weight associated with each distinct source,
                 # target node pair - all other results are discarded.
@@ -1078,10 +1034,10 @@ class Attacks:
 
                 "UNWIND results AS result",
                 "WITH results, result[0] AS source, result[1] AS target,",
-                "result[3] AS outcome, MIN(SIZE(result[4])) AS weight",
+                "result[3] AS outcome, MIN(SIZE(result[4])) AS weight, admin",
 
                 "UNWIND results AS result",
-                "WITH result, source, target, outcome, weight",
+                "WITH result, source, target, outcome, weight, admin",
                 "WHERE source = result[0] AND target = result[1]",
                 "AND outcome = result[3] AND weight = SIZE(result[4])",
 
@@ -1089,10 +1045,10 @@ class Attacks:
                 "REDUCE(commands=[], _ IN COLLECT(result[4])|",
                 "CASE WHEN _ IN commands THEN commands",
                 "ELSE _ + commands END) AS commands,",
-                "result[2] AS options, result[5] AS grants ",
+                "result[2] AS options, result[5] AS grants, admin ",
             ))
 
-        # Assert: CYPHER includes source, targets, options, grants; where options, targets
+        # Assert: CYPHER includes source, targets, options, grants, admin; where options, targets
         #         and grants comprise of (destination, commands) tuples.
 
         if OPTs["CreateAction"]:
@@ -1119,7 +1075,7 @@ class Attacks:
                 "REDUCE(commands=[], _ IN commands + COALESCE(edge.Commands,[])|",
                 "CASE WHEN _ IN commands THEN commands ",
                 "ELSE commands + _ END",
-                ") AS commands",
+                ") AS commands, admin",
 
                 "WHERE (NOT edge IS NULL AND target:Generic) OR target:Resource "
 
@@ -1130,7 +1086,7 @@ class Attacks:
         CYPHER += ' '.join((
 
             "WITH DISTINCT source, target, options, grants,",
-            "COALESCE(commands, []) AS commands",
+            "COALESCE(commands, []) AS commands, admin",
 
             # Prune targets where a transitive relationship does not exist
             # when a dependency that applies to the affected node type has
@@ -1142,21 +1098,30 @@ class Attacks:
             "REDUCE(commands=[], _ IN commands + option[1]|"
             "CASE WHEN _ IN commands THEN commands "
             "ELSE commands + _ END"
-            ") AS commands "
+            ") AS commands, admin "
 
-            "WITH source, target, commands, grants, [[NULL, []]] AS options "
+            "WITH source, target, commands, grants, [[NULL, []]] AS options, admin "
             "WHERE target = option "
 
             if "Depends" in attack \
             and attack["Depends"] == attack["Affects"]
             else "ORDER BY SIZE(commands)",
 
-            "WITH source, target, commands, options, grants",
+            "WITH source, target, commands, options, grants, admin",
             "ORDER BY SIZE(commands)",
 
-            "WITH DISTINCT source, options, COLLECT([target, commands]) AS grants " \
+            "WITH DISTINCT source, options, COLLECT([target, commands]) AS grants, admin " \
             if "Grants" not in attack else \
-            "WITH DISTINCT source, COLLECT([target, commands]) AS options, grants ",
+            "WITH DISTINCT source, COLLECT([target, commands]) AS options, grants, admin ",
+
+            # if any grant in admin: grants = grants ∩ admin
+
+            "UNWIND grants AS grant ",
+            "WITH source, options, grant[0] AS grant, grant[1] AS commands, ",
+            "ANY(_ IN EXTRACT(_ IN grants| _[0] IN admin) WHERE _) AS isadmin ",
+            "WHERE NOT isadmin OR grant IN admin ",
+
+            "WITH DISTINCT source, options, COLLECT([grant, commands]) AS grants ",
 
             "MERGE (source)-[:ATTACK{{Name:'{name}'}}]-> "
             "(pattern:Pattern:{name}{{Name:'{name}'}})",
@@ -1197,6 +1162,7 @@ class Attacks:
             "MERGE (pattern)-[edge:OPTION{{Name:'Option'}}]->(option) "
             "ON CREATE SET "
             "edge.Weight = SIZE(commands), "
+            "edge.Description = \"{description}\", "
             "edge.Commands = commands " \
             if ("Depends" in attack and attack["Depends"] != attack["Affects"]) \
             or "Grants" in attack \
@@ -1207,127 +1173,149 @@ class Attacks:
 
         return CYPHER
 
-    @staticmethod
-    def compute(
-        max_iterations=5,
-        skip_attacks=[],
-        only_attacks=[],
-        max_search_depth="",
-        ignore_actions_with_conditions=True
-    ):
+    def compute(self, max_iterations=5, max_search_depth=""):
 
-        stats = []
-        iteration = 0
-        exception = None
+        converged = False
+        db = Neo4j(console=self.console)
 
-        print("[*] Searching database for attack patterns\n")
+        self.console.task("Removing all existing attack patterns",
+                          db.run,  args=["MATCH (p:Pattern) DETACH DELETE p"],
+                          done="Removed all existing attack patterns")
 
-        sys.stdout.write("\033[F\033[K")
-        print("[*] Removing all existing attack patterns")
+        self.console.task("Creating pseudo Admin",
+                          db.run,  args=[
+                              "MERGE (admin:Admin:`AWS::Iam::Policy`{"
+                              "Name: 'Effective Admin', "
+                              "Description: 'Pseudo-Policy representing full and unfettered access.', "
+                              "Arn: 'arn:aws:iam::${Account}:policy/Admin', "
+                              'Document: \'[{"DefaultVersion": {"Version": "2012-10-17", '
+                              '"Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"'
+                              '}]}}]\''
+                              '}) '
+                          ],
+                          done="Created pseudo Admin")
 
-        Neo4j().run("MATCH (p:Pattern) DETACH DELETE p")
+        for i in self.console.tasklist(
+            "Adding attack paths (this search can take a while)",
+            range(max_iterations * len(self.definitions)),
+            done="Added attack paths"
+        ):
+            if converged:
+                continue
 
-        sys.stdout.write("\033[F\033[K")
-        print("[*] Creating pseudo admin")
-        Neo4j().run(Attacks._admin_cypher())
+            # First iteration
+            elif (i % len(self.definitions) == 0):
+                self.console.info("Temporarily adding Admin label "
+                                  "to Generic Policy")
+                db.run("MATCH (gp:`AWS::Iam::Policy`:Generic) SET gp:Admin")
 
-        # Temporarily set generic policy to admin. This is
-        # because all attack paths that allow for reaching
-        # this node (eg: AttachUserPolicy) would grant admin.
+            # Last iteration, check for convergence
+            elif ((i + 1) % len(self.definitions) == 0):
 
-        Neo4j().run("MATCH (gp:`AWS::Iam::Policy`:Generic) SET gp:Admin")
+                self.console.info("Removing Admin label from Generic Policy")
+                db.run("MATCH (admin:`AWS::Iam::Policy`:Generic) "
+                       "REMOVE admin:Admin")
 
-        # Identify any new attack paths, we stop when we've
-        # converged or exceeded the maximum number
-        # of iterations.
+                self.console.info("Pruning attack paths")
 
-        attack_definitions = {k: v for k, v in Attacks.definitions.items()
-                              if k not in skip_attacks
-                              and (only_attacks == [] or k in only_attacks)}
+                # Only keep the 'cheapest' paths to admin, favouring transitive
+                # relationships over attacks
+                db.run("MATCH shortestPath((admin)-[:ATTACK|TRANSITIVE*1..]->(:Admin)) "
+                       "WHERE NOT (admin:Pattern OR admin:Admin) "
+                       "WITH admin MATCH path=(admin)-[:ATTACK|:TRANSITIVE*..]->(:Admin) "
+                       "WITH DISTINCT admin, path, "
+                       "REDUCE(sum=0, _ IN EXTRACT(_ IN RELS(path)|"
+                       "COALESCE(_.Weight, 0))|sum + _) AS weight "
+                       "ORDER BY admin, weight "
+                       "WITH admin, COLLECT([weight, path]) AS paths "
+                       "WITH admin, FILTER(attack IN NODES(paths[0][1]) "
+                       "WHERE attack:Pattern) AS cheapest "
+                       "MATCH path=(admin)-[:ATTACK]->(pattern:Pattern) "
+                       "WHERE NOT pattern IN cheapest "
+                       "WITH pattern MATCH (source)-[attack:ATTACK]->(pattern) "
+                       "MERGE (source)-[_attack_:_ATTACK_]->(pattern) "
+                       "ON CREATE SET _attack_ = attack "
+                       "DELETE attack"
+                       )
 
-        try:
+                db.run("MATCH (admin)-[:ATTACK*..2]->(:Admin) "
+                       "WITH COLLECT(DISTINCT admin) AS admins "
+                       "WITH admins UNWIND admins AS admin "
+                       "MATCH (source)-[:TRANSITIVE*1..]->(target) "
+                       "WHERE target IN admins "
+                       "WITH DISTINCT source "
+                       "MATCH (source)-[attack:ATTACK]->(pattern:Pattern) "
+                       "MERGE (source)-[_attack_:_ATTACK_]->(pattern) "
+                       "ON CREATE SET _attack_ = attack "
+                       "DELETE attack "
+                       )
 
-            for iteration in range(1, max_iterations + 1):
+                if sum([s["nodes_created"] + s["relationships_created"]
+                        for s in self.stats[-(len(self.definitions)):]]) == 0:
 
-                index = 0
-                converged = True
+                    converged = True
+                    self.console.info("Search converged on iteration: "
+                                      f"{iteration} of max: {max_iterations} - "
+                                      "Tidying up")
 
-                for pattern, definition in attack_definitions.items():
+                    # Update attack descriptions
+                    db.run("MATCH (:Pattern)-[attack:ATTACK|OPTION|CREATE]->() "
+                           "WHERE LENGTH(attack.Commands) > 0 "
+                           "WITH COLLECT(DISTINCT attack) AS attacks "
+                           "UNWIND attacks AS attack "
+                           "WITH attacks, COLLECT(DISTINCT ["
+                           "    attack.Commands[LENGTH(attack.Commands) - 1], "
+                           "    attack.Description]) as commands "
+                           "UNWIND attacks AS attack "
+                           "WITH attack, commands WHERE TYPE(attack) = 'ATTACK' "
+                           "WITH attack, EXTRACT(command IN attack.Commands|"
+                           "    COALESCE([description IN commands "
+                           "        WHERE command = description[0]][0][1], "
+                           "        attack.Description)) AS descriptions "
+                           "WITH attack, descriptions "
+                           "SET attack.Descriptions = descriptions "
+                           "REMOVE attack.Description"
+                           )
 
-                    exception = pattern
-                    index += 1
+                    # Remove redundant attack paths
+                    db.run("MATCH ()-[:_ATTACK_]->(pattern:Pattern) "
+                           "DETACH DELETE pattern"
+                           )
+                    # Remove attacks affecting generic resources
+                    db.run("OPTIONAL MATCH ()-[:ATTACK]->(:Pattern)-[attack:ATTACK]->(:Generic) "
+                           "DELETE attack"
+                           )
 
-                    sys.stdout.write("\033[F\033[K")
-                    print("[*] Searching for attack "
-                          f"{index}/{len(attack_definitions)}: "
-                          f"{pattern} (iteration: {iteration} of max: {max_iterations})")
+                    continue
 
-                    cypher = Attacks._pattern_cypher(
-                        pattern,
-                        definition,
-                        max_search_depth=max_search_depth,
-                        ignore_actions_with_conditions=ignore_actions_with_conditions
-                    )
+            pattern = list(self.definitions.keys())[i % len(self.definitions)]
+            iteration = int(i / len(self.definitions)) + 1
+            definition = self.definitions[pattern]
+            timestamp = time.time()
 
-                    start = time.time()
-                    summary = Neo4j().run(cypher)._summary
+            self.console.info(f"Searching for attack: {pattern} "
+                              f"(iteration: {iteration} of max: {max_iterations})")
 
-                    stats.append({
-                        "pattern": pattern,
-                        "iteration": iteration,
-                        "seconds_elapsed": time.time() - start,
-                        **summary.counters.__dict__
-                    })
+            cypher = self._pattern_cypher(pattern, definition,
+                                          max_search_depth)
 
-                    if str(summary.counters) == "{}":
-                        continue
+            summary = db.run(cypher)._summary
 
-                    converged = False
+            self.stats.append({
+                "pattern": pattern,
+                "iteration": iteration,
+                "nodes_created": 0,
+                "relationships_created": 0,
+                "properties_set": 0,
+                "labels_added": 0,
+                "time_elapsed": time.time() - timestamp,
+                ** summary.counters.__dict__
+            })
 
-                if converged:
-                    break
-
-            exception = None
-
-        except Exception as e:
-            print(f"[-] Neo4j returned:\n\n{e}")
-            print("[!] Don't worry, we'll use what we already have")
-
-        sys.stdout.write("\033[F\033[K")
-        print("[+] Consolidating attack patterns")
-
-        # Restore generic policy (unset :Admin)
-
-        Neo4j().run("MATCH (gp:`AWS::Iam::Policy`:Generic) REMOVE gp:Admin")
-
-        # Replace all attack 'Description' entries with a 'Descriptions' set that maps
-        # to 'Commands'. We do this to support presenting each command with an associated
-        # description in the front end (rather than only the last description and all comamnds).
-        # It is easier to do it like this than to incorporate logic into _pattern_cypher().
-
-        Neo4j().run(
-            "MATCH ()-[attack:ATTACK]->() " +
-            "WITH attack UNWIND attack.Commands AS command " +
-            "OPTIONAL MATCH (:Pattern)-[_]->() " +
-            "WHERE command IN _.Commands " +
-            "WITH attack, command, _ ORDER BY _.Weight " +
-            "WITH attack, command, COLLECT(_)[0] AS _ " +
-            "WITH attack, COALESCE(_.Description, attack.Description) AS description " +
-            "WITH attack, COLLECT(description) AS descriptions " +
-            "SET attack.Descriptions = descriptions " +
-            "REMOVE attack.Description"
-        )
+        db.close()
 
         discovered = sum([s["nodes_created"] if "nodes_created" in s
-                          else 0 for s in stats])
+                          else 0 for s in self.stats])
 
-        sys.stdout.write("\033[F\033[K")
-        print(f"[+] {discovered} potential attacks were discovered " + str(
-              f"(successfully converged after {iteration} iterations)" if iteration < max_iterations else
-              f"(failed to converge of {max_iterations})")
-              )
-
-        # print(json.dumps(stats, indent=2))
-
-        if exception is not None:
-            raise Exception(exception)
+        self.console.notice(f"{discovered} potential attack paths "
+                            "were added to the database")
