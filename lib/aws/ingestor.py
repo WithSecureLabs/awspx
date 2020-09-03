@@ -85,10 +85,10 @@ class IngestionManager(Elements):
     def load_transitives(self):
 
         resources = self.get("Resource")
-        instance_profiles = resources.get("AWS::Iam::InstanceProfile")
-        policies = resources.get("AWS::Iam::Policy")
         groups = resources.get("AWS::Iam::Group")
         roles = resources.get("AWS::Iam::Role")
+        policies = resources.get("AWS::Iam::Policy")
+        instance_profiles = resources.get("AWS::Iam::InstanceProfile")
 
         for resource in self.console.tasklist(
             "Adding Transitive relationships",
@@ -96,32 +96,59 @@ class IngestionManager(Elements):
             done="Added Transitive relationships",
         ):
 
-            # (User)-->(Group)
-            if (resource.label() in ["AWS::Iam::User"]
-                    and "GroupList" in resource.properties()):
+            if resource.label() in ["AWS::Iam::User", "AWS::Iam::Group", "AWS::Iam::Role"]:
 
-                group_names = resource.get("GroupList")
-                del resource.properties()["GroupList"]
-                for group in filter(
-                        lambda r: r.get("Name") in group_names,
-                        groups):
+                # (User|Group|Role) --> (Policy)
+                if "AttachedManagedPolicies" in resource.properties():
 
-                    self.add(Transitive(properties={"Name": "Attached"},
-                                        source=resource, target=group))
+                    policy_arns = [policy["PolicyArn"]
+                                   for policy in resource.get("AttachedManagedPolicies")]
 
-            # Instance --> Instance Profile
+                    for policy in filter(lambda r: r.id() in policy_arns,
+                                         policies):
+
+                        self.add(Transitive(properties={"Name": "Attached"},
+                                            source=resource, target=policy))
+
+                        policy_arns = [p for p in policy_arns
+                                       if p != str(policy)]
+
+                    if not len(policy_arns) > 0:
+                        del resource.properties()["AttachedManagedPolicies"]
+
+                # (User)-->(Group)
+                if (resource.label() in ["AWS::Iam::User"]
+                        and "GroupList" in resource.properties()):
+
+                    group_names = resource.get("GroupList")
+
+                    for group in filter(
+                            lambda r: r.get("Name") in group_names,
+                            groups):
+
+                        self.add(Transitive(properties={"Name": "Attached"},
+                                            source=resource, target=group))
+
+                        group_names = [g for g in group_names
+                                       if g != str(group)]
+
+                    if not len(group_names) > 0:
+                        del resource.properties()["GroupList"]
+
+            # (Instance) --> (Instance Profile)
             if (resource.label() in ["AWS::Ec2::Instance"]
                     and "IamInstanceProfile" in resource.properties()):
 
-                instance_profile_arns = [
-                    resource.get("IamInstanceProfile")["Arn"]]
-                del resource.properties()["IamInstanceProfile"]
-                for instance_profile in filter(
-                        lambda r: r.id() in instance_profile_arns,
-                        instance_profiles):
+                instance_profile = next((i for i in instance_profiles
+                                         if str(i) == resource.get("IamInstanceProfile")["Arn"]
+                                         ), None)
+
+                if instance_profile is not None:
 
                     self.add(Transitive({"Name": "Attached"},
                                         source=resource, target=instance_profile))
+
+                    del resource.properties()["IamInstanceProfile"]
 
             # (InstanceProfile) --> (Role)
             if (resource.label() in ["AWS::Iam::InstanceProfile"]
@@ -129,7 +156,7 @@ class IngestionManager(Elements):
 
                 role_arns = list(map(lambda r: r["Arn"],
                                      resource.get("Roles")))
-                del resource.properties()["Roles"]
+
                 for role in filter(
                         lambda r: r.id() in role_arns,
                         roles):
@@ -137,34 +164,25 @@ class IngestionManager(Elements):
                     self.add(Transitive(properties={"Name": "Attached"},
                                         source=resource, target=role))
 
-            # Lambda --> Role
+                    role_arns = [r for r in role_arns if r != str(role)]
+
+                if not len(role_arns) > 0:
+                    del resource.properties()["Roles"]
+
+            # (Function) --> (Role)
             if (resource.label() in ["AWS::Lambda::Function"]
                     and "Role" in resource.properties()):
 
-                role_arns = [resource.get("Role")]
-                del resource.properties()["Role"]
-                for role in filter(
-                        lambda r: r.id() in role_arns,
-                        roles):
+                role = next((r for r in roles
+                             if str(r) == resource.get("Role")
+                             ), None)
+
+                if role is not None:
 
                     self.add(Transitive(properties={"Name": "Attached"},
                                         source=resource, target=role))
 
-            # (User|Group|Role)-->(Policy)
-            if (resource.label() in ["AWS::Iam::User", "AWS::Iam::Group", "AWS::Iam::Role"]
-                    and "AttachedManagedPolicies" in resource.properties()):
-
-                policy_arns = [
-                    policy["PolicyArn"]
-                    for policy in resource.get("AttachedManagedPolicies")
-                ]
-                del resource.properties()["AttachedManagedPolicies"]
-                for policy in filter(
-                        lambda r: r.id() in policy_arns,
-                        policies):
-
-                    self.add(Transitive(properties={"Name": "Attached"},
-                                        source=resource, target=policy))
+                    del resource.properties()["Role"]
 
     def load_actions(self):
 
@@ -305,7 +323,7 @@ class IngestionManager(Elements):
 
                 prefix = [":ID"]
                 suffix = [":LABEL"]
-                data = [[e.id()] + [stringify(e.properties()[f], _)
+                data = [[e.id()] + [stringify(e.get(f), _)
                                     if f in e.properties()
                                     else '' for (f, _) in header]
                         + [";".join(e.labels())] for e in elements]
@@ -317,7 +335,7 @@ class IngestionManager(Elements):
                 prefix = [":START_ID"]
                 suffix = [":END_ID", ":TYPE"]
 
-                data = [[e.source().id()] + [stringify(e.properties()[f], _)
+                data = [[e.source().id()] + [stringify(e.get(f), _)
                                              if f in e.properties()
                                              else '' for (f, _) in header]
                         + [e.target().id(), label] for e in elements if e.target() is not None]
