@@ -820,10 +820,10 @@ class IAM(Ingestor):
         super().__init__(**kwargs, load_resources=False)
 
         self.get_account_authorization_details()
-        self.list_user_mfa_devices()
         self.load_associatives()
 
         if not self.quick:
+            self.list_user_mfa_devices()
             self.get_login_profile()
             self.list_access_keys()
 
