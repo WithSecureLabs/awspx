@@ -529,8 +529,8 @@ definitions = {
         "the target role and assume it thereafter:",
 
         "Commands": [
-            "aws iam create-role --role-name ${AWS::Iam::Role} "
-            "--assume-role-policy-document file://<(cat <<EOF\n"
+            "aws iam update-assume-role-policy --role-name ${AWS::Iam::Role} "
+            "--policy-document file://<(cat <<EOF\n"
             "{\n"
             "  \"Version\": \"2012-10-17\",\n"
             "  \"Statement\": [\n"
