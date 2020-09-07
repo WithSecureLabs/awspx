@@ -765,14 +765,14 @@ class Ingestor(Elements):
         if any(r in element.labels() for r in ["Resource", "Generic"]):
 
             if element.label() not in self.types:
-                self.console.debug(f"Not adding {element}: "
+                self.console.debug(f"Skipping {element}: "
                                    f"type ({element.label()}) does not match user specifications")
                 return
 
             if "Resource" in element.labels() and \
                 ((len(self._only_arns) > 0 and element.id() not in self._only_arns)
                  or (len(self._skip_arns) > 0 and element.id() in self._skip_arns)):
-                self.console.debug(f"Not adding {element}: "
+                self.console.debug(f"Skipping {element}: "
                                    "ARN does not match user specifications")
                 return
 
