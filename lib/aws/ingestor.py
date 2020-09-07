@@ -214,7 +214,7 @@ class IngestionManager(Elements):
             ]:
 
                 self.update(IdentityBasedPolicy(
-                    resource, resources).resolve())
+                    resource, resources).actions())
 
             # Resource-based policies
             if resource.label() in [
@@ -225,7 +225,7 @@ class IngestionManager(Elements):
                     keys="Policy")
 
                 self.update(resource_based_policy.principals())
-                self.update(resource_based_policy.resolve())
+                self.update(resource_based_policy.actions())
 
             # Assume role policy documents
             if resource.label() in ["AWS::Iam::Role"]:
@@ -242,7 +242,7 @@ class IngestionManager(Elements):
                                      if not principal.type("AWS::Domain")))
 
                 # Only actions beginning with sts:AssumeRole are valid
-                for action in [action for action in resource_based_policy.resolve()
+                for action in [action for action in resource_based_policy.actions()
                                if str(action).startswith("sts:AssumeRole")]:
 
                     # This role trusts all IAM entities within this account
@@ -272,7 +272,7 @@ class IngestionManager(Elements):
                     else ObjectACL(resource, resources)
 
                 self.update(acl.principals())
-                self.update(acl.resolve())
+                self.update(acl.actions())
 
     def save(self, db="default.db", path="/opt/awspx/data"):
 
