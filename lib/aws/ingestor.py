@@ -528,17 +528,38 @@ class Ingestor(Elements):
 
             service = self.__class__.__name__.capitalize()
             resource_model = collection.meta.resource_model._resource_defs
-            remap = {k: k for k in resource_model.keys()}
+            remap = {k: f"AWS::{service}::{v}"
+                     for k, v in {k: resource_model[k]["shape"]
+                                  if "shape" in resource_model[k]
+                                  and not resource_model[k]["shape"].startswith("Get")
+                                  else k for k in resource_model.keys()
+                                  }.items()}
 
             # Map model types to RESOURCE definitions
-            for rt in resource_model.keys():
+            for k, v in list(remap.items()):
 
-                for resource_type in sorted([k for k in resource_model.keys()
-                                             if rt.startswith(k)], key=len, reverse=True):
+                if "load" in resource_model[k]:
 
-                    remap[rt] = f"AWS::{service}::{resource_type}"
+                    operation = resource_model[k]["load"]["request"]["operation"]
 
-                    if remap[rt] in RESOURCES.types.keys():
+                    # Find other resource types produced by the same operation.
+                    options = sorted([rt for rt, o in {
+                        rt: resource_model[key]["load"]["request"]["operation"]
+                        for key, rt in remap.items() if "load" in resource_model[key]}.items()
+                        if o == operation], key=lambda x: x in RESOURCES, reverse=True)
+
+                    if options[0] in RESOURCES:
+                        remap[k] = options[0]
+                        continue
+
+                # Find other resource types that have the same identifiers.
+                for alias in [rt for rt, i in {key: json.dumps(
+                    resource_model[key]["identifiers"], sort_keys=True)
+                        for key in resource_model.keys()}.items()
+                        if i == json.dumps(resource_model[k]["identifiers"], sort_keys=True)]:
+
+                    if f"AWS::{service}::{alias}" in RESOURCES:
+                        remap[k] = f"AWS::{service}::{alias}"
                         break
 
             model = {k: {remap[getattr(collection, k)._model.resource.type]: {}}
@@ -650,7 +671,7 @@ class Ingestor(Elements):
 
                             self.console.warn(f"Failed to construct resource ARN: defintion for type '{label}' is malformed - "
                                               f"boto collection '{cm.__class__.__name__}' does not have property {p}, "
-                                              f"maybe you meant one of the following instead? {', '.join(properties.keys())}")
+                                              f"maybe you meant one of the following ({', '.join(properties.keys())}) instead?")
                             continue
 
                         # Add Resource
