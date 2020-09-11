@@ -288,7 +288,7 @@ def main():
                      help="Maximum session duration in seconds (for --assume-role).")
     pnr.add_argument('--region', dest='region', default="eu-west-1", choices=Profile.regions,
                      help="Region to ingest (defaults to profile region, or `eu-west-1` if not set).")
-    pnr.add_argument('--database', dest='database', default=None, choices=Neo4j.databases,
+    pnr.add_argument('--database', dest='database', default=None, 
                      help="Database to store results (defaults to <profile>.db).")
 
     # Services & resources args
