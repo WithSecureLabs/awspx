@@ -138,15 +138,17 @@ class Console(Table):
         if not self._verbose:
             self._annotate(message, "bold red")
 
-    def critical(self, message):
+    def critical(self, *message):
 
-        self.logger.critical(message)
-        self.stop()
+        if isinstance(message[0], str):
+            self.logger.critical(message)
 
-        try:
-            self.console.print_exception()
-        except ValueError:
-            self.console.print(message, style="bold red")
+        else:
+            self.stop()
+            try:
+                self.console.print_exception()
+            except ValueError:
+                self.console.print(message[0].__repr__())
 
         os._exit(1)
 
