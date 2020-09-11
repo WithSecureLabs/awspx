@@ -403,6 +403,11 @@ class IngestionManager(Elements):
 
 class Client(object):
 
+    codes = [
+        'AccessDenied',
+        'AccessDeniedException',
+    ]
+
     def __init__(self, client, console=None):
 
         self.client = client
@@ -413,8 +418,9 @@ class Client(object):
             for i in self.client.__iter__():
                 yield i
         except ClientError as e:
-            if e.response['Error']['Code'] in ['AccessDenied', 'AccessDeniedException']:
+            if e.response['Error']['Code'] in self.codes:
                 self.console.warn(str(e))
+                yield {}
             else:
                 raise e
 
@@ -425,7 +431,8 @@ class Client(object):
         if callable(method):
 
             def hook(*args, **kwargs):
-                result = []
+
+                result = {}
 
                 try:
                     result = method(*args, **kwargs)
@@ -435,7 +442,7 @@ class Client(object):
 
                 except ClientError as e:
 
-                    if e.response['Error']['Code'] in ['AccessDenied', 'AccessDeniedException']:
+                    if e.response['Error']['Code'] in self.codes:
                         self.console.warn(str(e))
                     else:
                         raise e
@@ -1111,6 +1118,7 @@ class S3(Ingestor):
             wait="Awaiting response to s3:GetBucketPolicy",
             done="Updated Bucket policy information"
         ):
+
             try:
                 policy = self.client.get_bucket_policy(
                     Bucket=bucket.get('Name'))["Policy"]
@@ -1118,9 +1126,10 @@ class S3(Ingestor):
                 bucket.set("Policy", json.loads(policy))
                 self.console.info(f"Updated Bucket ({bucket}) policy")
 
-            except ClientError as e:
-                self.console.debug("Failed to update Bucket policy "
-                                   f"({bucket}): {str(e)}")
+            except (ClientError, KeyError) as e:
+                self.console.warn("Failed to update "
+                                  f"Bucket policy ({bucket}). "
+                                  f"{e if isinstance(e, ClientError) else ''}")
 
     def get_public_access_blocks(self):
 
@@ -1141,12 +1150,13 @@ class S3(Ingestor):
                 )["PublicAccessBlockConfiguration"]
 
                 bucket.set("PublicAccessBlock", public_access_block)
-                self.console.info(
-                    f"Updated Bucket ({bucket}) public access block")
+                self.console.info(f"Updated Bucket ({bucket}) "
+                                  "public access block")
 
-            except ClientError as e:
-                self.console.debug("Failed to update Bucket public access block "
-                                   f"({bucket}): {str(e)}")
+            except (ClientError, KeyError) as e:
+                self.console.warn("Failed to update Bucket "
+                                  f"public access block ({bucket}). "
+                                  f"{e if isinstance(e, ClientError) else ''}")
 
     def get_bucket_acls(self):
 
@@ -1164,9 +1174,10 @@ class S3(Ingestor):
                 })
                 self.console.info(f"Updated Bucket ({bucket}) ACL")
 
-            except ClientError as e:
-                self.console.debug("Failed to update Bucket ACL "
-                                   f"({bucket}): {str(e)}")
+            except (ClientError, KeyError) as e:
+                self.console.warn("Failed to update "
+                                  f"Bucket ACL ({bucket}). "
+                                  f"{e if isinstance(e, ClientError) else ''}")
 
     def get_object_acls(self):
 
@@ -1188,9 +1199,10 @@ class S3(Ingestor):
                 })
                 self.console.info(f"Updated Object ({obj}) ACL")
 
-            except ClientError as e:
-                self.console.debug("Failed to update Object ACL "
-                                   f"({obj}): {str(e)}")
+            except (ClientError, KeyError) as e:
+                self.console.warn("Failed to update "
+                                  f"Object ACL ({obj}). "
+                                  f"{e if isinstance(e, ClientError) else ''}")
 
 
 class Lambda(Ingestor):
