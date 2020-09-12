@@ -525,8 +525,7 @@ class Ingestor(Elements):
         ):
             self.add(Generic(properties={
                 "Name": f"${k.split(':')[-1]}",
-                "Arn":  RESOURCES.definition(k).replace("{Account}", self.account),
-                "Account": self.account
+                "Arn":  RESOURCES.definition(k),
             }, labels=[k]))
 
     def load_resources(self):
