@@ -401,7 +401,7 @@ class IngestionManager(Elements):
             self.console.info(f"Added {element.label()}: ({element})")
 
 
-class Client(object):
+class SessionClientWrapper(object):
 
     codes = [
         'AccessDenied',
@@ -478,26 +478,27 @@ class Ingestor(Elements):
         self._only_arns = only_arns
         self._skip_arns = skip_arns
 
-        self.client = Client(self.session.client(
+        if self.__class__.__name__.lower() not in self.session.get_available_services():
+            self.console.critical(f"'{self.__class__.__name__}' is not a recognized boto service.\n"
+                                  f"Only the following services are supported: {', '.join(self.session.get_available_services())}.")
+
+        if (load_resources and self.__class__.__name__.lower() not in self.session.get_available_resources()):
+            self.console.critical(f"'{self.__class__.__name__}' is not a supported boto resource. "
+                                  "This means you'll need to write a custom ingestor (see Lambda for a practical example).\n"
+                                  f"Only the following services are supported: {', '.join(self.session.get_available_resources())}.")
+
+        self.client = SessionClientWrapper(self.session.client(
             self.__class__.__name__.lower()),
             console=self.console)
 
-        if load_resources:
-            available_resources = self.session.get_available_resources()
-            if self.__class__.__name__.lower() not in available_resources:
-                self.console.critical(f"'{self.__class__.__name__}' is not a supported boto resource. "
-                                      "This means you'll need to write a custom ingestor (see Lambda for a practical example). "
-                                      f"For future reference, boto supports: {', '.join(available_resources)}.")
-                return
-
         # If no resources to ingest have been specified, assume all
         if len(self.types) == 0:
-            self.types = [t for t in RESOURCES if t.upper().startswith(
-                "AWS::%s::" % self.__class__.__name__.upper())]
+            self.types = [t for t in RESOURCES
+                          if t.startswith(f"AWS::{self.__class__.__name__}::")]
 
         # There must be nothing specified for this service
         if len(self.types) == 0:
-            self.console.critical(f"No {self.__class__.__name__.capitalize()} resources were found in 'lib.aws.resources.py'. "
+            self.console.critical(f"No AWS::{self.__class__.__name__} resources were found in 'lib.aws.resources.py'. "
                                   "You'll need to add them before this ingestor will work.")
             return
 
@@ -643,7 +644,7 @@ class Ingestor(Elements):
                     done=f"Added {rt}"
                 ):
 
-                    for cm in Client(operation(), console=self.console):
+                    for cm in SessionClientWrapper(operation(), console=self.console):
 
                         collection_managers.append(cm)
 
