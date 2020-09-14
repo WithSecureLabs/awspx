@@ -144,7 +144,7 @@ function hook(){
 
 function awspx(){
     
-    if [[ -z "$(docker ps -a -f name=^/awspx$ -f -q)" ]]; then
+    if [[ -z "$(docker ps -a -f name=^/awspx$ -q)" ]]; then
         echo -e "[-] Couldn't find \"awspx\" container, you will need to create it first"
         exit 1
     fi
