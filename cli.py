@@ -146,7 +146,7 @@ def handle_ingest(args):
 
     assert ingestor.zip is not None, "Ingestion failed"
 
-    args.load_zip = ingestor.zip
+    args.load_zips = [ingestor.zip]
     handle_db(args, console=console.item("Creating Database"))
 
     if not (args.skip_attacks_all or args.skip_actions_all):
@@ -175,9 +175,10 @@ def handle_db(args, console=console):
 
     db = Neo4j(console=console)
 
-    if args.load_zip:
+    if args.load_zips:
 
-        db.load_zip(args.load_zip)
+        db.load_zips(archives=args.load_zips,
+                     db=args.database if 'database' in args else 'default.db')
 
     elif args.list_dbs:
         db.list()
@@ -288,7 +289,7 @@ def main():
                      help="Maximum session duration in seconds (for --assume-role).")
     pnr.add_argument('--region', dest='region', default="eu-west-1", choices=Profile.regions,
                      help="Region to ingest (defaults to profile region, or `eu-west-1` if not set).")
-    pnr.add_argument('--database', dest='database', default=None, 
+    pnr.add_argument('--database', dest='database', default=None,
                      help="Database to store results (defaults to <profile>.db).")
 
     # Services & resources args
@@ -357,7 +358,7 @@ def main():
                           help="Switch to the specified database.")
     db_group.add_argument('--list', dest='list_dbs', action='store_true',
                           help="List available databases.")
-    db_group.add_argument('--load-zip', dest='load_zip', choices=sorted(Neo4j.zips),
+    db_group.add_argument('--load-zip', dest='load_zips', choices=sorted(Neo4j.zips), action='append',
                           help="Create/overwrite database using ZIP file content.")
 
     # Add --verbose to ingest, attacks, db

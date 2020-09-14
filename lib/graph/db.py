@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import sys
 import subprocess
 import time
 
@@ -101,13 +102,76 @@ class Neo4j(object):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT).communicate()
 
-    def _load(self, archive, db):
+    def _load(self, archives, db):
 
-        directory = archive.split('.')[0]
-        shutil.unpack_archive(archive, directory, "zip")
-        csvs = [f for f in os.listdir(directory) if f.endswith(".csv")]
-        edges = [e for e in csvs if re.compile("([A-Z]+)\.csv").match(e)]
-        nodes = [n for n in csvs if n not in edges]
+        ARCHIVES = {}
+
+        for archive in archives:
+
+            ARCHIVES[archive] = {
+                "DIR": None,
+                "CSV": None,
+            }
+
+            ARCHIVES[archive]["DIR"] = archive.split('.')[0]
+            shutil.unpack_archive(archive, ARCHIVES[archive]["DIR"], "zip")
+
+            ARCHIVES[archive]["CSV"] = [f for f in os.listdir(ARCHIVES[archive]["DIR"])
+                                        if f.endswith(".csv")]
+
+        for c in set([c for a in ARCHIVES
+                      for c in ARCHIVES[a]["CSV"]
+                      if len(ARCHIVES) > 0]):
+
+            keys = set()
+
+            for i in range(2):
+
+                for _, v in ARCHIVES.items():
+
+                    if c not in v["CSV"]:
+                        continue
+
+                    else:
+
+                        with open(f'{v["DIR"]}/{c}', 'r') as f:
+                            headers = [h.strip()
+                                       for h in f.readline().split(',')]
+
+                        if i == 0:
+                            keys.update(headers)
+                            continue
+
+                        additional = [k for k in keys if k not in headers]
+
+                        if not len(additional) > 0:
+                            continue
+
+                        self.console.debug(f"Adding columns {additional} "
+                                           f'to {v["DIR"]}/{c}')
+
+                        with open(f'{v["DIR"]}/{c}', 'r') as f:
+                            rows = f.read().splitlines()
+
+                            rows[0] = ','.join(rows[0].split(',') + additional)
+
+                            for i in range(1, len(rows)):
+                                rows[i] = ','.join(rows[i].split(
+                                    ',') + ['' for _ in additional])
+
+                        with open(f'{v["DIR"]}/{c}', 'w') as f:
+                            f.write('\n'.join(rows))
+
+        directory = ARCHIVES[list(ARCHIVES.keys())[0]]["DIR"]
+
+        csvs = [f"{a['DIR']}/{csv}"
+                for a in ARCHIVES.values()
+                for csv in a["CSV"]]
+
+        edges = [e for e in csvs
+                 if re.compile("(.*/)?([A-Z]+)\.csv").match(e)]
+        nodes = [n for n in csvs
+                 if n not in edges]
 
         self._delete(db)
 
@@ -116,10 +180,10 @@ class Neo4j(object):
             conf = ' '.join([
                 "--report-file /dev/null",
                 "--ignore-missing-nodes=true",
+                "--ignore-duplicate-nodes=true",
                 f"--database {db}",
-                ' '.join([f"--nodes {directory}/{n}" for n in nodes]),
-                ' '.join(
-                    [f"--relationships {directory}/{e}" for e in edges]),
+                ' '.join([f"--nodes={n}" for n in nodes]),
+                ' '.join([f"--relationships={e}" for e in edges]),
             ])
 
             config.write(conf)
@@ -128,7 +192,7 @@ class Neo4j(object):
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT).communicate()
 
-        subprocess.Popen(["rm", "-rf", f"{directory}/"])
+        subprocess.Popen(["rm", "-rf", *[a["DIR"] for a in ARCHIVES.values()]])
         stats = re.compile("([0-9a-zA-Z]+)."
                            "Imported:([0-9]+)nodes"
                            "([0-9]+)relationships"
@@ -138,16 +202,13 @@ class Neo4j(object):
                                    .replace("\\n", "").replace(" ", ""))
 
         if stats is None:
-
-            self.console.error(str(stdout).replace(
+            self.console.critical(str(stdout).replace(
                 "\\n", "\n").replace("\\t", "\t"))
-
-            return False
 
         (time, nodes, edges, props, ram) = stats.groups()
 
         return str(f"Loaded {nodes} nodes, {edges} edges, and {props} properties "
-                   f"into '{db}' from '{archive}'")
+                   f"into '{db}' from: {', '.join([re.sub(f'^{NEO4J_ZIP_DIR}/', '', a) for a in archives])}")
 
     def running(self):
 
@@ -189,18 +250,17 @@ class Neo4j(object):
         self.console.task("Starting Neo4j",
                           self._start, done="Started Neo4j")
 
-    def load_zip(self, archive):
+    def load_zips(self, archives=[], db='default.db'):
 
-        if not archive.startswith(f"{NEO4J_ZIP_DIR}/"):
-            archive = f"{NEO4J_ZIP_DIR}/{archive}"
-
-        db = f"{archive.split('/')[-1].split('_')[-1].split('.')[0]}.db"
+        archives = [f"{NEO4J_ZIP_DIR}/{a}"
+                    if not a.startswith(f"{NEO4J_ZIP_DIR}/") else a
+                    for a in archives]
 
         self.console.task("Stopping Neo4j",
                           self._stop, done="Stopped Neo4j")
 
         loaded = self.console.task(f"Creating database '{db}'",
-                                   self._load, args=[archive, db],
+                                   self._load, args=[archives, db],
                                    done=f"Created database '{db}'")
 
         self.console.task(f"Switching active database to '{db}'",
