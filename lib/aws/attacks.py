@@ -529,8 +529,8 @@ definitions = {
         "the target role and assume it thereafter:",
 
         "Commands": [
-            "aws iam create-role --role-name ${AWS::Iam::Role} "
-            "--assume-role-policy-document file://<(cat <<EOF\n"
+            "aws iam update-assume-role-policy --role-name ${AWS::Iam::Role} "
+            "--policy-document file://<(cat <<EOF\n"
             "{\n"
             "  \"Version\": \"2012-10-17\",\n"
             "  \"Statement\": [\n"
@@ -1176,7 +1176,7 @@ class Attacks:
     def compute(self, max_iterations=5, max_search_depth=""):
 
         converged = False
-        db = Neo4j()
+        db = Neo4j(console=self.console)
 
         self.console.task("Removing all existing attack patterns",
                           db.run,  args=["MATCH (p:Pattern) DETACH DELETE p"],

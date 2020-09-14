@@ -16,10 +16,12 @@ from botocore.exceptions import (ClientError,
 from lib.aws.actions import ACTIONS
 from lib.aws.policy import (BucketACL, IdentityBasedPolicy,
                             ObjectACL, ResourceBasedPolicy)
+
 from lib.aws.resources import RESOURCES
 from lib.graph.base import Elements, Node
 from lib.graph.edges import (Action, Associative,
                              Transitive, Trusts)
+
 from lib.graph.nodes import Generic, Resource
 
 
@@ -83,10 +85,10 @@ class IngestionManager(Elements):
     def load_transitives(self):
 
         resources = self.get("Resource")
-        instance_profiles = resources.get("AWS::Iam::InstanceProfile")
-        policies = resources.get("AWS::Iam::Policy")
         groups = resources.get("AWS::Iam::Group")
         roles = resources.get("AWS::Iam::Role")
+        policies = resources.get("AWS::Iam::Policy")
+        instance_profiles = resources.get("AWS::Iam::InstanceProfile")
 
         for resource in self.console.tasklist(
             "Adding Transitive relationships",
@@ -94,32 +96,59 @@ class IngestionManager(Elements):
             done="Added Transitive relationships",
         ):
 
-            # (User)-->(Group)
-            if (resource.label() in ["AWS::Iam::User"]
-                    and "GroupList" in resource.properties()):
+            if resource.label() in ["AWS::Iam::User", "AWS::Iam::Group", "AWS::Iam::Role"]:
 
-                group_names = resource.get("GroupList")
-                del resource.properties()["GroupList"]
-                for group in filter(
-                        lambda r: r.get("Name") in group_names,
-                        groups):
+                # (User|Group|Role) --> (Policy)
+                if "AttachedManagedPolicies" in resource.properties():
 
-                    self.add(Transitive(properties={"Name": "Attached"},
-                                        source=resource, target=group))
+                    policy_arns = [policy["PolicyArn"]
+                                   for policy in resource.get("AttachedManagedPolicies")]
 
-            # Instance --> Instance Profile
+                    for policy in filter(lambda r: r.id() in policy_arns,
+                                         policies):
+
+                        self.add(Transitive(properties={"Name": "Attached"},
+                                            source=resource, target=policy))
+
+                        policy_arns = [p for p in policy_arns
+                                       if p != str(policy)]
+
+                    if not len(policy_arns) > 0:
+                        del resource.properties()["AttachedManagedPolicies"]
+
+                # (User)-->(Group)
+                if (resource.label() in ["AWS::Iam::User"]
+                        and "GroupList" in resource.properties()):
+
+                    group_names = resource.get("GroupList")
+
+                    for group in filter(
+                            lambda r: r.get("Name") in group_names,
+                            groups):
+
+                        self.add(Transitive(properties={"Name": "Attached"},
+                                            source=resource, target=group))
+
+                        group_names = [g for g in group_names
+                                       if g != str(group)]
+
+                    if not len(group_names) > 0:
+                        del resource.properties()["GroupList"]
+
+            # (Instance) --> (Instance Profile)
             if (resource.label() in ["AWS::Ec2::Instance"]
                     and "IamInstanceProfile" in resource.properties()):
 
-                instance_profile_arns = [
-                    resource.get("IamInstanceProfile")["Arn"]]
-                del resource.properties()["IamInstanceProfile"]
-                for instance_profile in filter(
-                        lambda r: r.id() in instance_profile_arns,
-                        instance_profiles):
+                instance_profile = next((i for i in instance_profiles
+                                         if str(i) == resource.get("IamInstanceProfile")["Arn"]
+                                         ), None)
+
+                if instance_profile is not None:
 
                     self.add(Transitive({"Name": "Attached"},
                                         source=resource, target=instance_profile))
+
+                    del resource.properties()["IamInstanceProfile"]
 
             # (InstanceProfile) --> (Role)
             if (resource.label() in ["AWS::Iam::InstanceProfile"]
@@ -127,7 +156,7 @@ class IngestionManager(Elements):
 
                 role_arns = list(map(lambda r: r["Arn"],
                                      resource.get("Roles")))
-                del resource.properties()["Roles"]
+
                 for role in filter(
                         lambda r: r.id() in role_arns,
                         roles):
@@ -135,34 +164,25 @@ class IngestionManager(Elements):
                     self.add(Transitive(properties={"Name": "Attached"},
                                         source=resource, target=role))
 
-            # Lambda --> Role
+                    role_arns = [r for r in role_arns if r != str(role)]
+
+                if not len(role_arns) > 0:
+                    del resource.properties()["Roles"]
+
+            # (Function) --> (Role)
             if (resource.label() in ["AWS::Lambda::Function"]
                     and "Role" in resource.properties()):
 
-                role_arns = [resource.get("Role")]
-                del resource.properties()["Role"]
-                for role in filter(
-                        lambda r: r.id() in role_arns,
-                        roles):
+                role = next((r for r in roles
+                             if str(r) == resource.get("Role")
+                             ), None)
+
+                if role is not None:
 
                     self.add(Transitive(properties={"Name": "Attached"},
                                         source=resource, target=role))
 
-            # (User|Group|Role)-->(Policy)
-            if (resource.label() in ["AWS::Iam::User", "AWS::Iam::Group", "AWS::Iam::Role"]
-                    and "AttachedManagedPolicies" in resource.properties()):
-
-                policy_arns = [
-                    policy["PolicyArn"]
-                    for policy in resource.get("AttachedManagedPolicies")
-                ]
-                del resource.properties()["AttachedManagedPolicies"]
-                for policy in filter(
-                        lambda r: r.id() in policy_arns,
-                        policies):
-
-                    self.add(Transitive(properties={"Name": "Attached"},
-                                        source=resource, target=policy))
+                    del resource.properties()["Role"]
 
     def load_actions(self):
 
@@ -194,7 +214,7 @@ class IngestionManager(Elements):
             ]:
 
                 self.update(IdentityBasedPolicy(
-                    resource, resources).resolve())
+                    resource, resources).actions())
 
             # Resource-based policies
             if resource.label() in [
@@ -205,7 +225,7 @@ class IngestionManager(Elements):
                     keys="Policy")
 
                 self.update(resource_based_policy.principals())
-                self.update(resource_based_policy.resolve())
+                self.update(resource_based_policy.actions())
 
             # Assume role policy documents
             if resource.label() in ["AWS::Iam::Role"]:
@@ -222,7 +242,7 @@ class IngestionManager(Elements):
                                      if not principal.type("AWS::Domain")))
 
                 # Only actions beginning with sts:AssumeRole are valid
-                for action in [action for action in resource_based_policy.resolve()
+                for action in [action for action in resource_based_policy.actions()
                                if str(action).startswith("sts:AssumeRole")]:
 
                     # This role trusts all IAM entities within this account
@@ -252,7 +272,7 @@ class IngestionManager(Elements):
                     else ObjectACL(resource, resources)
 
                 self.update(acl.principals())
-                self.update(acl.resolve())
+                self.update(acl.actions())
 
     def save(self, db="default.db", path="/opt/awspx/data"):
 
@@ -303,7 +323,7 @@ class IngestionManager(Elements):
 
                 prefix = [":ID"]
                 suffix = [":LABEL"]
-                data = [[e.id()] + [stringify(e.properties()[f], _)
+                data = [[e.id()] + [stringify(e.get(f), _)
                                     if f in e.properties()
                                     else '' for (f, _) in header]
                         + [";".join(e.labels())] for e in elements]
@@ -315,7 +335,7 @@ class IngestionManager(Elements):
                 prefix = [":START_ID"]
                 suffix = [":END_ID", ":TYPE"]
 
-                data = [[e.source().id()] + [stringify(e.properties()[f], _)
+                data = [[e.source().id()] + [stringify(e.get(f), _)
                                              if f in e.properties()
                                              else '' for (f, _) in header]
                         + [e.target().id(), label] for e in elements if e.target() is not None]
@@ -381,6 +401,60 @@ class IngestionManager(Elements):
             self.console.info(f"Added {element.label()}: ({element})")
 
 
+class SessionClientWrapper(object):
+
+    codes = [
+        'AccessDenied',
+        'AccessDeniedException',
+    ]
+
+    def __init__(self, client, console=None):
+
+        self.client = client
+        self.console = console
+
+    def __iter__(self):
+        try:
+            for i in self.client.__iter__():
+                yield i
+        except ClientError as e:
+            if e.response['Error']['Code'] in self.codes:
+                self.console.warn(str(e))
+                yield {}
+            else:
+                raise e
+
+    def __getattr__(self, attr):
+
+        method = self.client.__getattribute__(attr)
+
+        if callable(method):
+
+            def hook(*args, **kwargs):
+
+                result = {}
+
+                try:
+                    result = method(*args, **kwargs)
+
+                    if attr in ['get_paginator', 'paginate']:
+                        result = self.__class__(result, console=self.console)
+
+                except ClientError as e:
+
+                    if e.response['Error']['Code'] in self.codes:
+                        self.console.warn(str(e))
+                    else:
+                        raise e
+
+                return result
+
+            return hook
+
+        else:
+            return method
+
+
 class Ingestor(Elements):
 
     types = []
@@ -404,22 +478,27 @@ class Ingestor(Elements):
         self._only_arns = only_arns
         self._skip_arns = skip_arns
 
-        if load_resources:
-            available_resources = self.session.get_available_resources()
-            if self.__class__.__name__.lower() not in available_resources:
-                self.console.critical(f"'{self.__class__.__name__}' is not a supported boto resource. "
-                                      "This means you'll need to write a custom ingestor (see Lambda for a practical example). "
-                                      f"For future reference, boto supports: {', '.join(available_resources)}.")
-                return
+        if self.__class__.__name__.lower() not in self.session.get_available_services():
+            self.console.critical(f"'{self.__class__.__name__}' is not a recognized boto service.\n"
+                                  f"Only the following services are supported: {', '.join(self.session.get_available_services())}.")
+
+        if (load_resources and self.__class__.__name__.lower() not in self.session.get_available_resources()):
+            self.console.critical(f"'{self.__class__.__name__}' is not a supported boto resource. "
+                                  "This means you'll need to write a custom ingestor (see Lambda for a practical example).\n"
+                                  f"Only the following services are supported: {', '.join(self.session.get_available_resources())}.")
+
+        self.client = SessionClientWrapper(self.session.client(
+            self.__class__.__name__.lower()),
+            console=self.console)
 
         # If no resources to ingest have been specified, assume all
         if len(self.types) == 0:
-            self.types = [t for t in RESOURCES if t.upper().startswith(
-                "AWS::%s::" % self.__class__.__name__.upper())]
+            self.types = [t for t in RESOURCES
+                          if t.startswith(f"AWS::{self.__class__.__name__}::")]
 
         # There must be nothing specified for this service
         if len(self.types) == 0:
-            self.console.critical(f"No {self.__class__.__name__.capitalize()} resources were found in 'lib.aws.resources.py'. "
+            self.console.critical(f"No AWS::{self.__class__.__name__} resources were found in 'lib.aws.resources.py'. "
                                   "You'll need to add them before this ingestor will work.")
             return
 
@@ -431,6 +510,7 @@ class Ingestor(Elements):
         # Remove types that dont match user specifications
         self.types = [t for t in self.types if t not in skip_types
                       and (len(only_types) == 0 or t in only_types)]
+
         self.load_generics()
 
         if load_resources and len(self.types) > 0:
@@ -446,7 +526,7 @@ class Ingestor(Elements):
         ):
             self.add(Generic(properties={
                 "Name": f"${k.split(':')[-1]}",
-                "Arn":  RESOURCES.definition(k)
+                "Arn":  RESOURCES.definition(k),
             }, labels=[k]))
 
     def load_resources(self):
@@ -455,17 +535,38 @@ class Ingestor(Elements):
 
             service = self.__class__.__name__.capitalize()
             resource_model = collection.meta.resource_model._resource_defs
-            remap = {k: k for k in resource_model.keys()}
+            remap = {k: f"AWS::{service}::{v}"
+                     for k, v in {k: resource_model[k]["shape"]
+                                  if "shape" in resource_model[k]
+                                  and not resource_model[k]["shape"].startswith("Get")
+                                  else k for k in resource_model.keys()
+                                  }.items()}
 
             # Map model types to RESOURCE definitions
-            for rt in resource_model.keys():
+            for k, v in list(remap.items()):
 
-                for resource_type in sorted([k for k in resource_model.keys()
-                                             if rt.startswith(k)], key=len, reverse=True):
+                if "load" in resource_model[k]:
 
-                    remap[rt] = f"AWS::{service}::{resource_type}"
+                    operation = resource_model[k]["load"]["request"]["operation"]
 
-                    if remap[rt] in RESOURCES.types.keys():
+                    # Find other resource types produced by the same operation.
+                    options = sorted([rt for rt, o in {
+                        rt: resource_model[key]["load"]["request"]["operation"]
+                        for key, rt in remap.items() if "load" in resource_model[key]}.items()
+                        if o == operation], key=lambda x: x in RESOURCES, reverse=True)
+
+                    if options[0] in RESOURCES:
+                        remap[k] = options[0]
+                        continue
+
+                # Find other resource types that have the same identifiers.
+                for alias in [rt for rt, i in {key: json.dumps(
+                    resource_model[key]["identifiers"], sort_keys=True)
+                        for key in resource_model.keys()}.items()
+                        if i == json.dumps(resource_model[k]["identifiers"], sort_keys=True)]:
+
+                    if f"AWS::{service}::{alias}" in RESOURCES:
+                        remap[k] = f"AWS::{service}::{alias}"
                         break
 
             model = {k: {remap[getattr(collection, k)._model.resource.type]: {}}
@@ -543,7 +644,7 @@ class Ingestor(Elements):
                     done=f"Added {rt}"
                 ):
 
-                    for cm in operation():
+                    for cm in SessionClientWrapper(operation(), console=self.console):
 
                         collection_managers.append(cm)
 
@@ -577,7 +678,7 @@ class Ingestor(Elements):
 
                             self.console.warn(f"Failed to construct resource ARN: defintion for type '{label}' is malformed - "
                                               f"boto collection '{cm.__class__.__name__}' does not have property {p}, "
-                                              f"maybe you meant one of the following instead? {', '.join(properties.keys())}")
+                                              f"maybe you meant one of the following ({', '.join(properties.keys())}) instead?")
                             continue
 
                         # Add Resource
@@ -693,14 +794,14 @@ class Ingestor(Elements):
         if any(r in element.labels() for r in ["Resource", "Generic"]):
 
             if element.label() not in self.types:
-                self.console.debug(f"Not adding {element}: "
+                self.console.debug(f"Skipping {element}: "
                                    f"type ({element.label()}) does not match user specifications")
                 return
 
             if "Resource" in element.labels() and \
                 ((len(self._only_arns) > 0 and element.id() not in self._only_arns)
                  or (len(self._skip_arns) > 0 and element.id() in self._skip_arns)):
-                self.console.debug(f"Not adding {element}: "
+                self.console.debug(f"Skipping {element}: "
                                    "ARN does not match user specifications")
                 return
 
@@ -747,13 +848,11 @@ class IAM(Ingestor):
 
         super().__init__(**kwargs, load_resources=False)
 
-        self.client = self.session.client("iam")
-
         self.get_account_authorization_details()
-        self.list_user_mfa_devices()
         self.load_associatives()
 
         if not self.quick:
+            self.list_user_mfa_devices()
             self.get_login_profile()
             self.list_access_keys()
 
@@ -955,7 +1054,6 @@ class EC2(Ingestor):
     def __init__(self, **kwargs):
 
         super().__init__(**kwargs)
-        self.client = self.session.client("ec2")
 
         if not self.quick:
             self.get_instance_user_data()
@@ -1006,8 +1104,6 @@ class S3(Ingestor):
 
         super().__init__(**kwargs)
 
-        self.client = self.session.client('s3')
-
         if not self.quick:
             self.get_bucket_policies()
             self.get_bucket_acls()
@@ -1022,6 +1118,7 @@ class S3(Ingestor):
             wait="Awaiting response to s3:GetBucketPolicy",
             done="Updated Bucket policy information"
         ):
+
             try:
                 policy = self.client.get_bucket_policy(
                     Bucket=bucket.get('Name'))["Policy"]
@@ -1029,9 +1126,10 @@ class S3(Ingestor):
                 bucket.set("Policy", json.loads(policy))
                 self.console.info(f"Updated Bucket ({bucket}) policy")
 
-            except ClientError as e:
-                self.console.debug("Failed to update Bucket policy "
-                                   f"({bucket}): {str(e)}")
+            except (ClientError, KeyError) as e:
+                self.console.warn("Failed to update "
+                                  f"Bucket policy ({bucket}). "
+                                  f"{e if isinstance(e, ClientError) else ''}")
 
     def get_public_access_blocks(self):
 
@@ -1052,12 +1150,13 @@ class S3(Ingestor):
                 )["PublicAccessBlockConfiguration"]
 
                 bucket.set("PublicAccessBlock", public_access_block)
-                self.console.info(
-                    f"Updated Bucket ({bucket}) public access block")
+                self.console.info(f"Updated Bucket ({bucket}) "
+                                  "public access block")
 
-            except ClientError as e:
-                self.console.debug("Failed to update Bucket public access block "
-                                   f"({bucket}): {str(e)}")
+            except (ClientError, KeyError) as e:
+                self.console.warn("Failed to update Bucket "
+                                  f"public access block ({bucket}). "
+                                  f"{e if isinstance(e, ClientError) else ''}")
 
     def get_bucket_acls(self):
 
@@ -1075,9 +1174,10 @@ class S3(Ingestor):
                 })
                 self.console.info(f"Updated Bucket ({bucket}) ACL")
 
-            except ClientError as e:
-                self.console.debug("Failed to update Bucket ACL "
-                                   f"({bucket}): {str(e)}")
+            except (ClientError, KeyError) as e:
+                self.console.warn("Failed to update "
+                                  f"Bucket ACL ({bucket}). "
+                                  f"{e if isinstance(e, ClientError) else ''}")
 
     def get_object_acls(self):
 
@@ -1099,9 +1199,10 @@ class S3(Ingestor):
                 })
                 self.console.info(f"Updated Object ({obj}) ACL")
 
-            except ClientError as e:
-                self.console.debug("Failed to update Object ACL "
-                                   f"({obj}): {str(e)}")
+            except (ClientError, KeyError) as e:
+                self.console.warn("Failed to update "
+                                  f"Object ACL ({obj}). "
+                                  f"{e if isinstance(e, ClientError) else ''}")
 
 
 class Lambda(Ingestor):
@@ -1114,7 +1215,6 @@ class Lambda(Ingestor):
 
         super().__init__(**kwargs, load_resources=False)
 
-        self.client = self.session.client('lambda')
         self.list_functions()
 
     def list_functions(self):

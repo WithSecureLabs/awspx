@@ -1,4 +1,5 @@
 
+import copy
 import json
 import re
 from functools import reduce
@@ -18,78 +19,58 @@ from lib.util.console import console
 
 class Statement:
 
-    def __init__(self, statement: dict, resource: Element, resources: Elements):
+    _principals = None
+    _actions = None
+    _resources = None
+    _conditions = None
 
-        # TODO: policy statements do not appear to strictly adhere to the JSON
-        # format and may include duplicate keys. Duplicate keys will be ignored.
+    __statement = {}
+    __resources = Elements()
 
-        self._resources = resources
-        self._statement = statement
-        self._resource = resource
+    def __init__(self, statement, resource, resources):
 
-        self._explicit_principals = None
-        self._explicit_actions = None
-        self._explicit_resources = None
-        self._explicit_conditions = None
-        self._explicit_resource_conditions = {}
-        self._Actions = None
+        self.__statement = copy.deepcopy(statement)
+        self.__resources = resources
 
-        try:
+        self.__str__ = lambda: str(statement)
 
-            if not isinstance(statement, dict):
+        assert isinstance(self.__statement, dict)
 
-                raise ValueError
+        keys = [k for k in self.__statement.keys()]
 
-            self._statement = statement
+        if not ("Effect" in keys
+                and any([k in keys for k in ["Action", "NotAction"]])):
 
-            keys = [k.replace("Not", "")
-                    for k in self._statement.keys()]
+            console.critical(f"Statement: {self.__statement} "
+                             "is missing required key")
 
-            if not all([k in keys for k in ["Effect", "Action"]]):
-                raise ValueError("Malformed statement: Missing 'Effect'")
+        if "NotPrincipal" in keys:
+            console.warn("'NotPrincipal' support hasn't been implemented."
+                         f"Statement: {self.__statement} will be ignored.")
 
-            if "Resource" not in keys and resource is not None:
-                self._statement["Resource"] = str(self._resource)
-                self._explicit_resources = Elements([self._resource])
-                self._explicit_resource_conditions = {
-                    self._resource.id(): [{}]}
+        elif "Principal" not in keys:
+            self.__statement["Principal"] = {"AWS": [str(resource)]}
+            self._principals = Elements([resource])
 
-            elif "Resource" is None:
-                raise ValueError("Malformed statement: Missing 'Resource'")
+        if (not any([k in keys for k in ["Resource", "NotResource"]])
+                and resource is not None):
+            self.__statement["Resource"] = [str(resource)]
+            self._resources = Elements([resource])
 
-            if "Condition" not in keys:
-                self._explicit_conditions = {}
-            else:
-                self._explicit_conditions = self._statement["Condition"]
-
-            # TODO: Not implemented
-            if "NotPrincipal" in keys:
-                console.warn("'NotPrincipal' support has not yet been added. "
-                             "\n\tThis entire statement will be ingnored (%s)." % self._resource.id())
-                self._explicit_principals = []
-
-            elif "Principal" not in keys:
-                self._explicit_principals = [self._resource]
-
-        except:
-            raise ValueError("Malformed statement: %s" % self._statement)
-
-    '''https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html'''
-
-    def _resolve_principal_statement(self):
+    def _get_principals(self):
+        '''https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html'''
 
         principals = Elements()
 
         key = list(filter(lambda x: "Principal" in x,
-                          self._statement.keys()))[0]
+                          self.__statement.keys()))[0]
 
-        statement = self._statement[key]
+        statement = self.__statement[key]
 
         if isinstance(statement, str) and statement == "*":
             statement = {"AWS": "*"}
 
-        if not isinstance(statement, dict):
-            raise ValueError
+        assert isinstance(statement, dict)
 
         if "AWS" in statement:
 
@@ -98,46 +79,43 @@ class Statement:
 
             if '*' in statement["AWS"]:
 
-                principals = self._resources.get(
-                    'AWS::Iam::User').get("Resource") + self._resources.get(
-                    'AWS::Iam::Role').get("Resource") + [External(
-                        key="Arn",
-                        labels=["AWS::Account"],
-                        properties={
-                            "Name": "All AWS Accounts",
-                            "Description": "Pseudo-Account representing anyone who possesses an AWS account",
-                            "Arn": "arn:aws:iam::{Account}:root"
-                        })]
+                external = External(
+                    key="Arn",
+                    labels=["AWS::Account"],
+                    properties={
+                        "Name": "All AWS Accounts",
+                        "Description": "Pseudo-Account representing anyone who possesses an AWS account",
+                        "Arn": "arn:aws:iam::{Account}:root"
+                    })
+
+                principals = Elements([*self.__resources.get('AWS::Iam::User').get("Resource"),
+                                       *self.__resources.get('AWS::Iam::Role').get("Resource"),
+                                       external])
 
             for principal in [p for p in statement["AWS"] if '*' not in statement["AWS"]]:
 
                 if '*' in principal:
                     continue
 
-                node = next((a for a in self._resources
+                node = next((a for a in self.__resources.get("Resource")
                              if a.id() == principal),
                             None)
 
                 # We haven't seen this node before. It may belong to another account,
                 # or it belongs to a service that was not loaded.
-
                 if node is None:
 
                     name = principal
                     labels = []
 
-                    if re.compile(
-                        "^%s$" % RESOURCES.regex["Account"]
-                    ).match(principal) is not None:
+                    if re.compile(f"^{RESOURCES.regex['Account']}$"
+                                  ).match(principal) is not None:
 
+                        principal = f"arn:aws:iam::{principal}:root"
                         labels += ["AWS::Account"]
-                        principal = "arn:aws:iam::{Account}:root".format(
-                            Account=principal)
 
-                    elif re.compile(
-                        "^%s$" % "arn:aws:iam::{Account}:root".format(
-                            Account=RESOURCES.regex["Account"])
-                    ).match(principal) is not None:
+                    elif re.compile(f"^arn:aws:iam::{RESOURCES.regex['Account']}:root$"
+                                    ).match(principal) is not None:
 
                         name = str(principal.split(":")[4])
                         labels += ["AWS::Account"]
@@ -145,6 +123,7 @@ class Statement:
                     else:
 
                         for k, v in RESOURCES.items():
+
                             if re.compile(v).match(principal):
                                 name = principal.replace(
                                     '/', ':').split(':')[-1]
@@ -168,12 +147,13 @@ class Statement:
 
             for service in services:
 
-                if service.endswith("amazonaws.com"):
+                if service.lower().endswith("amazonaws.com"):
                     labels = ["AWS::Domain"]
                 else:
                     labels = ["Internet::Domain"]
 
                 principals.add(External(
+                    key="Name",
                     labels=labels,
                     properties={
                         "Name": service
@@ -194,10 +174,11 @@ class Statement:
                     RESOURCES["AWS::Iam::SamlProvider"]
                 ).match(federated) is not None:
 
-                    base = Resource if (next((a for a in self._resources.get("Resource")
+                    base = Resource if (next((a for a in self.__resources.get("Resoure")
                                               if a.account() == federated.split(':')[4]
                                               ), False)) else External
                     node = base(
+                        key="Arn",
                         labels=["AWS::Iam::SamlProvider"],
                         properties={
                             "Name": federated.split('/')[-1],
@@ -208,6 +189,7 @@ class Statement:
                     "^(?=.{1,253}\.?$)(?:(?!-|[^.]+_)[A-Za-z0-9-_]{1,63}(?<!-)(?:\.|$)){2,}$"
                 ).match(federated):
                     node = External(
+                        key="Name",
                         labels=["Internet::Domain"],
                         properties={
                             "Name": federated
@@ -215,6 +197,7 @@ class Statement:
 
                 else:
                     node = External(
+                        key="Name",
                         properties={
                             "Name": federated,
                         })
@@ -224,33 +207,31 @@ class Statement:
         elif "CanonicalUser" in statement:
 
             principals.add(External(
+                key="CanonicalUser",
                 labels=["AWS::Account"],
                 properties={
                     "Name": statement["CanonicalUser"],
                     "CanonicalUser": statement["CanonicalUser"],
-                    "Arn": ""
                 }))
 
         else:
             console.warn("Unknown principal: ", statement)
 
-        self._explicit_principals = principals
+        return principals
 
-    def _resolve_action_statement(self):
+    def _get_actions(self):
 
         actions = set()
         key = list(filter(lambda x: "Action" in x,
-                          self._statement.keys()))[0]
-        statement = self._statement[key] \
-            if isinstance(self._statement[key], list) \
-            else [self._statement[key]]
+                          self.__statement.keys()))[0]
+        statement = self.__statement[key] if isinstance(
+            self.__statement[key], list) else [self.__statement[key]]
 
         for action in [a for a in statement if '*' not in statement]:
 
             if '*' in action:
-
-                actions.update(set(filter(re.compile(
-                    action.replace("*", "(.*)")).match,
+                actions.update(set(filter(
+                    re.compile(action.replace("*", "(.*)")).match,
                     ACTIONS.keys())))
             else:
                 actions.update([action] if action in ACTIONS.keys() else [])
@@ -266,32 +247,34 @@ class Statement:
             actions = [action for action in ACTIONS
                        if action not in actions]
 
-        self._explicit_actions = sorted(list(actions))
+        return sorted(list(actions))
 
-    def _resolve_resource_statement(self):
+    def _get_resources_and_conditions(self):
 
         resources = Elements()
         conditions = {}
 
-        key = list(filter(lambda x: "Resource" in x,
-                          self._statement.keys()))[0]
-        statement = self._statement[key] \
-            if isinstance(self._statement[key], list) \
-            else [self._statement[key]]
+        all_resources = self.__resources
 
-        for resource in set([r.replace('*', "(.*)") + "$" for r in statement
-                             if '*' not in statement
-                             and len(self._resources) > 0]):
+        key = list(filter(lambda x: "Resource" in x,
+                          self.__statement.keys()))[0]
+
+        statement = self.__statement[key] \
+            if isinstance(self.__statement[key], list) \
+            else [self.__statement[key]]
+
+        for rlp in set([r.replace('*', "(.*)") + "$" for r in statement
+                        if '*' not in statement and len(all_resources) > 0
+                        ]):
 
             # Identify variable resource-level permissions
-            variables = list(re.findall("\$\{[0-9a-zA-Z:]+\}", resource))
+            variables = list(re.findall("\$\{[0-9a-zA-Z:]+\}", rlp))
             regex = re.compile(reduce(lambda x, y: x.replace(y, "(.*)"),
-                                      variables,
-                                      resource))
+                                      variables, rlp))
 
             # Match resource-level permissions against resource arns
             results = Elements(filter(lambda r: regex.match(r.id()),
-                                      self._resources))
+                                      all_resources))
 
             # Standard case: add results to result set
             if len(variables) == 0:
@@ -299,7 +282,7 @@ class Statement:
                     conditions[r.id()] = [{}]
                     resources.add(r)
 
-            offset = len([x for x in resource if x == '(']) + 1
+            offset = len([x for x in rlp if x == '(']) + 1
 
             # Handle resource-level permissions
             for result in [r for r in results
@@ -325,120 +308,113 @@ class Statement:
 
         if '*' in statement:
 
-            resources = self._resources
+            resources = all_resources
 
         elif key == "NotResource":
-            resources = [r for r in self._resources
+            resources = [r for r in all_resources
                          if r not in resources]
 
-        self._explicit_resource_conditions = {
-            r.id(): conditions[r.id()]
-            if r.id() in conditions
-            else [{}]
-            for r in resources
-        }
+        resources = Elements(resources)
+        conditions = {str(r): conditions[r.id()] if r.id() in conditions else [{}]
+                      for r in resources}
 
-        self._explicit_resources = Elements(resources)
-
-    def __str__(self):
-        return str(self._statement)
+        return (resources, conditions)
 
     def principals(self):
 
-        if self._explicit_principals is None:
-            self._resolve_principal_statement()
-        return self._explicit_principals
+        if self._principals is None:
+            self._principals = self._get_principals()
+
+        return self._principals
 
     def actions(self):
 
-        if self._explicit_actions is None:
-            self._resolve_action_statement()
+        if self._actions is not None:
+            return self._actions
 
-        return self._explicit_actions
+        (principals, actions, resources, conditions) = (self.principals(),
+                                                        Elements(),
+                                                        self.resources(),
+                                                        self.conditions())
 
-    def resources(self):
+        for action in self._get_actions():
 
-        if self._explicit_resources is None:
-            self._resolve_resource_statement()
-
-        return [str(r) for r in self._explicit_resources]
-
-    def resolve(self):
-
-        if self._Actions is not None:
-            return self._Actions
-
-        if self._explicit_actions is None:
-            self._resolve_action_statement()
-        if self._explicit_resources is None:
-            self._resolve_resource_statement()
-        if self._explicit_principals is None:
-            self._resolve_principal_statement()
-
-        actions = Elements()
-
-        for action in self.actions():
-
-            resources = Elements()
+            action_resources = Elements()
 
             # Actions that do not affect specific resource types.
-
             if ACTIONS[action]["Affects"] == {}:
-
-                resources.update(Elements(
-                    self._explicit_resources.get("CatchAll")))
+                action_resources.update(Elements(
+                    self.__resources.get("CatchAll")))
 
             for affected_type in ACTIONS[action]["Affects"].keys():
-
-                affected = self._explicit_resources.get(affected_type)
-
                 # Ignore mutable actions affecting built in policies
+                if (affected_type == "AWS::Iam::Policy" and ACTIONS[action]["Access"] in [
+                    "Permissions Management",
+                    "Write"
+                ]):
+                    action_resources.update([a for a in resources.get(affected_type)
+                                             if str(a).split(':')[4] != "aws"])
+                else:
+                    action_resources.update(
+                        resources.get(affected_type)
+                    )
 
-                if affected_type == "AWS::Iam::Policy" \
-                        and ACTIONS[action]["Access"] in ["Permissions Management", "Write"]:
-                    affected = [a for a in affected if str(a).split(':')[
-                        4] != "aws"]
+            for resource in action_resources:
+                # Action conditions comprise of resource-level conditions and statement conditions
+                resource_conditions = list(conditions[str(resource)]
+                                           if str(resource) in conditions else [{}])
 
-                resources.update(Elements(affected))
+                statement_conditions = dict(self.__statement["Condition"]
+                                            if "Condition" in self.__statement.keys() else {})
+                # Add the two together
+                condition = json.dumps([
+                    {
+                        **resource_conditions[i],
+                        **statement_conditions
+                    } for i in range(len(resource_conditions))
+                ]) if (len(resource_conditions[0]) + len(statement_conditions)) > 0  \
+                    else "[]"
 
-            for resource in resources:
-
-                # Action conditions comprise of resource level permission conditions
-                # variants AND statement conditions
-
-                condition = self._explicit_resource_conditions[resource.id()]
-
-                condition = [
-                    {**condition[i], **self._explicit_conditions}
-                    for i in range(len(condition))]
-
-                condition = json.dumps(condition) \
-                    if len(condition[0]) > 0 else "[]"
-
+                # Incorporate all items from ACTIONS.py
                 supplementary = next((ACTIONS[action]["Affects"][r]
-                                      for r in resource.labels(
-                ) if r in ACTIONS[action]["Affects"]), {})
+                                      for r in resource.labels()
+                                      if r in ACTIONS[action]["Affects"]),
+                                     {})
 
-                for principal in self._explicit_principals:
+                for principal in self._principals:
+
                     actions.add(Action(
                         properties={
                             "Name":         action,
                             "Description":  ACTIONS[action]["Description"],
-                            "Effect":       self._statement["Effect"],
+                            "Effect":       self.__statement["Effect"],
                             "Access":       ACTIONS[action]["Access"],
                             "Reference":    ACTIONS[action]["Reference"],
                             "Condition":    condition,
                             **supplementary
-                        },
-                        source=principal, target=resource))
+                        }, source=principal, target=resource))
 
         # Unset resource level permission conditions
-        for resource in self._explicit_resources:
+        for resource in self._resources:
             resource.condition = []
 
-        self._Actions = actions
+        self._actions = actions
 
-        return self._Actions
+        return self._actions
+
+    def resources(self):
+
+        if self._resources is None:
+            (self._resources, self._conditions) = self._get_resources_and_conditions()
+
+        return self._resources
+
+    def conditions(self):
+
+        if self._conditions is None:
+            (self._resources, self._conditions) = self._get_resources_and_conditions()
+
+        return self._conditions
 
 
 ''' Consists of one or more Statements '''
@@ -448,7 +424,6 @@ class Document:
 
     def __init__(self, document, resource, resources):
 
-        self.document = {}
         self.statements = []
 
         if not (isinstance(document, dict)
@@ -457,40 +432,35 @@ class Document:
                 and "Statement" in document):
             return
 
-        self.resource = resource
-        self.document = document
+        self.document = json.loads(json.dumps(document))
 
-        # TODO: We're going to end up with things that weren't here before
-        self._document = json.dumps(
-            self.document,
-            indent=2,
-            default=str)
-
-        if not isinstance(document["Statement"], list):
-            document["Statement"] = [document["Statement"]]
+        if not isinstance(self.document["Statement"], list):
+            self.document["Statement"] = [self.document["Statement"]]
 
         for statement in self.document["Statement"]:
-            self.statements.append(Statement(
-                statement=statement,
-                resource=self.resource,
-                resources=resources))
-
-    def __str__(self):
-        return self._document
+            self.statements.append(Statement(statement=statement,
+                                             resource=resource,
+                                             resources=resources))
 
     def __len__(self):
         return len(self.statements)
 
     def principals(self):
+
         principals = Elements()
-        for i in range(len(self.statements)):
-            principals.update(self.statements[i].principals())
+
+        for statement in self.statements:
+            principals.update(statement.principals())
+
         return principals
 
-    def resolve(self):
+    def actions(self):
+
         actions = Elements()
-        for i in range(len(self.statements)):
-            actions.update(self.statements[i].resolve())
+
+        for statement in self.statements:
+            actions.update(statement.actions())
+
         return actions
 
 
@@ -501,25 +471,31 @@ class Policy:
 
     def __init__(self, resource, resources):
 
+        self.__resource = resource
         self.documents = {}
-        self.resource = resource
-        self.resources = resources
-
-    def __str__(self):
-
-        return json.dumps({
-            k: json.loads(str(v))
-            for k, v in self.documents.items()
-        }, indent=2)
 
     def __len__(self):
         return len(self.documents)
 
-    def resolve(self):
+    def principals(self):
+
+        principals = Elements()
+
+        for policy in self.documents.values():
+            principals.update(policy.principals())
+
+        return principals
+
+    def actions(self):
 
         actions = Elements()
-        for _, policy in self.documents.items():
-            actions.update(policy.resolve())
+
+        for document in self.documents.values():
+            actions.update(document.actions())
+
+        console.info(f"{self.__class__.__name__} {self.__resource} "
+                     f"resolved to {len(actions)} Action(s)")
+
         return actions
 
 
@@ -531,13 +507,14 @@ class IdentityBasedPolicy(Policy):
     def __init__(self, resource, resources):
 
         super().__init__(resource, resources)
-        key = list(filter(lambda k: k == "Document" or k == "Documents",
-                          self.resource.properties().keys()))
 
+        key = list(filter(lambda k: k == "Document" or k == "Documents",
+                          resource.properties().keys()))
         if len(key) != 1:
             return
 
-        for policy in self.resource.properties()[key[0]]:
+        # Set self.documents
+        for policy in resource.properties()[key[0]]:
             for name, document in policy.items():
                 self.documents[name] = Document(document, resource, resources)
 
@@ -555,20 +532,17 @@ class ResourceBasedPolicy(Policy):
 
         for k, v in resource.properties().items():
 
-            if len(keys) == 0 or k in keys:
-                document = Document(v, resource, resources)
+            if not (len(keys) == 0 or k in keys):
+                continue
 
-                if len(document) > 0:
-                    self.documents[k] = Document(
-                        resource.properties()[k], resource, resources)
+            document = Document(v, resource, resources)
 
-    def principals(self):
+            if not len(document) > 0:
+                continue
 
-        principals = Elements()
-        for _, policy in self.documents.items():
-            results = policy.principals()
-            principals.update(results)
-        return principals
+            # Set self.documents
+            self.documents[k] = Document(resource.properties()[k],
+                                         resource, resources)
 
 
 ''' Resource based policy variant, specific to S3 Buckets and their Objects '''
@@ -611,13 +585,11 @@ class BucketACL(ResourceBasedPolicy):
         for key, acls in resource.properties().items():
 
             # Property is not a valid ACL
-
             if not (isinstance(acls, list)
                     and all(["Grantee" in x and "Permission" for x in acls])):
                 continue
 
             # Construct a policy from ACL
-
             for (grantee, permission) in map(lambda x: (x["Grantee"], x["Permission"]), acls):
 
                 statement = {
@@ -625,7 +597,6 @@ class BucketACL(ResourceBasedPolicy):
                 }
 
                 # Handle Principal
-
                 if grantee["Type"] not in ["CanonicalUser", "Group"]:
                     raise ValueError
 
@@ -638,31 +609,25 @@ class BucketACL(ResourceBasedPolicy):
                     group = grantee["URI"].split('/')[-1]
 
                     # Any AWS account can access this resource
-
                     if group == "AuthenticatedUsers":
                         statement["Principal"] = {"AWS": "*"}
 
                     # Anyone (not neccessarily AWS)
-
                     elif group == "AllUsers":
                         statement["Principal"] = {"AWS": "*"}
 
                     # Service
-
                     elif group == "LogDelivery":
                         statement["Principal"] = {"Service": grantee["URI"]}
 
                     # Specific AWS resource
-
                     else:
                         statement["Principal"] = {"AWS": grantee["URI"]}
 
                 # Handle Actions
-
                 statement["Action"] = self.AccessControlList[permission]
 
                 # Handle Resources (Bucket and Objects in Bucket)
-
                 statement["Resource"] = [resource.id(), resource.id() + "/*"]
 
                 statements.append(statement)

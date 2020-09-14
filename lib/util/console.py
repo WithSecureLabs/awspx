@@ -30,7 +30,7 @@ class Log(Handler):
     levels = {
         "CRITICAL": Style(color="red", bold=True, reverse=True),
         "ERROR":  Style(color="red", bold=True),
-        "WARNING":  Style(color="dark_red", bold=True),
+        "WARNING":  Style(color="dark_red"),
         "NOTICE":  Style(color="yellow"),
         "INFO":  Style(dim=True),
         "DEBUG":  Style(color="green", dim=True),
@@ -131,22 +131,25 @@ class Console(Table):
     def warn(self, message):
         self.logger.warn(message)
         if not self._verbose:
-            self._annotate(message, "bold red blink")
+            self._annotate(message, "dark_red")
 
     def error(self, message):
         self.logger.error(message)
         if not self._verbose:
-            self._annotate(message, "bold red blink")
+            self._annotate(message, "bold red")
 
     def critical(self, message):
 
-        self.logger.critical(message)
-        self.stop()
-
-        try:
-            self.console.print_exception()
-        except ValueError:
-            self.console.print(message, style="bold red")
+        if isinstance(message, str):
+            self.logger.critical(message)
+            if not self._verbose:
+                self._annotate(message, "bold red")
+        else:
+            self.stop()
+            try:
+                self.console.print_exception()
+            except ValueError:
+                self.console.print(message.__repr__())
 
         os._exit(1)
 
@@ -331,7 +334,7 @@ class Console(Table):
 
     def _add(self, message, iterables=[], override=None):
 
-        key = Text(message)
+        key = Text(message, overflow='ellipsis', no_wrap=True)
         busy = Text()
 
         if override is None:
