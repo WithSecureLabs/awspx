@@ -140,13 +140,16 @@ class Console(Table):
 
     def critical(self, message):
 
-        self.logger.critical(message)
-        self.stop()
-
-        try:
-            self.console.print_exception()
-        except ValueError:
-            self.console.print(message, style="bold red")
+        if isinstance(message, str):
+            self.logger.critical(message)
+            if not self._verbose:
+                self._annotate(message, "bold red")
+        else:
+            self.stop()
+            try:
+                self.console.print_exception()
+            except ValueError:
+                self.console.print(message.__repr__())
 
         os._exit(1)
 

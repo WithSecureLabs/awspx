@@ -12,7 +12,7 @@
 
 _OS_="UNKNOWN"
 
-function detect_os(){
+function host_checks(){
     
     #MacOS
     if [ "$(uname)" == "Darwin" ]; then
@@ -127,7 +127,7 @@ function install(){
 
 function hook(){
     
-    if [ "$@" == "neo4j" ]; then
+    if [[ "${@}" == "neo4j" ]]; then
         # Start web interface
         [[ -z "$(pgrep npm)" ]] \
             && cd /opt/awspx/www \
@@ -144,6 +144,15 @@ function hook(){
 
 function awspx(){
     
+    if [[ -z "$(docker ps -a -f name=^/awspx$ -q)" ]]; then
+        echo -e "[-] Couldn't find \"awspx\" container, you will need to create it first"
+        exit 1
+    fi
+
+    if [[ -z "$(docker ps -a -f name=^/awspx$ -f status=running -q)" ]]; then
+        docker start awspx > /dev/null
+    fi
+
     docker exec -it \
         -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
         -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
@@ -157,14 +166,14 @@ function main(){
     
     case "$(basename $0)" in
         INSTALL)
-            detect_os
+            host_checks
             install $@
         ;;
         docker-entrypoint.sh)
             hook $@
         ;;
         awspx)
-            detect_os
+            host_checks
             awspx $@
         ;;
     esac
