@@ -648,7 +648,7 @@ class Ingestor(Elements):
 
                         collection_managers.append(cm)
 
-                        if cm.meta.data is None:
+                        if 'meta' not in dir(cm) or cm.meta.data is None:
 
                             self.console.warn(f"Skipping ServiceResource {cm}: "
                                               "it has no properties")
