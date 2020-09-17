@@ -106,7 +106,7 @@ class Statement:
                 if node is None:
 
                     name = principal
-                    labels = []
+                    labels = ["AWS::Account"]
 
                     if re.compile(f"^{RESOURCES.regex['Account']}$"
                                   ).match(principal) is not None:
@@ -131,11 +131,12 @@ class Statement:
                                 break
 
                     node = External(
-                        key="Arn",
+                        key=str("Arn" if principal.startswith("arn")
+                                else "CanonicalUser"),
                         labels=labels,
                         properties={
                             "Name": str(name),
-                            "Arn":  principal
+                            str("Arn" if principal.startswith("arn") else "CanonicalUser"): principal,
                         })
 
                 principals.add(node)
