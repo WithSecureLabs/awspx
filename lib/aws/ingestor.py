@@ -73,7 +73,7 @@ class IngestionManager(Elements):
             super().update(elements)
             elements.destroy()
 
-        self.load_transitives()
+        self.load_cross_service_relationships()
 
         if not skip_actions:
             self.load_actions()
@@ -82,19 +82,21 @@ class IngestionManager(Elements):
 
         self.console.spacer()
 
-    def load_transitives(self):
+    def load_cross_service_relationships(self, remove=True):
 
         resources = self.get("Resource")
         groups = resources.get("AWS::Iam::Group")
         roles = resources.get("AWS::Iam::Role")
         policies = resources.get("AWS::Iam::Policy")
         clusters = resources.get("AWS::Eks::Cluster")
+        nodegroups = resources.get("AWS::Eks::Nodegroup")
+        instances = resources.get("AWS::Ec2::Instance")
         instance_profiles = resources.get("AWS::Iam::InstanceProfile")
 
         for resource in self.console.tasklist(
-            "Adding Transitive relationships",
+            "Adding cross-service relationships",
             iterables=resources,
-            done="Added Transitive relationships",
+            done="Added cross-service relationships",
         ):
 
             if resource.label() in ["AWS::Iam::User", "AWS::Iam::Group", "AWS::Iam::Role"]:
@@ -114,7 +116,7 @@ class IngestionManager(Elements):
                         policy_arns = [p for p in policy_arns
                                        if p != str(policy)]
 
-                    if not len(policy_arns) > 0:
+                    if remove and not len(policy_arns) > 0:
                         del resource.properties()["AttachedManagedPolicies"]
 
                 # (User)-->(Group)
@@ -133,23 +135,56 @@ class IngestionManager(Elements):
                         group_names = [g for g in group_names
                                        if g != str(group)]
 
-                    if not len(group_names) > 0:
+                    if remove and not len(group_names) > 0:
                         del resource.properties()["GroupList"]
 
-            # (Instance) --> (Instance Profile)
-            if (resource.label() in ["AWS::Ec2::Instance"]
-                    and "IamInstanceProfile" in resource.properties()):
+            if resource.label() in ["AWS::Ec2::Instance"]:
 
-                instance_profile = next((i for i in instance_profiles
-                                         if str(i) == resource.get("IamInstanceProfile")["Arn"]
-                                         ), None)
+                # (Instance) --> (Instance Profile)
+                if "IamInstanceProfile" in resource.properties():
 
-                if instance_profile is not None:
+                    instance_profile = next((i for i in instance_profiles
+                                             if str(i) == resource.get("IamInstanceProfile")["Arn"]
+                                             ), None)
 
-                    self.add(Transitive({"Name": "Attached"},
-                                        source=resource, target=instance_profile))
+                    if instance_profile is not None:
 
-                    del resource.properties()["IamInstanceProfile"]
+                        self.add(Transitive({"Name": "Attached"},
+                                            source=resource, target=instance_profile))
+
+                        if remove:
+                            del resource.properties()["IamInstanceProfile"]
+
+                if "Tags" in resource.properties():
+
+                    target = None
+                    cluster = None
+                    nodegroup = None
+
+                    for tag in resource.get("Tags"):
+
+                        if tag["Key"].startswith("kubernetes.io/cluster/"):
+                            cluster = tag["Key"].replace(
+                                "kubernetes.io/cluster/", "")
+
+                        if tag["Key"] == "eks:nodegroup-name":
+                            nodegroup = tag["Value"]
+
+                    # (Instance) -- (Node Group)
+                    if cluster is not None and nodegroup is not None:
+                        target = next((n for n in nodegroups
+                                       if n.get("Name") == nodegroup
+                                       ), None)
+
+                    # (Instance) -- (Cluster)
+                    elif cluster is not None:
+                        target = next((c for c in clusters
+                                       if c.get("Name") == cluster
+                                       ), None)
+
+                    if target is not None:
+                        self.add(Associative(properties={"Name": "Attached"},
+                                             source=resource, target=target))
 
             # (InstanceProfile) --> (Role)
             if (resource.label() in ["AWS::Iam::InstanceProfile"]
@@ -167,7 +202,7 @@ class IngestionManager(Elements):
 
                     role_arns = [r for r in role_arns if r != str(role)]
 
-                if not len(role_arns) > 0:
+                if remove and not len(role_arns) > 0:
                     del resource.properties()["Roles"]
 
             # (Function) --> (Role)
@@ -185,7 +220,7 @@ class IngestionManager(Elements):
 
                     role_arns = [r for r in role_arns if r != str(role)]
 
-                if not len(role_arns) > 0:
+                if remove and not len(role_arns) > 0:
                     del resource.properties()["Roles"]
 
             # (Cluster) --> (Role)
@@ -201,7 +236,8 @@ class IngestionManager(Elements):
                     self.add(Transitive(properties={"Name": "Attached"},
                                         source=resource, target=role))
 
-                    del resource.properties()["Role"]
+                    if remove:
+                        del resource.properties()["Role"]
 
             if resource.label() in ["AWS::Eks::FargateProfile"]:
 
@@ -214,12 +250,13 @@ class IngestionManager(Elements):
 
                     if role is not None:
 
-                        self.add(Transitive(properties={"Name": "Attached"},
-                                            source=resource, target=role))
+                        self.add(Associative(properties={"Name": "Attached"},
+                                             source=resource, target=role))
 
+                    if remove:
                         del resource.properties()["PodExecutionRole"]
 
-                # (Cluster) --> (Fargate Profile)
+                # (Fargate Profile) -- (Cluster)
                 if "Cluster" in resource.properties():
 
                     cluster = next((c for c in clusters
@@ -228,10 +265,11 @@ class IngestionManager(Elements):
 
                     if cluster is not None:
 
-                        self.add(Transitive(properties={"Name": "Attached"},
-                                            source=cluster, target=resource))
+                        self.add(Associative(properties={"Name": "Attached"},
+                                             source=cluster, target=resource))
 
-                        del resource.properties()["Cluster"]
+                        if remove:
+                            del resource.properties()["Cluster"]
 
             if resource.label() in ["AWS::Eks::Nodegroup"]:
 
@@ -244,12 +282,12 @@ class IngestionManager(Elements):
 
                     if role is not None:
 
-                        self.add(Transitive(properties={"Name": "Attached"},
-                                            source=resource, target=role))
+                        self.add(Associative(properties={"Name": "Attached"},
+                                             source=resource, target=role))
+                        if remove:
+                            del resource.properties()["NodeRole"]
 
-                        del resource.properties()["NodeRole"]
-
-                # (Cluster) --> (Node Group)
+                # (Node Group) -- (Cluster)
                 if "Cluster" in resource.properties():
 
                     cluster = next((c for c in clusters
@@ -258,10 +296,11 @@ class IngestionManager(Elements):
 
                     if cluster is not None:
 
-                        self.add(Transitive(properties={"Name": "Attached"},
-                                            source=cluster, target=resource))
+                        self.add(Associative(properties={"Name": "Attached"},
+                                             source=cluster, target=resource))
 
-                        del resource.properties()["Cluster"]
+                        if remove:
+                            del resource.properties()["Cluster"]
 
     def load_actions(self):
 
@@ -472,6 +511,11 @@ class IngestionManager(Elements):
 
             self.console.info(f"Added {element.label().capitalize()} relationship: "
                               f"({element.source()}) → ({element.target()})")
+
+        elif "ASSOCIATIVE" in element.labels():
+
+            self.console.info(f"Added {element.label().capitalize()} relationship: "
+                              f"({element.source()}) - ({element.target()})")
 
         elif any([e in ["ACTION", "TRUSTS"] for e in element.labels()]):
             pass
