@@ -56,7 +56,7 @@ class IngestionManager(Elements):
             self.console.spacer()
 
         except (ClientError, PartialCredentialsError, ProfileNotFound) as e:
-            self.console.error(e)
+            self.console.error(str(e))
             sys.exit(1)
 
         if len(only_arns) > 0:
