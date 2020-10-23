@@ -406,6 +406,7 @@ class SessionClientWrapper(object):
     codes = [
         'AccessDenied',
         'AccessDeniedException',
+        'IllegalLocationConstraintException',
     ]
 
     def __init__(self, client, console=None):
