@@ -216,7 +216,7 @@ class Statement:
                 }))
 
         else:
-            console.warn("Unknown principal: ", statement)
+            console.warn(str("Unknown principal: ", statement))
 
         return principals
 
