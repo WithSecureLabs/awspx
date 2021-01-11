@@ -878,7 +878,7 @@ class IAM(Ingestor):
 
             for k in sorted(item.keys()):
 
-                 # Rename PolicyLists to Documents
+                # Rename PolicyLists to Documents
                 if k.endswith("PolicyList"):
                     properties["Documents"] = [{
                         p["PolicyName"]: p["PolicyDocument"]
@@ -1074,7 +1074,7 @@ class EC2(Ingestor):
                 response = self.client.describe_instance_attribute(Attribute="userData",
                                                                    DryRun=False,
                                                                    InstanceId=name)
-            except ClientError as e:
+            except ClientError:
                 self.console.error(f"Couldn't get user data for {name} "
                                    "- it may no longer exist.")
 
@@ -1222,8 +1222,6 @@ class Lambda(Ingestor):
 
         if 'AWS::Lambda::Function' not in self.types:
             return
-
-        functions = Elements()
 
         for function in [f for r in self.console.tasklist(
             "Adding Functions",
