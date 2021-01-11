@@ -34,6 +34,7 @@
         ref="advanced"
         @visual_queries_active="$emit('visual_queries_active', $event)"
         :visual_queries_active="visual_queries_active"
+        class="mb-5"
         style="width: 70vw; bottom: 10px"
         @back="$emit('advanced', false)"
         @add="$emit('add', $event)"
