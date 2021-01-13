@@ -7,6 +7,7 @@ ENV NEO4J_AUTH=neo4j/password
 ENV EXTENSION_SCRIPT=/opt/awspx/INSTALL
 
 RUN apt -y update && apt install -y \
+        awscli \
         nodejs \
         npm \
         python3-pip \
@@ -15,7 +16,7 @@ RUN apt -y update && apt install -y \
     && rm -rf /var/lib/apt/lists/* \
     && pip3 install --upgrade \
         argparse \
-        awscli-local \
+        awscli \
         boto3 \
         configparser \
         git-python \
