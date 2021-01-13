@@ -706,6 +706,41 @@ export default {
       },
       deep: true,
     },
+    database_mounted(n, o) {
+      // Set visual query editor schema after the database has been mounted
+      if (n && !o) {
+        Promise.all([
+          this.neo4j.run("CALL db.labels()").then((r) => {
+            return r.Text.map((l) => `:${l["label"]}`);
+          }),
+          this.neo4j.run("CALL db.relationshipTypes()").then((r) => {
+            return r.Text.map((rt) => `:${rt["relationshipType"]}`);
+          }),
+          this.neo4j.run("CALL db.propertyKeys()").then((r) => {
+            return r.Text.map((p) => p["propertyKey"]);
+          }),
+
+          this.neo4j.run("CALL dbms.functions()").then((r) => r.Text),
+
+          this.neo4j.run("CALL dbms.procedures()").then((r) => r.Text),
+        ]).then((values) => {
+          this.editor.settings.neo4jSchema = {
+            ...this.editor.settings.neo4jSchema,
+            ...{
+              labels: values[0],
+              relationshipTypes: values[1],
+              propertyKeys: values[2],
+              functions: values[3],
+              procedures: values[4],
+            },
+          };
+
+          this.editor.value.editorSupport.setSchema(
+            this.editor.settings.neo4jSchema
+          );
+        });
+      }
+    },
   },
 
   computed: {
@@ -764,54 +799,22 @@ export default {
 
       return query.join(" ");
     },
+    database_mounted() {
+      return this.$parent.$parent.$refs.database.mounted;
+    },
   },
 
   mounted() {
-    Promise.all(
-      // Populate visual query editor settings
-      [
-        this.neo4j.run("CALL db.labels()").then((r) => {
-          this.editor.settings.neo4jSchema.labels = r.Text.map(
-            (l) => `:${l["label"]}`
-          )
-            .filter(
-              (l) =>
-                l.includes("::") ||
-                [":Admin", ":Resource", ":Generic", ":External"].includes(l)
-            )
-            .sort();
-        }),
-        this.neo4j.run("CALL db.relationshipTypes()").then((r) => {
-          this.editor.settings.neo4jSchema.relationshipTypes = r.Text.map(
-            (rt) => `:${rt["relationshipType"]}`
-          );
-        }),
-        this.neo4j.run("CALL db.propertyKeys()").then((r) => {
-          this.editor.settings.neo4jSchema.propertyKeys = r.Text.map(
-            (p) => p["propertyKey"]
-          );
-        }),
+    const { editor, editorSupport } = CypherCodeMirror.createCypherEditor(
+      document.getElementById("editor"),
+      this.editor.settings
+    );
+    editorSupport.setSchema(this.editor.settings.neo4jSchema);
+    editor.setOption("theme", "cypher");
+    editor.on("change", this.editor_autocomplete);
 
-        this.neo4j.run("CALL dbms.functions()").then((r) => {
-          this.editor.settings.neo4jSchema.functions = r.Text;
-        }),
-
-        this.neo4j.run("CALL dbms.procedures()").then((r) => {
-          this.editor.settings.neo4jSchema.procedures = r.Text;
-        }),
-      ]
-    ).then(() => {
-      const { editor, editorSupport } = CypherCodeMirror.createCypherEditor(
-        document.getElementById("editor"),
-        this.editor.settings
-      );
-      editorSupport.setSchema(this.editor.settings.neo4jSchema);
-      editor.setOption("theme", "cypher");
-      editor.on("change", this.editor_autocomplete);
-
-      this.editor.value = editor;
-      this.visual_query_load(this.visual_query);
-    });
+    this.editor.value = editor;
+    this.visual_query_load(this.visual_query);
   },
 };
 </script>
