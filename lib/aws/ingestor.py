@@ -247,8 +247,8 @@ class IngestionManager(Elements):
 
                     # This role trusts all IAM entities within this account
                     if (action.source().type("AWS::Account")
+                        and len(action.source().id().split(':')) >= 5
                             and action.source().id().split(':')[4] == self.account):
-
                         self.update(Elements(Trusts(properties=action.properties(),
                                                     source=action.target(),
                                                     target=entity)
