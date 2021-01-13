@@ -41,29 +41,37 @@ function host_checks(){
 
 function install(){
     
-    CLI="/usr/local/bin/awspx"
+    DEFAULT_PATH="/usr/local/bin"
+
     [[ $_OS_ == "MACOS" ]] \
         && MOUNT="${HOME}/bin/awspx" \
         || MOUNT="/opt/awspx"
     
-    # Make sure this script exists somewhere in $PATH
-    if !(which awspx >/dev/null 2>&1) ; then
-        read -p "[*] '/usr/local/bin' isn't in your \$PATH. Choose another location to save \"awspx\" [y/n]? " response
+    # Use default path for awspx installation 
+    if [[ ":${PATH}:" == *":${DEFAULT_PATH}:"* ]] && [ -w "${DEFAULT_PATH}" ]; then 
+        cp -f $0 ${DEFAULT_PATH}/awspx >/dev/null
+
+    # Select an alternative writable location 
+    else 
+        read -p "[*] '${DEFAULT_PATH}' isn't in your \$PATH. Choose another location to save \"awspx\" [y/n]? " response
         if [[ "${response}" == "Y" || "${response}" == "y" ]]; then
-            select p in $(echo "${PATH}" | tr ':' '\n' | sort); do
+            select p in $(for p in $(echo "${PATH}" | tr ':' '\n' | sort); do [[ -w $p ]] && echo $p; done); do
                 case $p in
                     /*)
                         cp -f $0 $p/awspx >/dev/null
-                        CLI="awspx"
                         break
                     ;;
                     *) ;;
                 esac
             done
         fi
-    else
-        CLI="awspx"
     fi
+
+    # Assert awspx exists in $PATH
+    if !(which awspx >/dev/null 2>&1) ; then 
+        >&2 echo "Failed to identify a writable \$PATH directory"
+        exit 2
+    fi 
     
     # Delete all containers named awspx (prompt for confirmation)
     if [ -n "$(docker ps -a -f name=awspx -q)" ]; then
@@ -119,7 +127,7 @@ function install(){
         echo -e "and you're all set!\n"
         
         echo -e "    The web interface (http://localhost) will be available shortly..."
-        echo -e "    Run: \`${CLI} -h\` for a list of options."
+        echo -e "    Run: \`awspx -h\` for a list of options."
     fi
     
     echo ""
