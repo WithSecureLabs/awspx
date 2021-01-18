@@ -684,6 +684,9 @@ export default {
     "editor.settings.readOnly"(value) {
       this.editor.value.setOption("readOnly", value);
       this.visual.enabled = !!value;
+      if (this.visual.enabled){
+        this.visual_query_load(this.visual_query);
+      }
     },
 
     "visual.queries.loaded"(load) {
