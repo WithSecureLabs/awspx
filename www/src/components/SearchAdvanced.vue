@@ -146,7 +146,7 @@
           </v-row>
 
           <!-- Add filters or limit results -->
-          <v-row no-gutters align="center" class="mb-n3 mt-n3">
+          <v-row no-gutters align="center" class="mt-n3">
             <v-col v-show="!editor.fullscreen">
               <div style="width: 450px">
                 <v-row class="mx-5 mt-5" no-gutters>
