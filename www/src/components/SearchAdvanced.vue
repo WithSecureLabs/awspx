@@ -706,8 +706,8 @@ export default {
       },
       deep: true,
     },
-    database_mounted(n, o) {
-      // Set visual query editor schema after the database has been mounted
+    database_available(n, o) {
+      // Set visual query editor schema once the database is available
       if (n && !o) {
         Promise.all([
           this.neo4j.run("CALL db.labels()").then((r) => {
@@ -799,8 +799,8 @@ export default {
 
       return query.join(" ");
     },
-    database_mounted() {
-      return this.$parent.$parent.$refs.database.mounted;
+    database_available() {
+      return this.$parent.$parent.$refs.database.db.populated;
     },
   },
 
