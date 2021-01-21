@@ -41,24 +41,20 @@ function host_checks(){
 
 function install(){
     
-    DEFAULT_PATH="/usr/local/bin"
+    BIN_PATH="/usr/local/bin"
 
     [[ $_OS_ == "MACOS" ]] \
         && MOUNT="${HOME}/bin/awspx" \
         || MOUNT="/opt/awspx"
     
     # Use default path for awspx installation 
-    if [[ ":${PATH}:" == *":${DEFAULT_PATH}:"* ]] && [ -w "${DEFAULT_PATH}" ]; then 
-        cp -f $0 ${DEFAULT_PATH}/awspx >/dev/null
-
-    # Select an alternative writable location 
-    else 
-        read -p "[*] '${DEFAULT_PATH}' isn't in your \$PATH. Choose another location to save \"awspx\" [y/n]? " response
+    if [[ ":${PATH}:" != *":${BIN_PATH}:"* ]] || [ ! -w "${BIN_PATH}" ]; then 
+        read -p "[*] '${BIN_PATH}' isn't in your \$PATH. Choose another location to save \"awspx\" [y/n]? " response
         if [[ "${response}" == "Y" || "${response}" == "y" ]]; then
             select p in $(for p in $(echo "${PATH}" | tr ':' '\n' | sort); do [[ -w $p ]] && echo $p; done); do
                 case $p in
                     /*)
-                        cp -f $0 $p/awspx >/dev/null
+                        BIN_PATH="$p"
                         break
                     ;;
                     *) ;;
@@ -67,8 +63,12 @@ function install(){
         fi
     fi
 
+    cp -f $0 ${BIN_PATH}/awspx 
+
     # Assert awspx exists in $PATH
-    if !(which awspx >/dev/null 2>&1) ; then 
+    if (which awspx >/dev/null 2>&1) ; then 
+        echo "awspx successfully written to ${BIN_PATH}/awspx"
+    else 
         >&2 echo "Failed to identify a writable \$PATH directory"
         exit 2
     fi 
