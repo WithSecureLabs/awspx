@@ -264,7 +264,7 @@ class Statement:
             if isinstance(self.__statement[key], list) \
             else [self.__statement[key]]
 
-        for rlp in set([r.replace('*', "(.*)") + "$" for r in statement
+        for rlp in set([r.replace('*', "(.*)").replace('?', '.') + "$" for r in statement
                         if '*' not in statement and len(all_resources) > 0
                         ]):
 
