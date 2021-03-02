@@ -647,8 +647,6 @@ class Ingestor(Elements):
 
                     for cm in SessionClientWrapper(operation(), console=self.console):
 
-                        collection_managers.append(cm)
-
                         if 'meta' not in dir(cm) or cm.meta.data is None:
 
                             self.console.warn(f"Skipping ServiceResource {cm}: "
@@ -686,6 +684,7 @@ class Ingestor(Elements):
                         resource = Resource(labels=[label],
                                             properties=cm.meta.data)
                         self.add(resource)
+                        collection_managers.append(cm)
 
                 for _, attrs in v.items():
                     run_ingestor(collection_managers, attrs)
