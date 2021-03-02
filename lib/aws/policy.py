@@ -586,12 +586,12 @@ class BucketACL(ResourceBasedPolicy):
         for key, acls in resource.properties().items():
 
             # Property is not a valid ACL
-            if not (isinstance(acls, list)
-                    and all(["Grantee" in x and "Permission" for x in acls])):
+            if not (isinstance(acls, dict) and "Grants" in acls
+                    and all(["Grantee" in x and "Permission" for x in acls["Grants"]])):
                 continue
 
             # Construct a policy from ACL
-            for (grantee, permission) in map(lambda x: (x["Grantee"], x["Permission"]), acls):
+            for (grantee, permission) in map(lambda x: (x["Grantee"], x["Permission"]), acls["Grants"]):
 
                 statement = {
                     "Effect": "Allow"
