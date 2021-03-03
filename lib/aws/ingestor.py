@@ -365,8 +365,8 @@ class IngestionManager(Elements):
 
                     # This role trusts all IAM entities within this account
                     if (action.source().type("AWS::Account")
+                        and len(action.source().id().split(':')) >= 5
                             and action.source().id().split(':')[4] == self.account):
-
                         self.update(Elements(Trusts(properties=action.properties(),
                                                     source=action.target(),
                                                     target=entity)
@@ -770,8 +770,6 @@ class Ingestor(Elements):
 
                     for cm in SessionClientWrapper(operation(), console=self.console):
 
-                        collection_managers.append(cm)
-
                         if 'meta' not in dir(cm) or cm.meta.data is None:
 
                             self.console.warn(f"Skipping ServiceResource {cm}: "
@@ -809,6 +807,7 @@ class Ingestor(Elements):
                         resource = Resource(labels=[label],
                                             properties=cm.meta.data)
                         self.add(resource)
+                        collection_managers.append(cm)
 
                 for _, attrs in v.items():
                     run_ingestor(collection_managers, attrs)
@@ -1001,7 +1000,7 @@ class IAM(Ingestor):
 
             for k in sorted(item.keys()):
 
-                 # Rename PolicyLists to Documents
+                # Rename PolicyLists to Documents
                 if k.endswith("PolicyList"):
                     properties["Documents"] = [{
                         p["PolicyName"]: p["PolicyDocument"]
@@ -1197,7 +1196,7 @@ class EC2(Ingestor):
                 response = self.client.describe_instance_attribute(Attribute="userData",
                                                                    DryRun=False,
                                                                    InstanceId=name)
-            except ClientError as e:
+            except ClientError:
                 self.console.error(f"Couldn't get user data for {name} "
                                    "- it may no longer exist.")
 

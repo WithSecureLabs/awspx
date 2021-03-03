@@ -216,7 +216,7 @@ class Statement:
                 }))
 
         else:
-            console.warn("Unknown principal: ", statement)
+            console.warn(str("Unknown principal: ", statement))
 
         return principals
 
@@ -264,7 +264,7 @@ class Statement:
             if isinstance(self.__statement[key], list) \
             else [self.__statement[key]]
 
-        for rlp in set([r.replace('*', "(.*)") + "$" for r in statement
+        for rlp in set([r.replace('*', "(.*)").replace('?', '.') + "$" for r in statement
                         if '*' not in statement and len(all_resources) > 0
                         ]):
 
@@ -586,12 +586,12 @@ class BucketACL(ResourceBasedPolicy):
         for key, acls in resource.properties().items():
 
             # Property is not a valid ACL
-            if not (isinstance(acls, list)
-                    and all(["Grantee" in x and "Permission" for x in acls])):
+            if not (isinstance(acls, dict) and "Grants" in acls
+                    and all(["Grantee" in x and "Permission" for x in acls["Grants"]])):
                 continue
 
             # Construct a policy from ACL
-            for (grantee, permission) in map(lambda x: (x["Grantee"], x["Permission"]), acls):
+            for (grantee, permission) in map(lambda x: (x["Grantee"], x["Permission"]), acls["Grants"]):
 
                 statement = {
                     "Effect": "Allow"

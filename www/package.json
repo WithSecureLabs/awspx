@@ -9,18 +9,18 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "codemirror": "^5.57.0",
-    "core-js": "^3.6.5",
-    "cytoscape": "^3.15.2",
-    "cytoscape-dagre": "^2.2.2",
-    "neo4j-driver": "^4.1.1",
+    "codemirror": "^5.59.1",
+    "core-js": "^3.8.2",
+    "cytoscape": "^3.17.1",
+    "cytoscape-dagre": "^2.3.2",
+    "neo4j-driver": "^4.2.1",
     "vue": "^2.6.12",
     "vue-template-compiler": "^2.6.12",
-    "vuetify": "^2.3.10"
+    "vuetify": "^2.4.2"
   },
   "devDependencies": {
-    "@mdi/font": "^5.5.55",
-    "@vue/cli-plugin-babel": "^4.5.4",
-    "@vue/cli-service": "^4.5.4"
+    "@mdi/font": "^5.9.55",
+    "@vue/cli-plugin-babel": "^4.5.10",
+    "@vue/cli-service": "^4.5.10"
   }
 }

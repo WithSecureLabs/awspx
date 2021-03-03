@@ -7,10 +7,16 @@
           style="font-size: 12px !important"
           v-for="(tab, i) in tabs"
           :key="'title-' + i"
-          :disabled="(tabs[i].content.length == 0)"
+          :disabled="tabs[i].content.length == 0"
           class="text-none"
-        >{{tabs[i].title}}</v-tab>
-        <v-tab v-if="notes.enabled" style="font-size: 12px !important" class="text-none">Notes</v-tab>
+          >{{ tabs[i].title }}</v-tab
+        >
+        <v-tab
+          v-if="notes.enabled"
+          style="font-size: 12px !important"
+          class="text-none"
+          >Notes</v-tab
+        >
       </v-tabs>
 
       <!-- Tab content -->
@@ -19,29 +25,46 @@
           <v-data-iterator
             :items="tabs[i].content"
             :items-per-page="10"
-            :hide-default-footer="(tabs[i].content.length <= 10)"
+            :hide-default-footer="tabs[i].content.length <= 10"
           >
             <template v-slot:default="props">
-              <v-card :raised="true" :outlined="true">
-                <v-card v-for="(item, i) in props.items" :key="'item-' + i" flat tile>
+              <v-card :raised="true" :outlined="true" class="py-2">
+                <v-card
+                  v-for="(item, i) in props.items"
+                  :key="'item-' + i"
+                  flat
+                  tile
+                >
                   <v-row no-gutters class="mx-0">
                     <v-col>
                       <!-- Action -->
                       <v-row
                         class="mx-2 my-0"
-                        v-if="tab.style === 'action' && item.key !== 'Condition'"
+                        v-if="
+                          tab.style === 'action' && item.key !== 'Condition'
+                        "
                       >
                         <v-col cols="4">
-                          <a v-if="'href' in item" :href="item.href" target="_blank">{{item.key}}</a>
-                          <div v-else>{{item.key}}</div>
+                          <a
+                            v-if="'href' in item"
+                            :href="item.href"
+                            target="_blank"
+                            >{{ item.key }}</a
+                          >
+                          <div v-else>{{ item.key }}</div>
                         </v-col>
                         <v-col cols="8" class="grey--text">
                           <div v-if="Array.isArray(item.value)">
                             <div v-if="item.value.length > 0">
-                              <li v-for="k in item.value" :key="'li-' + k">{{k}}</li>
+                              <li v-for="k in item.value" :key="'li-' + k">
+                                {{ k }}
+                              </li>
                             </div>
                             <div v-else>-</div>
-                            <div class="pt-1" v-if="(item.key === 'Condition Keys')">
+                            <div
+                              class="pt-1"
+                              v-if="item.key === 'Condition Keys'"
+                            >
                               +
                               <a
                                 href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html"
@@ -51,64 +74,95 @@
                               </a>
                             </div>
                           </div>
-                          <div v-else>{{item.value}}</div>
+                          <div v-else>{{ item.value }}</div>
                         </v-col>
                       </v-row>
 
                       <!-- Codeblock (i.e. policy or action condition) -->
                       <v-card
                         flat
-                        class="pt-5 ma-2"
-                        v-else-if="tab.style === 'codeblock' || tab.style == 'action'"
+                        class="ma-1"
+                        v-else-if="
+                          tab.style === 'codeblock' || tab.style == 'action'
+                        "
                       >
-                        <v-row class="ma-5 codeblock" v-html="item.value"></v-row>
+                        <v-row
+                          class="ma-5 codeblock"
+                          v-html="item.value"
+                        ></v-row>
                         <v-row>
                           <v-col
                             align="right"
                             class="mx-5 mt-n3 overline"
                             style="font-size: 9px !important"
-                          >{{item.key}}</v-col>
+                            >{{ item.key }}</v-col
+                          >
                         </v-row>
                       </v-card>
 
                       <!-- Actions -->
-                      <v-expansion-panels v-else-if="tab.style === 'actions'" :accordian="true">
+                      <v-expansion-panels
+                        v-else-if="tab.style === 'actions'"
+                        :accordian="true"
+                      >
                         <v-expansion-panel>
-                          <v-expansion-panel-header>
-                            {{item.name}}
+                          <v-expansion-panel-header style="font-size: 12px">
+                            {{ item.name }}
                             <template v-slot:actions>
                               <v-tooltip left>
                                 <template v-slot:activator="{ on }">
                                   <v-icon
                                     v-on="on"
-                                    :color="(item.effect.includes('Allow')) ? 'green' : 'red'"
-                                    :class="(item.effect.includes('Conditional')) ? 'conditional-action' : ''"
-                                  >mdi-chevron-down</v-icon>
+                                    :color="
+                                      item.effect.includes('Allow')
+                                        ? 'green'
+                                        : 'red'
+                                    "
+                                    :class="
+                                      item.effect.includes('Conditional')
+                                        ? 'conditional-action'
+                                        : ''
+                                    "
+                                    >mdi-chevron-down</v-icon
+                                  >
                                 </template>
-                                <span>{{item.effect}}</span>
+                                <span>{{ item.effect }}</span>
                               </v-tooltip>
                             </template>
                           </v-expansion-panel-header>
                           <v-expansion-panel-content
                             class="font-weight-thin ma-5px"
-                          >{{item.description}}</v-expansion-panel-content>
+                            style="font-size: 10px"
+                            >{{ item.description }}</v-expansion-panel-content
+                          >
                         </v-expansion-panel>
                       </v-expansion-panels>
 
                       <!-- Attacks -->
-                      <v-card class="pt-5 ma-2" flat v-else-if="tab.style === 'attack'">
+                      <v-card
+                        class="pt-5 ma-2"
+                        flat
+                        v-else-if="tab.style === 'attack'"
+                      >
                         <v-row class="ma-2" no-gutters>
                           <v-col cols="12">
-                            <div style="width: 60px; float: left">Step {{i + 1}}:</div>
+                            <div class="pb-2" style="width: 60px; float: left">
+                              Step {{ i + 1 }}:
+                            </div>
                             <div
-                              style="width: calc(100% - 70px); float: left;"
+                              style="width: calc(100% - 70px); float: left"
                               class="grey--text"
-                            >{{item.description}}</div>
+                            >
+                              {{ item.description }}
+                            </div>
                           </v-col>
                           <v-row class="mx-0" align="center">
                             <v-col>
                               <v-card>
-                                <div class="codeblock" v-html="item.command"></div>
+                                <div
+                                  class="codeblock"
+                                  v-html="item.command"
+                                ></div>
                               </v-card>
                             </v-col>
                           </v-row>
@@ -116,9 +170,11 @@
                       </v-card>
 
                       <!-- Standard case properties comprise of key, value pairs -->
-                      <v-row class="mx-0" v-else>
-                        <v-col cols="5">{{item.key}}</v-col>
-                        <v-col cols="7" class="grey--text">{{item.value}}</v-col>
+                      <v-row class="mx-2 pa-1" v-else>
+                        <v-col cols="5">{{ item.key }}</v-col>
+                        <v-col cols="7" class="grey--text">{{
+                          item.value
+                        }}</v-col>
                       </v-row>
                     </v-col>
                   </v-row>
@@ -141,7 +197,10 @@
                   :value="notes.value"
                   @input="notes_save"
                   class="mx-8 mt-8"
-                  :rules="[notes.connected || 'Database disconnected, changes will not be saved']"
+                  :rules="[
+                    notes.connected ||
+                      'Database disconnected, changes will not be saved',
+                  ]"
                 ></v-textarea>
               </v-card>
             </v-col>
@@ -160,9 +219,9 @@ import cytoscape from "cytoscape";
 export default {
   name: "Properties",
   props: {
-    properties: {}
+    properties: {},
   },
-  data: function() {
+  data: function () {
     return {
       tab: null,
       tabs: {},
@@ -171,19 +230,19 @@ export default {
       notes: {
         value: "",
         enabled: false,
-        connected: false
-      }
+        connected: false,
+      },
     };
   },
   watch: {
-    properties: function(element) {
+    properties: function (element) {
       if (element) {
         this.element = element;
         this.view_set(element);
       } else {
         this.unset();
       }
-    }
+    },
   },
 
   methods: {
@@ -201,7 +260,7 @@ export default {
         .then(() => {
           this.notes.connected = true;
         })
-        .catch(e => {
+        .catch((e) => {
           this.notes.connected = false;
         });
     },
@@ -217,11 +276,11 @@ export default {
             ` RETURN e.Notes AS Notes`,
           false
         )
-        .then(n => {
+        .then((n) => {
           value = n.Text[0]["Notes"] == null ? "" : n.Text[0]["Notes"];
           this.notes.connected = true;
         })
-        .catch(e => {
+        .catch((e) => {
           this.notes.connected = false;
         })
         .finally(() => {
@@ -267,7 +326,7 @@ export default {
       // Sort keys where Name and Arn are always first (Notes are ignored and placed last)
       Object.keys(element.data.properties)
         .sort()
-        .forEach(key => {
+        .forEach((key) => {
           let value = element.data.properties[key];
           if (
             // These keys are handled specially
@@ -287,14 +346,14 @@ export default {
 
       // Properties tab (Primary)
 
-      properties = Object.keys(properties).map(k => {
+      properties = Object.keys(properties).map((k) => {
         return { key: k, value: properties[k] };
       });
 
       tabs.push({
         title: "type" in element.data ? element.data.type : "Properties",
         content: properties,
-        style: "properties"
+        style: "properties",
       });
 
       // Handle JSON values (Secondary)
@@ -305,12 +364,12 @@ export default {
         // Documents
         if (title.includes("Document") && Array.isArray(content)) {
           for (let i in content) {
-            content[i] = Object.keys(content[i]).map(k => {
+            content[i] = Object.keys(content[i]).map((k) => {
               return {
                 key: k,
                 value: JSON.stringify(content[i][k], null, 2)
                   .replace(/ /g, "&nbsp;")
-                  .replace(/\n/g, "<br>")
+                  .replace(/\n/g, "<br>"),
               };
             });
           }
@@ -323,14 +382,14 @@ export default {
               key: "",
               value: JSON.stringify(content, null, 2)
                 .replace(/ /g, "&nbsp;")
-                .replace(/\n/g, "<br>")
-            }
+                .replace(/\n/g, "<br>"),
+            },
           ];
 
         tabs.push({
           title: title,
           content: content,
-          style: "codeblock"
+          style: "codeblock",
         });
       }
       return tabs;
@@ -339,10 +398,10 @@ export default {
     view_set_actions(element) {
       let tabs = [];
 
-      Object.keys(element.data.properties).map(k => {
+      Object.keys(element.data.properties).map((k) => {
         let actions = {};
 
-        element.data.properties[k].map(e => {
+        element.data.properties[k].map((e) => {
           const name = e.data.name;
           let effect = e.data.properties.Effect;
           effect = (e.classes.includes("Conditional")
@@ -356,7 +415,7 @@ export default {
               "Conditional Allow",
               "Conditional Deny",
               "Allow",
-              "Soft Deny" //Default, this should never be matched
+              "Soft Deny", //Default, this should never be matched
             ];
 
             if (
@@ -369,19 +428,19 @@ export default {
             actions[name] = {
               description: e.data.properties.Description,
               access: e.data.properties.Access,
-              effect: effect
+              effect: effect,
             };
         });
         actions = Object.keys(actions)
           .sort()
-          .map(k => {
+          .map((k) => {
             return { name: k, ...actions[k] };
           });
 
         tabs.push({
           title: k,
           content: actions,
-          style: "actions"
+          style: "actions",
         });
       });
 
@@ -399,17 +458,17 @@ export default {
       let properties = Object.keys(element.data.properties)
         .sort()
         .filter(
-          k =>
+          (k) =>
             ![
               "Name",
               "Description",
               "Condition",
               "Reference",
               "Condition Keys",
-              "Dependant Actions"
+              "Dependant Actions",
             ].includes(k) && element.data.properties[k].length > 0
         )
-        .map(k => {
+        .map((k) => {
           let item = { key: k, value: element.data.properties[k] };
           // if (
           //   k === "Description" &&
@@ -420,11 +479,11 @@ export default {
           return item;
         });
 
-      ["Condition Keys", "Dependant Actions"].forEach(property => {
+      ["Condition Keys", "Dependant Actions"].forEach((property) => {
         if (property in element.data.properties) {
           properties.push({
             key: property,
-            value: JSON.parse(element.data.properties[property]).sort()
+            value: JSON.parse(element.data.properties[property]).sort(),
           });
           if (property in hrefs) properties.slice(-1)[0].href = hrefs[property];
         }
@@ -439,25 +498,25 @@ export default {
             2
           )
             .replace(/ /g, "&nbsp;")
-            .replace(/\n/g, "<br>")
+            .replace(/\n/g, "<br>"),
         });
       }
 
       properties.unshift({
         key: "Description",
-        value: element.data.properties["Description"]
+        value: element.data.properties["Description"],
       });
 
       properties.push({
         key: "API Reference",
         href: element.data.properties["Reference"],
-        value: ""
+        value: "",
       });
 
       return {
         title: element.data.properties.Name,
         content: properties,
-        style: "action"
+        style: "action",
       };
     },
 
@@ -466,7 +525,7 @@ export default {
       let descriptions = element.data.properties.Descriptions || [];
       let commands = element.data.properties.Commands || [];
 
-      commands.forEach(function(part, i) {
+      commands.forEach(function (part, i) {
         this[i] = String(this[i])
           .replace(/ --/g, "&nbsp;\\<br>" + "&nbsp;".repeat(2) + "--")
           .replace(/<<EOF/g, "&lt;&lt;EOF")
@@ -487,14 +546,14 @@ export default {
       return {
         title: "Attack Path",
         content: attacks,
-        style: "attack"
+        style: "attack",
       };
     },
 
     unset() {
       this.tabs = [];
-    }
-  }
+    },
+  },
 };
 </script>
 

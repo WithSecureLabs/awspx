@@ -8,8 +8,9 @@
           <span
             class="overline ml-5"
             color="primary"
-            style="font-size: 12px !important; color: rgb(25, 118, 210);"
-          >Advanced Search</span>
+            style="font-size: 12px !important; color: rgb(25, 118, 210)"
+            >Advanced Search</span
+          >
 
           <v-row
             v-show="!editor.fullscreen"
@@ -28,8 +29,15 @@
                 width="50vw"
               />
               <!-- Swap 'From' and 'To' around -->
-              <div class="ma-n5 px-5 text-center">
-                <v-btn :disabled="!visual.enabled" @click="visual_swap" x-small icon fab>
+              <div class="mb-n6 mt-n3 px-5 text-center">
+                <v-btn
+                  :disabled="!visual.enabled"
+                  @click="visual_swap"
+                  x-small
+                  icon
+                  fab
+                  style="z-index: 100"
+                >
                   <v-icon size="16">mdi-cached</v-icon>
                 </v-btn>
               </div>
@@ -44,13 +52,13 @@
             </v-col>
 
             <!-- Advanced options -->
-            <v-col justify="center" class="pl-10 mt-n3" cols="2">
+            <v-col justify="center" class="pl-10" cols="2">
               <v-card flat :disabled="!visual.enabled" width="170px">
-                <fieldset class="search-mode">
-                  <legend class="mx-2 my-n3">
+                <fieldset class="search-mode py-2">
+                  <legend class="mx-2">
                     <span class="px-1">Mode</span>
                   </legend>
-                  <v-row class="text-center">
+                  <v-row class="text-center pb-2">
                     <v-switch v-model="visual.actions" class="mx-auto">
                       <template #prepend>
                         <v-tooltip left>
@@ -59,7 +67,8 @@
                               v-on="on"
                               :color="visual.actions ? '' : 'primary'"
                               @click="visual.actions = false"
-                            >mdi-map-marker-outline</v-icon>
+                              >mdi-map-marker-outline</v-icon
+                            >
                           </template>
                           <span width="300px">
                             <b>Paths-based search</b>
@@ -76,7 +85,8 @@
                               :value="true"
                               :color="visual.actions ? 'primary' : ''"
                               @click="visual.actions = true"
-                            >mdi-chevron-right-circle-outline</v-icon>
+                              >mdi-chevron-right-circle-outline</v-icon
+                            >
                           </template>
 
                           <span width="300px">
@@ -88,8 +98,12 @@
                     </v-switch>
                   </v-row>
 
-                  <v-row class="text-center">
-                    <v-switch v-model="visual.effective" false-value class="mx-auto">
+                  <v-row class="text-center pb-1">
+                    <v-switch
+                      v-model="visual.effective"
+                      false-value
+                      class="mx-auto"
+                    >
                       <template #prepend>
                         <v-tooltip left>
                           <template v-slot:activator="{ on }">
@@ -97,7 +111,8 @@
                               v-on="on"
                               :color="visual.effective ? '' : 'primary'"
                               @click="visual.effective = false"
-                            >mdi-arrow-top-right</v-icon>
+                              >mdi-arrow-top-right</v-icon
+                            >
                           </template>
                           <span width="300px">
                             <b>Direct search</b>
@@ -114,7 +129,8 @@
                               :color="visual.effective ? 'primary' : ''"
                               @click.stop="visual.effective = true"
                               value="false"
-                            >mdi-map-marker-path</v-icon>
+                              >mdi-map-marker-path</v-icon
+                            >
                           </template>
                           <span width="300px">
                             <b>Effective search</b>
@@ -130,7 +146,7 @@
           </v-row>
 
           <!-- Add filters or limit results -->
-          <v-row no-gutters align="center" class="mb-n5">
+          <v-row no-gutters align="center" class="mt-n3">
             <v-col v-show="!editor.fullscreen">
               <div style="width: 450px">
                 <v-row class="mx-5 mt-5" no-gutters>
@@ -141,53 +157,48 @@
                       small
                       color="primary"
                       @click="visual_filter_add()"
-                    >Add filter</v-btn>
+                      >Add filter</v-btn
+                    >
                   </v-col>
 
                   <v-col>
-                    <v-text-field
-                      :rules="[(v) => (v == '' || !isNaN(v)) || 'invalid integer value']"
-                      class="limit pa-0 ma-0 mr-5 ml-n1 overline"
-                      :aria-autocomplete="false"
-                      :disabled="!visual.enabled"
-                      placeholder="UNLIMITED"
-                      v-model="visual.limit"
-                      label="#Results"
-                      color="primary"
-                      outlined
-                    >
-                      <template #append>
-                        <v-icon
-                          v-if="visual.limit !== ''"
-                          class="mt-n3"
-                          small
-                          @click="visual.limit = ''"
-                        >mdi-close</v-icon>
-                      </template>
-                    </v-text-field>
+                    <fieldset class="mt-n2 ml-2 pt-0 mx-0 textbox">
+                      <legend class="mx-2 my-n2">
+                        <span class="px-1 legend">#RESULTS</span>
+                      </legend>
+                      <input
+                        v-model="visual.limit"
+                        :rules="[
+                          (v) =>
+                            v == '' || !isNaN(v) || 'invalid integer value',
+                        ]"
+                        :disabled="!visual.enabled"
+                        class="mx-2"
+                        style="max-height: 13px; font-size: 11px"
+                        placeholder="UNLIMITED"
+                        type="text"
+                      />
+                    </fieldset>
                   </v-col>
 
                   <v-col>
-                    <v-text-field
-                      :rules="[(v) => (v == '' || !isNaN(v)) || 'invalid integer value']"
-                      class="limit pa-0 ma-0 overline"
-                      :disabled="!visual.enabled"
-                      :aria-autocomplete="false"
-                      placeholder="UNLIMITED"
-                      v-model="visual.hops"
-                      color="primary"
-                      label="#Hops"
-                      outlined
-                    >
-                      <template #append>
-                        <v-icon
-                          v-if="visual.hops !== ''"
-                          class="mt-n3"
-                          small
-                          @click="visual.hops = ''"
-                        >mdi-close</v-icon>
-                      </template>
-                    </v-text-field>
+                    <fieldset class="mt-n2 mx-0 textbox">
+                      <legend class="mx-2 my-n2">
+                        <span class="px-1 legend">#HOPS</span>
+                      </legend>
+                      <input
+                        v-model="visual.hops"
+                        :rules="[
+                          (v) =>
+                            v == '' || !isNaN(v) || 'invalid integer value',
+                        ]"
+                        :disabled="!visual.enabled"
+                        class="mx-2"
+                        style="max-height: 13px; font-size: 11px"
+                        placeholder="UNLIMITED"
+                        type="text"
+                      />
+                    </fieldset>
                   </v-col>
                 </v-row>
               </div>
@@ -201,7 +212,7 @@
                 @blur="$emit('visual_queries_active', false)"
                 @focus="$emit('visual_queries_active', true)"
                 :class="editor.fullscreen ? 'mt-n8' : ''"
-                :menu-props="{top: true, nudgeTop: 10}"
+                :menu-props="{ top: true, nudgeTop: 10 }"
                 style="width: 30vw; float: right"
                 placeholder="LOAD A SAVED QUERY"
                 v-model="visual.queries.loaded"
@@ -213,23 +224,31 @@
               >
                 <template #prepend-inner>
                   <v-icon
-                    :color="visual.queries.loaded  ? 'primary' : ''"
+                    :color="visual.queries.loaded ? 'primary' : ''"
                     class="mx-5 pa-0"
-                  >mdi-content-save-edit</v-icon>
+                    >mdi-content-save-edit</v-icon
+                  >
                 </template>
 
                 <template #item="data">
                   <v-tooltip right>
                     <template v-slot:activator="{ on }">
-                      <v-icon x-small v-on="on" class="mr-5">mdi-help-circle-outline</v-icon>
-                      <div class="overline" flat>{{data.item.name}}</div>
+                      <v-icon x-small v-on="on" class="mr-5"
+                        >mdi-help-circle-outline</v-icon
+                      >
+                      <div
+                        class="overline"
+                        style="color: grey; font-size: 10px !important"
+                      >
+                        {{ data.item.name }}
+                      </div>
                     </template>
-                    <span>{{data.item.description}}</span>
+                    <span>{{ data.item.description }}</span>
                   </v-tooltip>
                 </template>
 
                 <template #selection="data">
-                  <div class="overline">{{data.item.name}}</div>
+                  <div class="overline">{{ data.item.name }}</div>
                 </template>
               </v-autocomplete>
             </v-col>
@@ -238,7 +257,7 @@
           <!-- Filters -->
           <div
             v-show="visual.filters.length > 0 && !editor.fullscreen"
-            style="max-height: 25vh; overflow-y: auto;"
+            style="max-height: 25vh; overflow-y: auto"
             class="pb-1"
           >
             <v-expansion-panels
@@ -256,25 +275,41 @@
                   <template #default>
                     <v-col>
                       <v-row
-                        style="color: rgba(0,0,0,0.4) !important; font-size: 13px"
+                        style="
+                          color: rgba(0, 0, 0, 0.4) !important;
+                          font-size: 13px;
+                        "
                         align="center"
                       >
                         <div v-if="visual.filters[j].valid">
-                          <v-icon class="mr-5" color="primary">mdi-filter</v-icon>
-                          <span style="color: rgba(0,0,0,0.7); font-size: 13px">
-                            {{(j === 0 ? "": visual.filters[j].and ? "AND " : "OR ") +
-                            visual.filters[j].text}}
+                          <v-icon class="mr-5" color="primary"
+                            >mdi-filter</v-icon
+                          >
+                          <span
+                            style="color: rgba(0, 0, 0, 0.7); font-size: 13px"
+                          >
+                            {{
+                              (j === 0
+                                ? ""
+                                : visual.filters[j].and
+                                ? "AND "
+                                : "OR ") + visual.filters[j].text
+                            }}
                           </span>
                         </div>
                         <div v-else>
-                          <v-icon class="mr-5" color="primary">mdi-filter-outline</v-icon>
+                          <v-icon class="mr-5" color="primary"
+                            >mdi-filter-outline</v-icon
+                          >
                           <span>Unconfigured</span>
                         </div>
                       </v-row>
                     </v-col>
                     <v-btn
                       v-if="j !== 0"
-                      @click.stop="visual.filters[j].and = !visual.filters[j].and"
+                      @click.stop="
+                        visual.filters[j].and = !visual.filters[j].and
+                      "
                       background-color="primary"
                       icon
                     >
@@ -288,7 +323,10 @@
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
                   <SearchAdvancedFilter
-                    :options="{actions: visual.actions, effective: visual.effective}"
+                    :options="{
+                      actions: visual.actions,
+                      effective: visual.effective,
+                    }"
                     :sources="visual.search.From.value"
                     :targets="visual.search.To.value"
                     :resources="resources"
@@ -311,28 +349,33 @@
               <v-btn
                 v-on="on"
                 @click.stop="editor.fullscreen = !editor.fullscreen"
-                style="z-index: 3; background-color: white;"
+                style="z-index: 3; background-color: white"
                 color="rgba(25, 118, 210, 0.7)"
                 x-small
                 icon
               >
-                <v-icon>{{ editor.fullscreen ? 'mdi-window-restore': 'mdi-arrow-expand'}}</v-icon>
+                <v-icon>{{
+                  editor.fullscreen ? "mdi-window-restore" : "mdi-arrow-expand"
+                }}</v-icon>
               </v-btn>
             </template>
-            <span>{{editor.fullscreen ? 'Restore' : 'Expand Editor' }}</span>
+            <span>{{ editor.fullscreen ? "Restore" : "Expand Editor" }}</span>
           </v-tooltip>
         </div>
         <v-card-text
           id="editor"
-          :class="[!editor.settings.readOnly ? '' : 'readonly', editor.fullscreen ? 'fullscreen' : '']"
+          :class="[
+            !editor.settings.readOnly ? '' : 'readonly',
+            editor.fullscreen ? 'fullscreen' : '',
+          ]"
           @input="editor.settings.value = editor.value.getValue()"
         />
-        <div style="width: 100%;" class="text-center mt-n8">
+        <div style="width: 100%" class="text-center mt-n8">
           <v-tooltip top>
             <template v-slot:activator="{ on }">
               <v-btn
                 v-on="on"
-                style="z-index: 3; background-color: white;"
+                style="z-index: 3; background-color: white"
                 @click.stop="editor_readonly_toggle"
                 :disabled="!editor.button"
                 color="rgba(25, 118, 210, 0.7)"
@@ -341,10 +384,16 @@
                 x-small
                 fab
               >
-                <v-icon>{{ editor.settings.readOnly ? 'mdi-lock-outline' : 'mdi-lock-open-variant-outline' }}</v-icon>
+                <v-icon>{{
+                  editor.settings.readOnly
+                    ? "mdi-lock-outline"
+                    : "mdi-lock-open-variant-outline"
+                }}</v-icon>
               </v-btn>
             </template>
-            <span>{{ editor.settings.readOnly ? 'Enable Editor' : 'Disable Editor' }}</span>
+            <span>{{
+              editor.settings.readOnly ? "Enable Editor" : "Disable Editor"
+            }}</span>
           </v-tooltip>
         </div>
       </div>
@@ -443,47 +492,47 @@ export default {
     SearchResultsTable,
     TemplateAutocomplete,
     TemplateSelectSearch,
-    TemplateSelectItem
+    TemplateSelectItem,
   },
   props: {
     resources: {
       Type: Array,
-      default: []
+      default: [],
     },
     actions: {
       Type: Array,
-      default: []
+      default: [],
     },
     visual_queries_active: {
       Type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
 
-  data: function() {
+  data: function () {
     return {
       visual: {
         enabled: true,
         search: {
           From: { input: "", value: [], label: "From" },
-          To: { input: "", value: [], label: "To" }
+          To: { input: "", value: [], label: "To" },
         },
         queries: {
           loaded: undefined,
           saved: queries,
-          active: false
+          active: false,
         },
         results: {
           items: [],
           enabled: false,
-          active: false
+          active: false,
         },
         effective: true,
         actions: false,
         reverse: false,
         filters: [],
         limit: 500,
-        hops: ""
+        hops: "",
       },
       editor: {
         enabled: true,
@@ -504,18 +553,18 @@ export default {
           styleActiveLine: true,
           extraKeys: {
             Tab: "autocomplete",
-            "Ctrl-R": this.editor_run
+            "Ctrl-R": this.editor_run,
           },
           hintOptions: {
             completeSingle: false,
             closeOnUnfocus: false,
             alignWithWord: true,
-            async: true
+            async: true,
           },
           gutters: ["cypher-hints"],
           lineWrapping: true,
           autoCloseBrackets: {
-            explode: ""
+            explode: "",
           },
 
           neo4jSchema: {
@@ -525,15 +574,15 @@ export default {
             parameters: [],
             propertyKeys: [],
             functions: [],
-            procedures: []
-          }
-        }
+            procedures: [],
+          },
+        },
       },
       loading: false,
       valid: {
         form: true,
-        filters: true
-      }
+        filters: true,
+      },
     };
   },
 
@@ -549,7 +598,7 @@ export default {
 
       this.neo4j
         .run(this.editor.settings.value)
-        .then(results => {
+        .then((results) => {
           this.visual.results.items = results.Text;
           if (results.Graph.length > 0) this.$emit("add", results.Graph);
           else if (results.Text.length > 0) this.visual.results.enabled = true;
@@ -598,7 +647,7 @@ export default {
     },
 
     visual_filter_update(i, e) {
-      Object.keys(e).forEach(k => {
+      Object.keys(e).forEach((k) => {
         this.visual.filters[i][k] = e[k];
       });
     },
@@ -613,9 +662,9 @@ export default {
       this.editor.value.setValue(cypher);
       this.editor.value.setCursor({
         line: lines.length,
-        ch: lines.splice(-1).length
+        ch: lines.splice(-1).length,
       });
-    }
+    },
   },
 
   watch: {
@@ -635,10 +684,13 @@ export default {
     "editor.settings.readOnly"(value) {
       this.editor.value.setOption("readOnly", value);
       this.visual.enabled = !!value;
+      if (this.visual.enabled){
+        this.visual_query_load(this.visual_query);
+      }
     },
 
     "visual.queries.loaded"(load) {
-      if (typeof load === "undefined") {
+      if (load === null || typeof load === "undefined") {
         this.editor.button = true;
         this.editor.settings.readOnly = "nocursor";
         this.visual_query_load(this.visual_query);
@@ -652,11 +704,46 @@ export default {
     },
 
     "visual.filters": {
-      handler: function() {
-        this.valid.filters = this.visual.filters.every(f => f.valid);
+      handler: function () {
+        this.valid.filters = this.visual.filters.every((f) => f.valid);
       },
-      deep: true
-    }
+      deep: true,
+    },
+    database_available(n, o) {
+      // Set visual query editor schema once the database is available
+      if (n && !o) {
+        Promise.all([
+          this.neo4j.run("CALL db.labels()").then((r) => {
+            return r.Text.map((l) => `:${l["label"]}`);
+          }),
+          this.neo4j.run("CALL db.relationshipTypes()").then((r) => {
+            return r.Text.map((rt) => `:${rt["relationshipType"]}`);
+          }),
+          this.neo4j.run("CALL db.propertyKeys()").then((r) => {
+            return r.Text.map((p) => p["propertyKey"]);
+          }),
+
+          this.neo4j.run("CALL dbms.functions()").then((r) => r.Text),
+
+          this.neo4j.run("CALL dbms.procedures()").then((r) => r.Text),
+        ]).then((values) => {
+          this.editor.settings.neo4jSchema = {
+            ...this.editor.settings.neo4jSchema,
+            ...{
+              labels: values[0],
+              relationshipTypes: values[1],
+              propertyKeys: values[2],
+              functions: values[3],
+              procedures: values[4],
+            },
+          };
+
+          this.editor.value.editorSupport.setSchema(
+            this.editor.settings.neo4jSchema
+          );
+        });
+      }
+    },
   },
 
   computed: {
@@ -665,14 +752,14 @@ export default {
     },
 
     visual_query() {
-      const from = this.visual.search.From.value.map(v =>
+      const from = this.visual.search.From.value.map((v) =>
         v.element.data.id.replace("n", "")
       );
-      const to = this.visual.search.To.value.map(v =>
+      const to = this.visual.search.To.value.map((v) =>
         v.element.data.id.replace("n", "")
       );
       const filters = this.visual.filters
-        .filter(f => f.valid)
+        .filter((f) => f.valid)
         .map((f, i) => {
           return i === 0 ? f.text : (f.and ? "AND " : "OR ") + f.text;
         })
@@ -696,15 +783,15 @@ export default {
         this.visual.actions
           ? `Paths=ShortestPath((Source)-[:${edges}]->(Entity)),` +
             `\n      Actions=(Entity)-[Action:ACTION]->(Target)`
-          : `Paths=ShortestPath((Source)-[:${edges}]->(Target))`
+          : `Paths=ShortestPath((Source)-[:${edges}]->(Target))`,
       ];
 
       const where = [
         from.length > 0 ? `ID(Source) IN [${from}]` : undefined,
         to.length > 0 ? `ID(Target) IN [${to}]` : undefined,
-        filters.length > 0 ? `(${filters})` : undefined
+        filters.length > 0 ? `(${filters})` : undefined,
       ]
-        .filter(f => typeof f === "string")
+        .filter((f) => typeof f === "string")
         .join("\nAND ");
 
       if (where.length > 0) query.push("\nWHERE", where);
@@ -714,56 +801,24 @@ export default {
       if (limit !== "") query.push(`LIMIT ${limit}`);
 
       return query.join(" ");
-    }
+    },
+    database_available() {
+      return this.$parent.$parent.$refs.database.db.populated;
+    },
   },
 
   mounted() {
-    Promise.all(
-      // Populate visual query editor settings
-      [
-        this.neo4j.run("CALL db.labels()").then(r => {
-          this.editor.settings.neo4jSchema.labels = r.Text.map(
-            l => `:${l["label"]}`
-          )
-            .filter(
-              l =>
-                l.includes("::") ||
-                [":Admin", ":Resource", ":Generic", ":External"].includes(l)
-            )
-            .sort();
-        }),
-        this.neo4j.run("CALL db.relationshipTypes()").then(r => {
-          this.editor.settings.neo4jSchema.relationshipTypes = r.Text.map(
-            rt => `:${rt["relationshipType"]}`
-          );
-        }),
-        this.neo4j.run("CALL db.propertyKeys()").then(r => {
-          this.editor.settings.neo4jSchema.propertyKeys = r.Text.map(
-            p => p["propertyKey"]
-          );
-        }),
+    const { editor, editorSupport } = CypherCodeMirror.createCypherEditor(
+      document.getElementById("editor"),
+      this.editor.settings
+    );
+    editorSupport.setSchema(this.editor.settings.neo4jSchema);
+    editor.setOption("theme", "cypher");
+    editor.on("change", this.editor_autocomplete);
 
-        this.neo4j.run("CALL dbms.functions()").then(r => {
-          this.editor.settings.neo4jSchema.functions = r.Text;
-        }),
-
-        this.neo4j.run("CALL dbms.procedures()").then(r => {
-          this.editor.settings.neo4jSchema.procedures = r.Text;
-        })
-      ]
-    ).then(() => {
-      const { editor, editorSupport } = CypherCodeMirror.createCypherEditor(
-        document.getElementById("editor"),
-        this.editor.settings
-      );
-      editorSupport.setSchema(this.editor.settings.neo4jSchema);
-      editor.setOption("theme", "cypher");
-      editor.on("change", this.editor_autocomplete);
-
-      this.editor.value = editor;
-      this.visual_query_load(this.visual_query);
-    });
-  }
+    this.editor.value = editor;
+    this.visual_query_load(this.visual_query);
+  },
 };
 </script>
 
@@ -819,5 +874,27 @@ export default {
 
 .search-advanced .mdi-close {
   font-size: 14px !important;
+}
+
+input {
+  border: 0;
+  outline: 0;
+}
+input:focus {
+  outline: none !important;
+}
+
+.textbox {
+  min-width: 0;
+  max-width: 100px;
+  border-radius: 4px 4px;
+  border-width: 1px;
+}
+
+.legend {
+  font-size: 11px;
+  font-family: Roboto, sans-serif;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.5);
 }
 </style>

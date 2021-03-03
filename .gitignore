@@ -6,3 +6,4 @@ data/*
 package-lock.json
 node_modules
 dist
+nohup.out

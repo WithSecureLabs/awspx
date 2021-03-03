@@ -10,14 +10,14 @@ import tty
 from datetime import datetime
 from logging import Handler
 from pathlib import Path
+
 from rich._log_render import LogRender
-from rich.bar import Bar
 from rich.console import Console as RichConsole
 from rich.progress import Progress
+from rich.progress_bar import ProgressBar
 from rich.style import Style
 from rich.table import Table, box
 from rich.text import Text
-
 
 logging.addLevelName(25, "NOTICE")
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class Log(Handler):
 
     def _styllize(self, record):
 
-        from lib.util.keywords import (Keywords, Regex)
+        from lib.util.keywords import Keywords, Regex
 
         message = Text(self.format(record))
         message.highlight_regex(Regex.arn, 'dim')
@@ -302,7 +302,7 @@ class Console(Table):
 
                         self.refresh()
 
-            except (KeyboardInterrupt, EOFError) as e:
+            except (KeyboardInterrupt, EOFError):
                 value.style = None
                 self.stop()
                 os._exit(0)
@@ -339,7 +339,7 @@ class Console(Table):
 
         if override is None:
 
-            total = 1
+            total = 1.0
             pulse = True
 
             try:
@@ -352,10 +352,10 @@ class Console(Table):
 
             busy._text = ["→"]
             color = Style(color="rgb(161, 209, 255)", dim=True)
-            value = Bar(total=total, pulse=pulse,
-                        complete_style=color,
-                        finished_style=color,
-                        pulse_style=color)
+            value = ProgressBar(total=total, pulse=pulse,
+                                complete_style=color,
+                                finished_style=color,
+                                pulse_style=color)
         else:
             value = override
 
