@@ -126,10 +126,9 @@ def handle_ingest(args):
 
             assume_role_args = {"RoleArn": args.role_to_assume,
                                 "RoleSessionName": "awspx",
-                                "DurationSeconds": args.role_to_assume_duration }
-
-            if args.role_to_assume_externalid:
-                assume_role_args["ExternalId"] = args.role_to_assume_externalid
+                                "DurationSeconds": args.role_to_assume_duration,
+                                **dict({"ExternalId": args.role_to_assume_external_id} if args.role_to_assume_external_id else {})
+                                }
 
             assumed_role = session.client('sts').assume_role(**assume_role_args)["Credentials"]
 
@@ -290,7 +289,7 @@ def main():
                      help="ARN of a role to assume for ingestion (useful for cross-account ingestion).")
     pnr.add_argument('--assume-role-duration', dest='role_to_assume_duration', type=int, default=3600,
                      help="Maximum session duration in seconds (for --assume-role).")
-    pnr.add_argument('--assume-role-externalid', dest='role_to_assume_externalid',
+    pnr.add_argument('--assume-role-external-id', dest='role_to_assume_external_id',
                      help="External ID for the role to assume.")
     pnr.add_argument('--region', dest='region', default="eu-west-1", choices=Profile.regions,
                      help="Region to ingest (defaults to profile region, or `eu-west-1` if not set).")
