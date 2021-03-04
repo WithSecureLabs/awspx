@@ -90,7 +90,6 @@ class IngestionManager(Elements):
         policies = resources.get("AWS::Iam::Policy")
         clusters = resources.get("AWS::Eks::Cluster")
         nodegroups = resources.get("AWS::Eks::Nodegroup")
-        instances = resources.get("AWS::Ec2::Instance")
         instance_profiles = resources.get("AWS::Iam::InstanceProfile")
 
         for resource in self.console.tasklist(
@@ -202,7 +201,7 @@ class IngestionManager(Elements):
 
                     role_arns = [r for r in role_arns if r != str(role)]
 
-                if remove and not len(role_arns) > 0:
+                if remove and len(role_arns) == 0:
                     del resource.properties()["Roles"]
 
             # (Function) --> (Role)
@@ -218,10 +217,7 @@ class IngestionManager(Elements):
                     self.add(Transitive(properties={"Name": "Attached"},
                                         source=resource, target=role))
 
-                    role_arns = [r for r in role_arns if r != str(role)]
-
-                if remove and not len(role_arns) > 0:
-                    del resource.properties()["Roles"]
+                    del resource.properties()["Role"]
 
             # (Cluster) --> (Role)
             if (resource.label() in ["AWS::Eks::Cluster"]
