@@ -421,7 +421,6 @@ class SessionClientWrapper(object):
         except ClientError as e:
             if e.response['Error']['Code'] in self.codes:
                 self.console.warn(str(e))
-                yield {}
             else:
                 raise e
 
