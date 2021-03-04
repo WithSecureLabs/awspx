@@ -151,7 +151,7 @@ class Resources(dict):
         "AWS::Iam::InstanceProfile":                                        "arn:aws:iam::{Account}:instance-profile/{InstanceProfile}",
         "AWS::Iam::VirtualMfaDevice":                                       "arn:aws:iam::{Account}:mfa/{UserName}",
         "AWS::Iam::MfaDevice":                                              "arn:aws:iam::{Account}:u2f/user/{UserName}/{MfaDevice}",
-        "AWS::Iam::OidcProvider":                                           "arn:aws:iam::{Account}:oidc-provider/{ProvIder}",
+        "AWS::Iam::OidcProvider":                                           "arn:aws:iam::{Account}:oidc-provider/{Provider}",
         "AWS::Iam::Policy":                                                 "arn:aws:iam::{Account}:policy/{Policy}",
         "AWS::Iam::Role":                                                   "arn:aws:iam::{Account}:role/{Role}",
         "AWS::Iam::SamlProvider":                                           "arn:aws:iam::{Account}:saml-provider/{Provider}",
@@ -310,8 +310,9 @@ class Resources(dict):
     regex = {
         "Region":   "([a-z0-9-]*)",
         "Account":  "(\d{12})?",
-        "Default":  "([A-Za-z0-9-_]*)",
+        "Provider": "(.*)",
         "Key":      "(.*)",
+        "Default":  "([A-Za-z0-9-_]*)",
     }
 
     def __init__(self):

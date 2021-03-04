@@ -187,6 +187,21 @@ class Statement:
                         })
 
                 elif re.compile(
+                    RESOURCES["AWS::Iam::OidcProvider"]
+                ).match(federated) is not None:
+
+                    base = Resource if (next((a for a in self.__resources.get("Resoure")
+                                              if a.account() == federated.split(':')[4]
+                                              ), False)) else External
+                    node = base(
+                        key="Arn",
+                        labels=["AWS::Iam::OidcProvider"],
+                        properties={
+                            "Name": federated.split('/')[-1],
+                            "Arn":  federated
+                        })
+
+                elif re.compile(
                     "^(?=.{1,253}\.?$)(?:(?!-|[^.]+_)[A-Za-z0-9-_]{1,63}(?<!-)(?:\.|$)){2,}$"
                 ).match(federated):
                     node = External(
@@ -202,6 +217,7 @@ class Statement:
                         properties={
                             "Name": federated,
                         })
+
                 principals.add(node)
 
         # TODO:
