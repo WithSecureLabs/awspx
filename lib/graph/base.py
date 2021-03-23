@@ -56,9 +56,12 @@ class Element:
         return self._properties
 
     def label(self):
-        return [l for l in self.labels()
-                if l != self.__class__.__name__
-                ][0]
+        return [
+            *[l for l in self.labels()
+              if l != self.__class__.__name__
+              ],
+            ""
+        ][0]
 
     def labels(self):
         return sorted(list(self._labels))
