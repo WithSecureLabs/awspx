@@ -130,7 +130,8 @@ def handle_ingest(args):
                                 **dict({"ExternalId": args.role_to_assume_external_id} if args.role_to_assume_external_id else {})
                                 }
 
-            assumed_role = session.client('sts').assume_role(**assume_role_args)["Credentials"]
+            assumed_role = session.client('sts').assume_role(
+                **assume_role_args)["Credentials"]
 
             session = boto3.session.Session(
                 aws_access_key_id=assumed_role["AccessKeyId"],
@@ -194,6 +195,13 @@ def main():
     def profile(p):
         if p in list(Profile().credentials.sections()):
             raise argparse.ArgumentTypeError(f"profile '{p}' already exists")
+        return p
+
+    def database(p):
+        if re.compile("[A-Za-z0-9-_]+.db").match(p) is None:
+            suggestion = re.sub(r'[^A-Za-z0-9-_]+(\.db)?', '', p) + ".db"
+            raise argparse.ArgumentTypeError(
+                f"'{p}' is invalid, perhaps you meant '{suggestion}' instead?")
         return p
 
     def service(service):
@@ -293,7 +301,7 @@ def main():
                      help="External ID for the role to assume.")
     pnr.add_argument('--region', dest='region', default="eu-west-1", choices=Profile.regions,
                      help="Region to ingest (defaults to profile region, or `eu-west-1` if not set).")
-    pnr.add_argument('--database', dest='database', default=None,
+    pnr.add_argument('--database', dest='database', default=None, type=database,
                      help="Database to store results (defaults to <profile>.db).")
 
     # Services & resources args
