@@ -59,20 +59,16 @@
                               <li v-for="k in item.value" :key="'li-' + k">
                                 {{ k }}
                               </li>
+                              <li v-if="item.key === 'Condition Keys'">
+                                <a
+                                  href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html"
+                                  target="_blank"
+                                >
+                                  <i>Global Conditions</i>
+                                </a>
+                              </li>
                             </div>
                             <div v-else>-</div>
-                            <div
-                              class="pt-1"
-                              v-if="item.key === 'Condition Keys'"
-                            >
-                              +
-                              <a
-                                href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html"
-                                target="_blank"
-                              >
-                                <i>Global Conditions</i>
-                              </a>
-                            </div>
                           </div>
                           <div v-else>{{ item.value }}</div>
                         </v-col>
@@ -505,12 +501,7 @@ export default {
       properties.unshift({
         key: "Description",
         value: element.data.properties["Description"],
-      });
-
-      properties.push({
-        key: "API Reference",
         href: element.data.properties["Reference"],
-        value: "",
       });
 
       return {
