@@ -1,15 +1,62 @@
 ACTIONS = {
   "ec2:AcceptReservedInstancesExchangeQuote": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::ReservedInstances": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Region",
+          "ec2:ReservedInstancesOfferingType",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to accept a Convertible Reserved Instance exchange quote",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AcceptReservedInstancesExchangeQuote.html"
+  },
+  "ec2:AcceptTransitGatewayMulticastDomainAssociations": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayAttachment": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayMulticastDomain": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to accept a request to associate subnets with a transit gateway multicast domain",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AcceptTransitGatewayMulticastDomainAssociations.html"
   },
   "ec2:AcceptTransitGatewayPeeringAttachment": {
     "Access": "Write",
     "Affects": {
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -24,6 +71,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -36,10 +84,23 @@ ACTIONS = {
   "ec2:AcceptVpcEndpointConnections": {
     "Access": "Write",
     "Affects": {
-      "AWS::Ec2::VpcEndpointService": {
+      "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VpceServicePrivateDnsName"
         ],
         "Dependant Actions": []
       }
@@ -52,6 +113,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Vpc": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -60,6 +122,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -68,6 +131,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -76,6 +140,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcFlowLog": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -84,6 +149,11 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcPeeringConnection": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy",
+          "aws:ResourceTag/${TagKey}",
           "ec2:AccepterVpc",
           "ec2:Region",
           "ec2:RequesterVpc",
@@ -103,7 +173,18 @@ ACTIONS = {
   },
   "ec2:AllocateAddress": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Ipv4PoolEc2": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to allocate an Elastic IP address (EIP) to your account",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AllocateAddress.html"
   },
@@ -111,7 +192,18 @@ ACTIONS = {
     "Access": "Write",
     "Affects": {
       "AWS::Ec2::DedicatedHost": {
-        "Condition Keys": [],
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AutoPlacement",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Quantity",
+          "ec2:HostRecovery"
+        ],
         "Dependant Actions": []
       }
     },
@@ -123,50 +215,69 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::ClientVpnEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::SecurityGroup": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Vpc": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpcFlowLog": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpcPeeringConnection": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       }
@@ -176,54 +287,58 @@ ACTIONS = {
   },
   "ec2:AssignIpv6Addresses": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to assign one or more IPv6 addresses to a network interface",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AssignIpv6Addresses.html"
   },
   "ec2:AssignPrivateIpAddresses": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to assign one or more secondary private IP addresses to a network interface",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AssignPrivateIpAddresses.html"
   },
   "ec2:AssociateAddress": {
     "Access": "Write",
-    "Affects": {},
-    "Description": "Grants permission to associate an Elastic IP address (EIP) with an instance or a network interface",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AssociateAddress.html"
-  },
-  "ec2:AssociateClientVpnTargetNetwork": {
-    "Access": "Write",
     "Affects": {
-      "AWS::Ec2::ClientVpnEndpoint": {
+      "AWS::Ec2::ElasticIp": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
-      "AWS::Ec2::Subnet": {
-        "Condition Keys": [
-          "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
-        ],
-        "Dependant Actions": []
-      }
-    },
-    "Description": "Grants permission to associate a target network with a Client VPN endpoint",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AssociateClientVpnTargetNetwork.html"
-  },
-  "ec2:AssociateDhcpOptions": {
-    "Access": "Write",
-    "Affects": {},
-    "Description": "Grants permission to associate or disassociate a set of DHCP options with a VPC",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AssociateDhcpOptions.html"
-  },
-  "ec2:AssociateIamInstanceProfile": {
-    "Access": "Write",
-    "Affects": {
       "AWS::Ec2::Instance": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -234,12 +349,129 @@ ACTIONS = {
           "ec2:RootDeviceType",
           "ec2:Tenancy"
         ],
-        "Dependant Actions": [
-          "iam:PassRole"
-        ]
+        "Dependant Actions": []
       },
-      "AWS::Iam::InstanceProfile": {
+      "AWS::Ec2::NetworkInterface": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to associate an Elastic IP address (EIP) with an instance or a network interface",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AssociateAddress.html"
+  },
+  "ec2:AssociateClientVpnTargetNetwork": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::ClientVpnEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to associate a target network with a Client VPN endpoint",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AssociateClientVpnTargetNetwork.html"
+  },
+  "ec2:AssociateDhcpOptions": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to associate or disassociate a set of DHCP options with a VPC",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AssociateDhcpOptions.html"
+  },
+  "ec2:AssociateEnclaveCertificateIamRole": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::Certificate": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      },
+      "AWS::Iam::Role": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to associate an ACM certificate with an IAM role to be used in an EC2 Enclave",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AssociateEnclaveCertificateIamRole.html"
+  },
+  "ec2:AssociateIamInstanceProfile": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -260,13 +492,60 @@ ACTIONS = {
   },
   "ec2:AssociateRouteTable": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::InternetGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::RouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpnGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to associate a subnet or gateway with a route table",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AssociateRouteTable.html"
   },
   "ec2:AssociateSubnetCidrBlock": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to associate a CIDR block with a subnet",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AssociateSubnetCidrBlock.html"
   },
@@ -275,13 +554,17 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Subnet": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -289,6 +572,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -303,6 +587,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -310,6 +595,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -321,7 +607,61 @@ ACTIONS = {
   },
   "ec2:AssociateVpcCidrBlock": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Ipv6PoolEc2": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to associate a CIDR block with a VPC",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AssociateVpcCidrBlock.html"
   },
@@ -330,6 +670,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Instance": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -344,6 +685,7 @@ ACTIONS = {
       },
       "AWS::Ec2::SecurityGroup": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -352,6 +694,7 @@ ACTIONS = {
       },
       "AWS::Ec2::Vpc": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -360,6 +703,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -368,6 +712,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -376,6 +721,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcFlowLog": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -384,14 +730,83 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcPeeringConnection": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to link an EC2-Classic instance to a ClassicLink-enabled VPC through one or more of the VPC's security groups",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AttachClassicLinkVpc.html"
+  },
+  "ec2:AttachInternetGateway": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::InternetGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
-      "AWS::Iam::InstanceProfile": {
+      "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to attach an internet gateway to a VPC",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AttachInternetGateway.html"
+  },
+  "ec2:AttachNetworkInterface": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -403,20 +818,21 @@ ACTIONS = {
           "ec2:Tenancy"
         ],
         "Dependant Actions": []
+      },
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
       }
     },
-    "Description": "Grants permission to link an EC2-Classic instance to a ClassicLink-enabled VPC through one or more of the VPC's security groups",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AttachClassicLinkVpc.html"
-  },
-  "ec2:AttachInternetGateway": {
-    "Access": "Write",
-    "Affects": {},
-    "Description": "Grants permission to attach an internet gateway to a VPC",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AttachInternetGateway.html"
-  },
-  "ec2:AttachNetworkInterface": {
-    "Access": "Write",
-    "Affects": {},
     "Description": "Grants permission to attach a network interface to an instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AttachNetworkInterface.html"
   },
@@ -425,6 +841,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Instance": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -439,6 +856,7 @@ ACTIONS = {
       },
       "AWS::Ec2::Volume": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:Encrypted",
           "ec2:ParentSnapshot",
@@ -446,21 +864,8 @@ ACTIONS = {
           "ec2:ResourceTag/${TagKey}",
           "ec2:VolumeIops",
           "ec2:VolumeSize",
+          "ec2:VolumeThroughput",
           "ec2:VolumeType"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Iam::InstanceProfile": {
-        "Condition Keys": [
-          "ec2:AvailabilityZone",
-          "ec2:EbsOptimized",
-          "ec2:InstanceProfile",
-          "ec2:InstanceType",
-          "ec2:PlacementGroup",
-          "ec2:Region",
-          "ec2:ResourceTag/${TagKey}",
-          "ec2:RootDeviceType",
-          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       }
@@ -470,7 +875,61 @@ ACTIONS = {
   },
   "ec2:AttachVpnGateway": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpnGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to attach a virtual private gateway to a VPC",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AttachVpnGateway.html"
   },
@@ -479,8 +938,15 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::ClientVpnEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
         ],
         "Dependant Actions": []
       }
@@ -493,6 +959,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::SecurityGroup": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -508,6 +975,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::SecurityGroup": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -520,7 +988,23 @@ ACTIONS = {
   },
   "ec2:BundleInstance": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to bundle an instance store-backed Windows instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_BundleInstance.html"
   },
@@ -535,6 +1019,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::CapacityReservation": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -552,13 +1037,47 @@ ACTIONS = {
   },
   "ec2:CancelExportTask": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::ExportImageTask": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::ExportInstanceTask": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to cancel an active export task",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CancelExportTask.html"
   },
   "ec2:CancelImportTask": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::ImportImageTask": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::ImportSnapshotTask": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to cancel an in-process import virtual machine or import snapshot task",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CancelImportTask.html"
   },
@@ -570,32 +1089,82 @@ ACTIONS = {
   },
   "ec2:CancelSpotFleetRequests": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::SpotFleetRequest": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to cancel one or more Spot Fleet requests",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CancelSpotFleetRequests.html"
   },
   "ec2:CancelSpotInstanceRequests": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::SpotInstancesRequest": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to cancel one or more Spot Instance requests",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CancelSpotInstanceRequests.html"
   },
   "ec2:ConfirmProductInstance": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to determine whether an owned product code is associated with an instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ConfirmProductInstance.html"
   },
   "ec2:CopyFpgaImage": {
     "Access": "Write",
-    "Affects": {},
-    "Description": "Grants permission to copy a source Amazon FPGA image (AFI) to the current Region",
+    "Affects": {
+      "AWS::Ec2::FpgaImage": {
+        "Condition Keys": [
+          "ec2:Owner",
+          "ec2:Region"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to copy a source Amazon FPGA image (AFI) to the current Region. Resource-level permissions specified for this action apply to the new AFI only. They do not apply to the source AFI",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CopyFpgaImage.html"
   },
   "ec2:CopyImage": {
     "Access": "Write",
-    "Affects": {},
-    "Description": "Grants permission to copy an Amazon Machine Image (AMI) from a source Region to the current Region",
+    "Affects": {
+      "AWS::Ec2::Image": {
+        "Condition Keys": [
+          "ec2:Owner",
+          "ec2:Region"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to copy an Amazon Machine Image (AMI) from a source Region to the current Region. Resource-level permissions specified for this action apply to the new AMI only. They do not apply to the source AMI",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CopyImage.html"
   },
   "ec2:CopySnapshot": {
@@ -603,30 +1172,147 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Snapshot": {
         "Condition Keys": [
-          "aws:TagKeys",
           "aws:RequestTag/${TagKey}",
-          "ec2:Region"
+          "ec2:OutpostArn",
+          "ec2:Region",
+          "aws:TagKeys",
+          "ec2:SourceOutpostArn"
         ],
         "Dependant Actions": []
       }
     },
-    "Description": "Grants permission to copy a point-in-time snapshot of an EBS volume and store it in Amazon S3",
+    "Description": "Grants permission to copy a point-in-time snapshot of an EBS volume and store it in Amazon S3. Resource-level permissions specified for this action apply to the new snapshot only. They do not apply to the source snapshot",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CopySnapshot.html"
   },
   "ec2:CreateCapacityReservation": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::CapacityReservation": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a Capacity Reservation",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateCapacityReservation.html"
+  },
+  "ec2:CreateCarrierGateway": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::CarrierGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to create a carrier gateway and provides CSP connectivity to VPC customers.",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateCarrierGateway.html"
   },
   "ec2:CreateClientVpnEndpoint": {
     "Access": "Write",
     "Affects": {
       "AWS::Ec2::ClientVpnEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       }
@@ -639,15 +1325,25 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::ClientVpnEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Subnet": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       }
@@ -657,7 +1353,18 @@ ACTIONS = {
   },
   "ec2:CreateCustomerGateway": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::CustomerGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a customer gateway, which provides information to AWS about your customer gateway device",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateCustomerGateway.html"
   },
@@ -675,19 +1382,194 @@ ACTIONS = {
   },
   "ec2:CreateDhcpOptions": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::DhcpOptions": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a set of DHCP options for a VPC",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateDhcpOptions.html"
   },
   "ec2:CreateEgressOnlyInternetGateway": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::EgressOnlyInternetGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create an egress-only internet gateway for a VPC",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateEgressOnlyInternetGateway.html"
   },
   "ec2:CreateFleet": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Fleet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Image": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:ImageType",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::KeyPair": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:KeyPairName",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LaunchTemplate": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Snapshot": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Owner",
+          "ec2:ParentVolume",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:SnapshotTime",
+          "ec2:VolumeSize"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to launch an EC2 Fleet",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateFleet.html"
   },
@@ -696,30 +1578,49 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::NetworkInterface": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
           "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
           "ec2:Subnet",
-          "ec2:Vpc"
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Subnet": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
           "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Vpc": {
         "Condition Keys": [
-          "ec2:Region"
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpcFlowLog": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": [
           "iam:PassRole"
@@ -731,47 +1632,363 @@ ACTIONS = {
   },
   "ec2:CreateFpgaImage": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::FpgaImage": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create an Amazon FPGA Image (AFI) from a design checkpoint (DCP)",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateFpgaImage.html"
   },
   "ec2:CreateImage": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Image": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:ImageType",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create an Amazon EBS-backed AMI from a stopped or running Amazon EBS-backed instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateImage.html"
   },
   "ec2:CreateInstanceExportTask": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::ExportInstanceTask": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to export a running or stopped instance to an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateInstanceExportTask.html"
   },
   "ec2:CreateInternetGateway": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::InternetGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create an internet gateway for a VPC",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateInternetGateway.html"
   },
   "ec2:CreateKeyPair": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::KeyPair": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:KeyPairName",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a 2048-bit RSA key pair",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateKeyPair.html"
   },
   "ec2:CreateLaunchTemplate": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::CapacityReservation": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::DedicatedHost": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AutoPlacement",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Quantity",
+          "ec2:HostRecovery"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Image": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:ImageType",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::KeyPair": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:KeyPairName",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LaunchTemplate": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::PlacementGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:PlacementGroupStrategy",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Snapshot": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Owner",
+          "ec2:ParentVolume",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:SnapshotTime",
+          "ec2:VolumeSize"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a launch template",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateLaunchTemplate.html"
   },
   "ec2:CreateLaunchTemplateVersion": {
     "Access": "Write",
     "Affects": {
-      "AWS::Ec2::LaunchTemplate": {
+      "AWS::Ec2::CapacityReservation": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::DedicatedHost": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AutoPlacement",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Quantity",
+          "ec2:HostRecovery"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Image": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:ImageType",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::KeyPair": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:KeyPairName",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LaunchTemplate": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::PlacementGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:PlacementGroupStrategy",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Snapshot": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Owner",
+          "ec2:ParentVolume",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:SnapshotTime",
+          "ec2:VolumeSize"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       }
@@ -784,6 +2001,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::LocalGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -791,6 +2009,7 @@ ACTIONS = {
       },
       "AWS::Ec2::LocalGatewayRouteTableVirtualInterfaceGroupAssociation": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -798,6 +2017,7 @@ ACTIONS = {
       },
       "AWS::Ec2::LocalGatewayRouteTableVpcAssociation": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -805,6 +2025,7 @@ ACTIONS = {
       },
       "AWS::Ec2::LocalGatewayVirtualInterfaceGroup": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -819,6 +2040,9 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::LocalGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -826,6 +2050,9 @@ ACTIONS = {
       },
       "AWS::Ec2::LocalGatewayRouteTableVirtualInterfaceGroupAssociation": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -833,13 +2060,25 @@ ACTIONS = {
       },
       "AWS::Ec2::LocalGatewayRouteTableVpcAssociation": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Vpc": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -848,6 +2087,9 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -856,6 +2098,9 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -864,6 +2109,9 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcFlowLog": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -872,6 +2120,9 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcPeeringConnection": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -882,27 +2133,210 @@ ACTIONS = {
     "Description": "Grants permission to associate a VPC with a local gateway route table",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateLocalGatewayRouteTableVpcAssociation.html"
   },
+  "ec2:CreateManagedPrefixList": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::PrefixList": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to create a managed prefix list",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateManagedPrefixList.html"
+  },
   "ec2:CreateNatGateway": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::ElasticIp": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NatGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a NAT gateway in a subnet",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateNatGateway.html"
   },
   "ec2:CreateNetworkAcl": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::NetworkAcl": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a network ACL in a VPC",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateNetworkAcl.html"
   },
   "ec2:CreateNetworkAclEntry": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::NetworkAcl": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a numbered entry (a rule) in a network ACL",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateNetworkAclEntry.html"
   },
+  "ec2:CreateNetworkInsightsPath": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::NetworkInsightsPath": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to create a path to analyze for reachability",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateNetworkInsightsPath.html"
+  },
   "ec2:CreateNetworkInterface": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a network interface in a subnet",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateNetworkInterface.html"
   },
@@ -911,14 +2345,14 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::NetworkInterface": {
         "Condition Keys": [
-          "ec2:AuthorizedUser",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
           "ec2:AvailabilityZone",
-          "ec2:Permission",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Subnet",
           "ec2:Vpc",
-          "ec2:AuthorizedService"
+          "ec2:AssociatePublicIpAddress"
         ],
         "Dependant Actions": []
       }
@@ -928,24 +2362,162 @@ ACTIONS = {
   },
   "ec2:CreatePlacementGroup": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::PlacementGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:PlacementGroupStrategy",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a placement group",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreatePlacementGroup.html"
   },
   "ec2:CreateReservedInstancesListing": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::ReservedInstances": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Region",
+          "ec2:ReservedInstancesOfferingType",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a listing for Standard Reserved Instances to be sold in the Reserved Instance Marketplace",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateReservedInstancesListing.html"
   },
   "ec2:CreateRoute": {
     "Access": "Write",
     "Affects": {
+      "AWS::Ec2::CarrierGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::EgressOnlyInternetGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::InternetGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LocalGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NatGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::PrefixList": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
       "AWS::Ec2::RouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AccepterVpc",
+          "ec2:Region",
+          "ec2:RequesterVpc",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpnGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       }
@@ -955,13 +2527,103 @@ ACTIONS = {
   },
   "ec2:CreateRouteTable": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::RouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a route table for a VPC",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateRouteTable.html"
   },
   "ec2:CreateSecurityGroup": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a security group",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateSecurityGroup.html"
   },
@@ -970,20 +2632,33 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Snapshot": {
         "Condition Keys": [
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:OutpostArn",
+          "ec2:Owner",
           "ec2:ParentVolume",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:SnapshotTime",
+          "ec2:SourceOutpostArn",
+          "ec2:VolumeSize"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Volume": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
           "ec2:Encrypted",
+          "ec2:ParentSnapshot",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:VolumeIops",
           "ec2:VolumeSize",
+          "ec2:VolumeThroughput",
           "ec2:VolumeType"
         ],
         "Dependant Actions": []
@@ -997,6 +2672,9 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Instance": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -1011,35 +2689,34 @@ ACTIONS = {
       },
       "AWS::Ec2::Snapshot": {
         "Condition Keys": [
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:OutpostArn",
+          "ec2:Owner",
           "ec2:ParentVolume",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:SnapshotTime",
+          "ec2:SourceOutpostArn",
+          "ec2:VolumeSize"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Volume": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
           "ec2:Encrypted",
+          "ec2:ParentSnapshot",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:VolumeIops",
           "ec2:VolumeSize",
+          "ec2:VolumeThroughput",
           "ec2:VolumeType"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Iam::InstanceProfile": {
-        "Condition Keys": [
-          "ec2:AvailabilityZone",
-          "ec2:EbsOptimized",
-          "ec2:InstanceProfile",
-          "ec2:InstanceType",
-          "ec2:PlacementGroup",
-          "ec2:Region",
-          "ec2:ResourceTag/${TagKey}",
-          "ec2:RootDeviceType",
-          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       }
@@ -1055,7 +2732,75 @@ ACTIONS = {
   },
   "ec2:CreateSubnet": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a subnet in a VPC",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateSubnet.html"
   },
@@ -1064,8 +2809,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::CapacityReservation": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1073,21 +2817,91 @@ ACTIONS = {
       },
       "AWS::Ec2::ClientVpnEndpoint": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::CustomerGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::DedicatedHost": {
-        "Condition Keys": [],
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AutoPlacement",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Quantity",
+          "ec2:HostRecovery"
+        ],
         "Dependant Actions": []
       },
       "AWS::Ec2::DhcpOptions": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::EgressOnlyInternetGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::ElasticGpu": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ElasticGpuType"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::ElasticIp": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::ExportImageTask": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::ExportInstanceTask": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Fleet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1095,8 +2909,7 @@ ACTIONS = {
       },
       "AWS::Ec2::FpgaImage": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Owner",
           "ec2:Public",
           "ec2:Region",
@@ -1104,10 +2917,17 @@ ACTIONS = {
         ],
         "Dependant Actions": []
       },
+      "AWS::Ec2::HostReservation": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
       "AWS::Ec2::Image": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:ImageType",
           "ec2:Owner",
           "ec2:Public",
@@ -1117,10 +2937,25 @@ ACTIONS = {
         ],
         "Dependant Actions": []
       },
+      "AWS::Ec2::ImportImageTask": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::ImportSnapshotTask": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
       "AWS::Ec2::Instance": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -1135,41 +2970,105 @@ ACTIONS = {
       },
       "AWS::Ec2::InternetGateway": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Ipv4PoolEc2": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Ipv6PoolEc2": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::KeyPair": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:KeyPairName",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LaunchTemplate": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::LocalGateway": {
-        "Condition Keys": [],
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
         "Dependant Actions": []
       },
       "AWS::Ec2::LocalGatewayRouteTable": {
-        "Condition Keys": [],
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
         "Dependant Actions": []
       },
       "AWS::Ec2::LocalGatewayRouteTableVirtualInterfaceGroupAssociation": {
-        "Condition Keys": [],
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
         "Dependant Actions": []
       },
       "AWS::Ec2::LocalGatewayRouteTableVpcAssociation": {
-        "Condition Keys": [],
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
         "Dependant Actions": []
       },
       "AWS::Ec2::LocalGatewayVirtualInterface": {
-        "Condition Keys": [],
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
         "Dependant Actions": []
       },
       "AWS::Ec2::LocalGatewayVirtualInterfaceGroup": {
-        "Condition Keys": [],
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NatGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
         "Dependant Actions": []
       },
       "AWS::Ec2::NetworkAcl": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -1178,8 +3077,8 @@ ACTIONS = {
       },
       "AWS::Ec2::NetworkInterface": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
           "ec2:AvailabilityZone",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
@@ -1189,10 +3088,26 @@ ACTIONS = {
         ],
         "Dependant Actions": []
       },
+      "AWS::Ec2::PlacementGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:PlacementGroupStrategy",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::PrefixList": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
       "AWS::Ec2::ReservedInstances": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:InstanceType",
           "ec2:Region",
@@ -1204,8 +3119,7 @@ ACTIONS = {
       },
       "AWS::Ec2::RouteTable": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -1214,8 +3128,7 @@ ACTIONS = {
       },
       "AWS::Ec2::SecurityGroup": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -1224,8 +3137,7 @@ ACTIONS = {
       },
       "AWS::Ec2::Snapshot": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Owner",
           "ec2:ParentVolume",
           "ec2:Region",
@@ -1235,10 +3147,17 @@ ACTIONS = {
         ],
         "Dependant Actions": []
       },
-      "AWS::Ec2::SpotInstanceRequest": {
+      "AWS::Ec2::SpotFleetRequest": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SpotInstancesRequest": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1246,8 +3165,7 @@ ACTIONS = {
       },
       "AWS::Ec2::Subnet": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
@@ -1257,8 +3175,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TrafficMirrorFilter": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1266,8 +3183,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TrafficMirrorSession": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1275,8 +3191,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TrafficMirrorTarget": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1284,8 +3199,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGateway": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1293,8 +3207,15 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayConnectPeer": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1302,8 +3223,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1311,8 +3231,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1320,8 +3239,7 @@ ACTIONS = {
       },
       "AWS::Ec2::Volume": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:Encrypted",
           "ec2:ParentSnapshot",
@@ -1329,14 +3247,14 @@ ACTIONS = {
           "ec2:ResourceTag/${TagKey}",
           "ec2:VolumeIops",
           "ec2:VolumeSize",
+          "ec2:VolumeThroughput",
           "ec2:VolumeType"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Vpc": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -1345,8 +3263,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1354,30 +3271,59 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VpceServicePrivateDnsName"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
-      "AWS::Ec2::VpcFlowLog": {
-        "Condition Keys": [],
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AccepterVpc",
+          "ec2:Region",
+          "ec2:RequesterVpc",
+          "ec2:ResourceTag/${TagKey}"
+        ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpnConnection": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AuthenticationType",
+          "ec2:DPDTimeoutSeconds",
+          "ec2:GatewayType",
+          "ec2:IKEVersions",
+          "ec2:InsideTunnelCidr",
+          "ec2:Phase1DHGroupNumbers",
+          "ec2:Phase2DHGroupNumbers",
+          "ec2:Phase1EncryptionAlgorithms",
+          "ec2:Phase2EncryptionAlgorithms",
+          "ec2:Phase1IntegrityAlgorithms",
+          "ec2:Phase2IntegrityAlgorithms",
+          "ec2:Phase1LifetimeSeconds",
+          "ec2:Phase2LifetimeSeconds",
+          "ec2:PresharedKeys",
+          "ec2:RekeyFuzzPercentage",
+          "ec2:RekeyMarginTimeSeconds",
+          "ec2:RoutingType"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpnGateway": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1392,17 +3338,21 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TrafficMirrorFilter": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TrafficMirrorFilterRule": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       }
@@ -1415,6 +3365,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TrafficMirrorFilter": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1422,6 +3373,9 @@ ACTIONS = {
       },
       "AWS::Ec2::TrafficMirrorFilterRule": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
           "ec2:Region"
         ],
         "Dependant Actions": []
@@ -1435,13 +3389,24 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::NetworkInterface": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TrafficMirrorFilter": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1449,6 +3414,9 @@ ACTIONS = {
       },
       "AWS::Ec2::TrafficMirrorFilterRule": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1456,14 +3424,19 @@ ACTIONS = {
       },
       "AWS::Ec2::TrafficMirrorSession": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TrafficMirrorTarget": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1478,16 +3451,26 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::NetworkInterface": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TrafficMirrorTarget": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       }
@@ -1500,33 +3483,51 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TransitGateway": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayConnectPeer": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       }
@@ -1534,11 +3535,48 @@ ACTIONS = {
     "Description": "Grants permission to create a transit gateway",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateTransitGateway.html"
   },
+  "ec2:CreateTransitGatewayConnect": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::TransitGatewayAttachment": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to create a Connect attachment from a specified transit gateway attachment",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateTransitGatewayConnect.html"
+  },
+  "ec2:CreateTransitGatewayConnectPeer": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::TransitGatewayAttachment": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to create a Connect peer between a transit gateway and an appliance",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateTransitGatewayConnectPeer.html"
+  },
   "ec2:CreateTransitGatewayMulticastDomain": {
     "Access": "Write",
     "Affects": {
       "AWS::Ec2::TransitGateway": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1546,6 +3584,19 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayConnectPeer": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1553,14 +3604,24 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1575,6 +3636,9 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TransitGateway": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1582,14 +3646,34 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayConnectPeer": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1597,6 +3681,9 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1606,11 +3693,20 @@ ACTIONS = {
     "Description": "Grants permission to request a transit gateway peering attachment between a requester and accepter transit gateway",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateTransitGatewayPeeringAttachment.html"
   },
-  "ec2:CreateTransitGatewayRoute": {
+  "ec2:CreateTransitGatewayPrefixListReference": {
     "Access": "Write",
     "Affects": {
+      "AWS::Ec2::PrefixList": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1618,6 +3714,30 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to create a transit gateway prefix list reference",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateTransitGatewayPrefixListReference.html"
+  },
+  "ec2:CreateTransitGatewayRoute": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::TransitGatewayAttachment": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayRouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1632,6 +3752,9 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TransitGateway": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1639,6 +3762,19 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayConnectPeer": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1646,6 +3782,9 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1653,9 +3792,16 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       }
@@ -1668,13 +3814,21 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Subnet": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TransitGateway": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1682,14 +3836,34 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region"
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayConnectPeer": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1697,6 +3871,9 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1704,36 +3881,56 @@ ACTIONS = {
       },
       "AWS::Ec2::Vpc": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpcFlowLog": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpcPeeringConnection": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       }
@@ -1744,16 +3941,33 @@ ACTIONS = {
   "ec2:CreateVolume": {
     "Access": "Write",
     "Affects": {
+      "AWS::Ec2::Snapshot": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Owner",
+          "ec2:ParentVolume",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:SnapshotTime",
+          "ec2:VolumeSize"
+        ],
+        "Dependant Actions": []
+      },
       "AWS::Ec2::Volume": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
           "ec2:AvailabilityZone",
           "ec2:Encrypted",
           "ec2:ParentSnapshot",
           "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
           "ec2:VolumeIops",
           "ec2:VolumeSize",
+          "ec2:VolumeThroughput",
           "ec2:VolumeType"
         ],
         "Dependant Actions": []
@@ -1764,7 +3978,73 @@ ACTIONS = {
   },
   "ec2:CreateVpc": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Ipv6PoolEc2": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a VPC with a specified CIDR block",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateVpc.html"
   },
@@ -1773,29 +4053,46 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::RouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::SecurityGroup": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Subnet": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Vpc": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": [
           "route53:AssociateVPCWithHostedZone"
@@ -1803,26 +4100,15 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
           "ec2:Region",
-          "ec2:VpceServiceName",
-          "ec2:VpceServiceOwner"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::VpcEndpointService": {
-        "Condition Keys": [
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy",
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:Region",
-          "ec2:VpceServiceName",
-          "ec2:VpceServiceOwner"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::VpcFlowLog": {
-        "Condition Keys": [
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -1830,10 +4116,45 @@ ACTIONS = {
           "route53:AssociateVPCWithHostedZone"
         ]
       },
-      "AWS::Ec2::VpcPeeringConnection": {
+      "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy",
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": [
+          "route53:AssociateVPCWithHostedZone"
+        ]
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": [
+          "route53:AssociateVPCWithHostedZone"
+        ]
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": [
           "route53:AssociateVPCWithHostedZone"
@@ -1845,7 +4166,25 @@ ACTIONS = {
   },
   "ec2:CreateVpcEndpointConnectionNotification": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VpceServicePrivateDnsName"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a connection notification for a VPC endpoint or VPC endpoint service",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateVpcEndpointConnectionNotification.html"
   },
@@ -1854,9 +4193,11 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
           "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
           "ec2:VpceServicePrivateDnsName"
         ],
         "Dependant Actions": []
@@ -1870,6 +4211,9 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Vpc": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -1878,6 +4222,9 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -1886,6 +4233,9 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -1894,6 +4244,9 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcFlowLog": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -1902,9 +4255,19 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcPeeringConnection": {
         "Condition Keys": [
-          "ec2:AccepterVpc",
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
-          "ec2:RequesterVpc"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AccepterVpc",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:RequesterVpc",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       }
@@ -1915,9 +4278,75 @@ ACTIONS = {
   "ec2:CreateVpnConnection": {
     "Access": "Write",
     "Affects": {
+      "AWS::Ec2::CustomerGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
       "AWS::Ec2::VpnConnection": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AuthenticationType",
+          "ec2:DPDTimeoutSeconds",
+          "ec2:GatewayType",
+          "ec2:IKEVersions",
+          "ec2:InsideTunnelCidr",
+          "ec2:Phase1DHGroupNumbers",
+          "ec2:Phase2DHGroupNumbers",
+          "ec2:Phase1EncryptionAlgorithms",
+          "ec2:Phase2EncryptionAlgorithms",
+          "ec2:Phase1IntegrityAlgorithms",
+          "ec2:Phase2IntegrityAlgorithms",
+          "ec2:Phase1LifetimeSeconds",
+          "ec2:Phase2LifetimeSeconds",
+          "ec2:PresharedKeys",
+          "ec2:RekeyFuzzPercentage",
+          "ec2:RekeyMarginTimeSeconds",
+          "ec2:RoutingType"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpnGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to create a VPN connection between a virtual private gateway or transit gateway and a customer gateway",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateVpnConnection.html"
+  },
+  "ec2:CreateVpnConnectionRoute": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::VpnConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
           "ec2:AuthenticationType",
           "ec2:DPDTimeoutSeconds",
           "ec2:GatewayType",
@@ -1939,28 +4368,57 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Grants permission to create a VPN connection between a virtual private gateway or transit gateway and a customer gateway",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateVpnConnection.html"
-  },
-  "ec2:CreateVpnConnectionRoute": {
-    "Access": "Write",
-    "Affects": {},
     "Description": "Grants permission to create a static route for a VPN connection between a virtual private gateway and a customer gateway",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateVpnConnectionRoute.html"
   },
   "ec2:CreateVpnGateway": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::VpnGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a virtual private gateway",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateVpnGateway.html"
+  },
+  "ec2:DeleteCarrierGateway": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::CarrierGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to delete a carrier gateway",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteCarrierGateway.html"
   },
   "ec2:DeleteClientVpnEndpoint": {
     "Access": "Write",
     "Affects": {
       "AWS::Ec2::ClientVpnEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
         ],
         "Dependant Actions": []
       }
@@ -1973,15 +4431,25 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::ClientVpnEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Subnet": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       }
@@ -1994,6 +4462,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::CustomerGateway": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2008,6 +4477,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::DhcpOptions": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2019,25 +4489,63 @@ ACTIONS = {
   },
   "ec2:DeleteEgressOnlyInternetGateway": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::EgressOnlyInternetGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to delete an egress-only internet gateway",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteEgressOnlyInternetGateway.html"
   },
   "ec2:DeleteFleets": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Fleet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to delete one or more EC2 Fleets",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteFleets.html"
   },
   "ec2:DeleteFlowLogs": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to delete one or more flow logs",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteFlowLogs.html"
   },
   "ec2:DeleteFpgaImage": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::FpgaImage": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to delete an Amazon FPGA Image (AFI)",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteFpgaImage.html"
   },
@@ -2046,6 +4554,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::InternetGateway": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2057,7 +4566,17 @@ ACTIONS = {
   },
   "ec2:DeleteKeyPair": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::KeyPair": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:KeyPairName",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to delete a key pair by removing the public key from Amazon EC2",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteKeyPair.html"
   },
@@ -2066,6 +4585,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::LaunchTemplate": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2080,6 +4600,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::LaunchTemplate": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2094,6 +4615,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::LocalGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2101,6 +4623,7 @@ ACTIONS = {
       },
       "AWS::Ec2::LocalGatewayRouteTableVirtualInterfaceGroupAssociation": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2108,6 +4631,7 @@ ACTIONS = {
       },
       "AWS::Ec2::LocalGatewayRouteTableVpcAssociation": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2122,8 +4646,10 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::LocalGatewayRouteTableVpcAssociation": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       }
@@ -2131,9 +4657,33 @@ ACTIONS = {
     "Description": "Grants permission to delete an association between a VPC and local gateway route table",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteLocalGatewayRouteTableVpcAssociation.html"
   },
+  "ec2:DeleteManagedPrefixList": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::PrefixList": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to delete a managed prefix list",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteManagedPrefixList.html"
+  },
   "ec2:DeleteNatGateway": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::NatGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to delete a NAT gateway",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteNatGateway.html"
   },
@@ -2142,6 +4692,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::NetworkAcl": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -2157,6 +4708,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::NetworkAcl": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -2167,9 +4719,53 @@ ACTIONS = {
     "Description": "Grants permission to delete an inbound or outbound entry (rule) from a network ACL",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteNetworkAclEntry.html"
   },
+  "ec2:DeleteNetworkInsightsAnalysis": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::NetworkInsightsAnalysis": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to delete a network insights analysis",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteNetworkInsightsAnalysis.html"
+  },
+  "ec2:DeleteNetworkInsightsPath": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::NetworkInsightsPath": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to delete a network insights path",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteNetworkInsightsPath.html"
+  },
   "ec2:DeleteNetworkInterface": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to delete a detached network interface",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteNetworkInterface.html"
   },
@@ -2185,11 +4781,39 @@ ACTIONS = {
     "Description": "Grants permission to delete a placement group",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeletePlacementGroup.html"
   },
+  "ec2:DeleteQueuedReservedInstances": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::ReservedInstances": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Region",
+          "ec2:ReservedInstancesOfferingType",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to delete the queued purchases for the specified Reserved Instances",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteQueuedReservedInstances.html"
+  },
   "ec2:DeleteRoute": {
     "Access": "Write",
     "Affects": {
+      "AWS::Ec2::PrefixList": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
       "AWS::Ec2::RouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -2205,6 +4829,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::RouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -2220,6 +4845,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::SecurityGroup": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -2235,11 +4861,14 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Snapshot": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:OutpostArn",
           "ec2:Owner",
           "ec2:ParentVolume",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:SnapshotTime",
+          "ec2:SourceOutpostArn",
           "ec2:VolumeSize"
         ],
         "Dependant Actions": []
@@ -2256,7 +4885,18 @@ ACTIONS = {
   },
   "ec2:DeleteSubnet": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to delete a subnet",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteSubnet.html"
   },
@@ -2265,8 +4905,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::CapacityReservation": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2274,21 +4913,91 @@ ACTIONS = {
       },
       "AWS::Ec2::ClientVpnEndpoint": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::CustomerGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::DedicatedHost": {
-        "Condition Keys": [],
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AutoPlacement",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Quantity",
+          "ec2:HostRecovery"
+        ],
         "Dependant Actions": []
       },
       "AWS::Ec2::DhcpOptions": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::EgressOnlyInternetGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::ElasticGpu": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ElasticGpuType"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::ElasticIp": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::ExportImageTask": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::ExportInstanceTask": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Fleet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2296,8 +5005,17 @@ ACTIONS = {
       },
       "AWS::Ec2::FpgaImage": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::HostReservation": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2305,8 +5023,27 @@ ACTIONS = {
       },
       "AWS::Ec2::Image": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:ImageType",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::ImportImageTask": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::ImportSnapshotTask": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2314,59 +5051,151 @@ ACTIONS = {
       },
       "AWS::Ec2::Instance": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::InternetGateway": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Ipv4PoolEc2": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Ipv6PoolEc2": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::KeyPair": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:KeyPairName",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LaunchTemplate": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::LocalGateway": {
-        "Condition Keys": [],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::LocalGatewayRouteTable": {
-        "Condition Keys": [],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::LocalGatewayRouteTableVirtualInterfaceGroupAssociation": {
-        "Condition Keys": [],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::LocalGatewayRouteTableVpcAssociation": {
-        "Condition Keys": [],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::LocalGatewayVirtualInterface": {
-        "Condition Keys": [],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::LocalGatewayVirtualInterfaceGroup": {
-        "Condition Keys": [],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::NetworkAcl": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
+      "AWS::Ec2::LocalGatewayRouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LocalGatewayRouteTableVirtualInterfaceGroupAssociation": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LocalGatewayRouteTableVpcAssociation": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LocalGatewayVirtualInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LocalGatewayVirtualInterfaceGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NatGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NetworkAcl": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
       "AWS::Ec2::NetworkInterface": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::PlacementGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:PlacementGroupStrategy",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::PrefixList": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2374,44 +5203,57 @@ ACTIONS = {
       },
       "AWS::Ec2::ReservedInstances": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ReservedInstancesOfferingType",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::RouteTable": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::SecurityGroup": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Snapshot": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Owner",
+          "ec2:ParentVolume",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:SnapshotTime",
+          "ec2:VolumeSize"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SpotFleetRequest": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
-      "AWS::Ec2::SpotInstanceRequest": {
+      "AWS::Ec2::SpotInstancesRequest": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2419,8 +5261,33 @@ ACTIONS = {
       },
       "AWS::Ec2::Subnet": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TrafficMirrorFilter": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TrafficMirrorSession": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TrafficMirrorTarget": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2428,8 +5295,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGateway": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2437,8 +5303,15 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayConnectPeer": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2446,8 +5319,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2455,8 +5327,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2464,26 +5335,31 @@ ACTIONS = {
       },
       "AWS::Ec2::Volume": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Encrypted",
+          "ec2:ParentSnapshot",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VolumeIops",
+          "ec2:VolumeSize",
+          "ec2:VolumeThroughput",
+          "ec2:VolumeType"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Vpc": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2491,30 +5367,59 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VpceServicePrivateDnsName"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       },
-      "AWS::Ec2::VpcFlowLog": {
-        "Condition Keys": [],
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AccepterVpc",
+          "ec2:Region",
+          "ec2:RequesterVpc",
+          "ec2:ResourceTag/${TagKey}"
+        ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpnConnection": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AuthenticationType",
+          "ec2:DPDTimeoutSeconds",
+          "ec2:GatewayType",
+          "ec2:IKEVersions",
+          "ec2:InsideTunnelCidr",
+          "ec2:Phase1DHGroupNumbers",
+          "ec2:Phase2DHGroupNumbers",
+          "ec2:Phase1EncryptionAlgorithms",
+          "ec2:Phase2EncryptionAlgorithms",
+          "ec2:Phase1IntegrityAlgorithms",
+          "ec2:Phase2IntegrityAlgorithms",
+          "ec2:Phase1LifetimeSeconds",
+          "ec2:Phase2LifetimeSeconds",
+          "ec2:PresharedKeys",
+          "ec2:RekeyFuzzPercentage",
+          "ec2:RekeyMarginTimeSeconds",
+          "ec2:RoutingType"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpnGateway": {
         "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2529,6 +5434,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TrafficMirrorFilter": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2536,6 +5442,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TrafficMirrorFilterRule": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2548,13 +5455,6 @@ ACTIONS = {
   "ec2:DeleteTrafficMirrorFilterRule": {
     "Access": "Write",
     "Affects": {
-      "AWS::Ec2::TrafficMirrorFilter": {
-        "Condition Keys": [
-          "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
-        ],
-        "Dependant Actions": []
-      },
       "AWS::Ec2::TrafficMirrorFilterRule": {
         "Condition Keys": [
           "ec2:Region"
@@ -2570,6 +5470,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TrafficMirrorSession": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2584,6 +5485,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TrafficMirrorTarget": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2598,6 +5500,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TransitGateway": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2605,6 +5508,15 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayConnectPeer": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2612,6 +5524,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2619,6 +5532,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2628,11 +5542,42 @@ ACTIONS = {
     "Description": "Grants permission to delete a transit gateway",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteTransitGateway.html"
   },
+  "ec2:DeleteTransitGatewayConnect": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::TransitGatewayAttachment": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to delete a transit gateway connect attachment",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteTransitGatewayConnect.html"
+  },
+  "ec2:DeleteTransitGatewayConnectPeer": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::TransitGatewayConnectPeer": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to delete a transit gateway connect peer",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteTransitGatewayConnectPeer.html"
+  },
   "ec2:DeleteTransitGatewayMulticastDomain": {
     "Access": "Write",
     "Affects": {
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2647,6 +5592,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2656,11 +5602,35 @@ ACTIONS = {
     "Description": "Grants permission to delete a peering attachment from a transit gateway",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteTransitGatewayPeeringAttachment.html"
   },
+  "ec2:DeleteTransitGatewayPrefixListReference": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::PrefixList": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayRouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to delete a transit gateway prefix list reference",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteTransitGatewayPrefixListReference.html"
+  },
   "ec2:DeleteTransitGatewayRoute": {
     "Access": "Write",
     "Affects": {
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2675,6 +5645,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2689,6 +5660,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2703,6 +5675,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Volume": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:Encrypted",
           "ec2:ParentSnapshot",
@@ -2710,6 +5683,7 @@ ACTIONS = {
           "ec2:ResourceTag/${TagKey}",
           "ec2:VolumeIops",
           "ec2:VolumeSize",
+          "ec2:VolumeThroughput",
           "ec2:VolumeType"
         ],
         "Dependant Actions": []
@@ -2720,13 +5694,80 @@ ACTIONS = {
   },
   "ec2:DeleteVpc": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to delete a VPC",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteVpc.html"
   },
   "ec2:DeleteVpcEndpointConnectionNotifications": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VpceServicePrivateDnsName"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to delete one or more VPC endpoint connection notifications",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteVpcEndpointConnectionNotifications.html"
   },
@@ -2735,8 +5776,10 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VpceServicePrivateDnsName"
         ],
         "Dependant Actions": []
       }
@@ -2749,6 +5792,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2756,6 +5800,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2770,6 +5815,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::VpcPeeringConnection": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AccepterVpc",
           "ec2:Region",
           "ec2:RequesterVpc",
@@ -2783,19 +5829,80 @@ ACTIONS = {
   },
   "ec2:DeleteVpnConnection": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::VpnConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AuthenticationType",
+          "ec2:DPDTimeoutSeconds",
+          "ec2:GatewayType",
+          "ec2:IKEVersions",
+          "ec2:InsideTunnelCidr",
+          "ec2:Phase1DHGroupNumbers",
+          "ec2:Phase2DHGroupNumbers",
+          "ec2:Phase1EncryptionAlgorithms",
+          "ec2:Phase2EncryptionAlgorithms",
+          "ec2:Phase1IntegrityAlgorithms",
+          "ec2:Phase2IntegrityAlgorithms",
+          "ec2:Phase1LifetimeSeconds",
+          "ec2:Phase2LifetimeSeconds",
+          "ec2:PresharedKeys",
+          "ec2:RekeyFuzzPercentage",
+          "ec2:RekeyMarginTimeSeconds",
+          "ec2:RoutingType"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to delete a VPN connection",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteVpnConnection.html"
   },
   "ec2:DeleteVpnConnectionRoute": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::VpnConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AuthenticationType",
+          "ec2:DPDTimeoutSeconds",
+          "ec2:GatewayType",
+          "ec2:IKEVersions",
+          "ec2:InsideTunnelCidr",
+          "ec2:Phase1DHGroupNumbers",
+          "ec2:Phase2DHGroupNumbers",
+          "ec2:Phase1EncryptionAlgorithms",
+          "ec2:Phase2EncryptionAlgorithms",
+          "ec2:Phase1IntegrityAlgorithms",
+          "ec2:Phase2IntegrityAlgorithms",
+          "ec2:Phase1LifetimeSeconds",
+          "ec2:Phase2LifetimeSeconds",
+          "ec2:PresharedKeys",
+          "ec2:RekeyFuzzPercentage",
+          "ec2:RekeyMarginTimeSeconds",
+          "ec2:RoutingType"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to delete a static route for a VPN connection between a virtual private gateway and a customer gateway",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteVpnConnectionRoute.html"
   },
   "ec2:DeleteVpnGateway": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::VpnGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to delete a virtual private gateway",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeleteVpnGateway.html"
   },
@@ -2807,22 +5914,48 @@ ACTIONS = {
   },
   "ec2:DeregisterImage": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Image": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:ImageType",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to deregister an Amazon Machine Image (AMI)",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeregisterImage.html"
+  },
+  "ec2:DeregisterInstanceEventNotificationAttributes": {
+    "Access": "Write",
+    "Affects": {},
+    "Description": "Grants permission to remove tags from the set of tags to include in notifications about scheduled events for your instances",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeregisterInstanceEventNotificationAttributes.html"
   },
   "ec2:DeregisterTransitGatewayMulticastGroupMembers": {
     "Access": "Write",
     "Affects": {
       "AWS::Ec2::NetworkInterface": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2837,13 +5970,20 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::NetworkInterface": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -2864,6 +6004,12 @@ ACTIONS = {
     "Affects": {},
     "Description": "Grants permission to describe one or more Elastic IP addresses",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeAddresses.html"
+  },
+  "ec2:DescribeAddressesAttribute": {
+    "Access": "List",
+    "Affects": {},
+    "Description": "Grants permission to describe the attributes of the specified Elastic IP addresses",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeAddressesAttribute.html"
   },
   "ec2:DescribeAggregateIdFormat": {
     "Access": "List",
@@ -2894,6 +6040,12 @@ ACTIONS = {
     "Affects": {},
     "Description": "Grants permission to describe one or more Capacity Reservations",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeCapacityReservations.html"
+  },
+  "ec2:DescribeCarrierGateways": {
+    "Access": "List",
+    "Affects": {},
+    "Description": "Grants permission to describe one or more Carrier Gateways",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeCarrierGateways.html"
   },
   "ec2:DescribeClassicLinkInstances": {
     "Access": "List",
@@ -2930,6 +6082,12 @@ ACTIONS = {
     "Affects": {},
     "Description": "Grants permission to describe the target networks that are associated with a Client VPN endpoint",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeClientVpnTargetNetworks.html"
+  },
+  "ec2:DescribeCoipPools": {
+    "Access": "List",
+    "Affects": {},
+    "Description": "Grants permission to describe the specified customer-owned address pools or all of your customer-owned address pools",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeCoipPools.html"
   },
   "ec2:DescribeConversionTasks": {
     "Access": "List",
@@ -3087,16 +6245,28 @@ ACTIONS = {
     "Description": "Grants permission to describe the credit option for CPU usage of one or more burstable performance instances",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstanceCreditSpecifications.html"
   },
+  "ec2:DescribeInstanceEventNotificationAttributes": {
+    "Access": "List",
+    "Affects": {},
+    "Description": "Grants permission to describe the set of tags to include in notifications about scheduled events for your instances",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstanceEventNotificationAttributes.html"
+  },
   "ec2:DescribeInstanceStatus": {
     "Access": "List",
     "Affects": {},
     "Description": "Grants permission to describe the status of one or more instances",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstanceStatus.html"
   },
+  "ec2:DescribeInstanceTypeOfferings": {
+    "Access": "List",
+    "Affects": {},
+    "Description": "Grants permission to describe the set of instance types that are offered in a location",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstanceTypeOfferings.html"
+  },
   "ec2:DescribeInstanceTypes": {
     "Access": "List",
     "Affects": {},
-    "Description": "Grants permission to describe all instance types that are offered in an AWS Region",
+    "Description": "Grants permission to describe the details of instance types that are offered in a location",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstanceTypes.html"
   },
   "ec2:DescribeInstances": {
@@ -3110,6 +6280,12 @@ ACTIONS = {
     "Affects": {},
     "Description": "Grants permission to describe one or more internet gateways",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInternetGateways.html"
+  },
+  "ec2:DescribeIpv6Pools": {
+    "Access": "List",
+    "Affects": {},
+    "Description": "Grants permission to describe one or more IPv6 address pools",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeIpv6Pools.html"
   },
   "ec2:DescribeKeyPairs": {
     "Access": "List",
@@ -3165,6 +6341,12 @@ ACTIONS = {
     "Description": "Grants permission to describe one or more local gateways",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeLocalGateways.html"
   },
+  "ec2:DescribeManagedPrefixLists": {
+    "Access": "List",
+    "Affects": {},
+    "Description": "Grants permission to describe your managed prefix lists and any AWS-managed prefix lists",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeManagedPrefixLists.html"
+  },
   "ec2:DescribeMovingAddresses": {
     "Access": "List",
     "Affects": {},
@@ -3182,6 +6364,18 @@ ACTIONS = {
     "Affects": {},
     "Description": "Grants permission to describe one or more network ACLs",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkAcls.html"
+  },
+  "ec2:DescribeNetworkInsightsAnalyses": {
+    "Access": "List",
+    "Affects": {},
+    "Description": "Grants permission to describe one or more network insights analyses",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkInsightsAnalyses.html"
+  },
+  "ec2:DescribeNetworkInsightsPaths": {
+    "Access": "List",
+    "Affects": {},
+    "Description": "Grants permission to describe one or more network insights paths",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkInsightsPaths.html"
   },
   "ec2:DescribeNetworkInterfaceAttribute": {
     "Access": "List",
@@ -3375,6 +6569,18 @@ ACTIONS = {
     "Description": "Grants permission to describe one or more attachments between resources and transit gateways",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeTransitGatewayAttachments.html"
   },
+  "ec2:DescribeTransitGatewayConnectPeers": {
+    "Access": "List",
+    "Affects": {},
+    "Description": "Grants permission to describe one or more transit gateway connect peers",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeTransitGatewayConnectPeers.html"
+  },
+  "ec2:DescribeTransitGatewayConnects": {
+    "Access": "List",
+    "Affects": {},
+    "Description": "Grants permission to describe one or more transit gateway connect attachments",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeTransitGatewayConnects.html"
+  },
   "ec2:DescribeTransitGatewayMulticastDomains": {
     "Access": "List",
     "Affects": {},
@@ -3512,6 +6718,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Instance": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -3526,6 +6733,7 @@ ACTIONS = {
       },
       "AWS::Ec2::Vpc": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -3534,6 +6742,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -3542,6 +6751,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -3550,6 +6760,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcFlowLog": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -3558,14 +6769,83 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcPeeringConnection": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to unlink (detach) a linked EC2-Classic instance from a VPC",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DetachClassicLinkVpc.html"
+  },
+  "ec2:DetachInternetGateway": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::InternetGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
         ],
         "Dependant Actions": []
       },
-      "AWS::Iam::InstanceProfile": {
+      "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to detach an internet gateway from a VPC",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DetachInternetGateway.html"
+  },
+  "ec2:DetachNetworkInterface": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -3577,20 +6857,21 @@ ACTIONS = {
           "ec2:Tenancy"
         ],
         "Dependant Actions": []
+      },
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
       }
     },
-    "Description": "Grants permission to unlink (detach) a linked EC2-Classic instance from a VPC",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DetachClassicLinkVpc.html"
-  },
-  "ec2:DetachInternetGateway": {
-    "Access": "Write",
-    "Affects": {},
-    "Description": "Grants permission to detach an internet gateway from a VPC",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DetachInternetGateway.html"
-  },
-  "ec2:DetachNetworkInterface": {
-    "Access": "Write",
-    "Affects": {},
     "Description": "Grants permission to detach a network interface from an instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DetachNetworkInterface.html"
   },
@@ -3599,6 +6880,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Instance": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -3613,6 +6895,7 @@ ACTIONS = {
       },
       "AWS::Ec2::Volume": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:Encrypted",
           "ec2:ParentSnapshot",
@@ -3620,21 +6903,8 @@ ACTIONS = {
           "ec2:ResourceTag/${TagKey}",
           "ec2:VolumeIops",
           "ec2:VolumeSize",
+          "ec2:VolumeThroughput",
           "ec2:VolumeType"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Iam::InstanceProfile": {
-        "Condition Keys": [
-          "ec2:AvailabilityZone",
-          "ec2:EbsOptimized",
-          "ec2:InstanceProfile",
-          "ec2:InstanceType",
-          "ec2:PlacementGroup",
-          "ec2:Region",
-          "ec2:ResourceTag/${TagKey}",
-          "ec2:RootDeviceType",
-          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       }
@@ -3644,7 +6914,61 @@ ACTIONS = {
   },
   "ec2:DetachVpnGateway": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpnGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to detach a virtual private gateway from a VPC",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DetachVpnGateway.html"
   },
@@ -3659,14 +6983,13 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Snapshot": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Owner",
           "ec2:ParentVolume",
           "ec2:Region",
-          "ec2:AvailabilityZone",
+          "ec2:ResourceTag/${TagKey}",
           "ec2:SnapshotTime",
-          "ec2:Encrypted",
-          "ec2:VolumeSize",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:VolumeSize"
         ],
         "Dependant Actions": []
       }
@@ -3679,6 +7002,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -3686,6 +7010,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -3697,7 +7022,25 @@ ACTIONS = {
   },
   "ec2:DisableVgwRoutePropagation": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::RouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpnGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to disable a virtual private gateway from propagating routes to a specified route table of a VPC",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisableVgwRoutePropagation.html"
   },
@@ -3706,6 +7049,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Vpc": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -3714,6 +7058,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -3722,6 +7067,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -3730,6 +7076,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcFlowLog": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -3738,6 +7085,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcPeeringConnection": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -3750,35 +7098,34 @@ ACTIONS = {
   },
   "ec2:DisableVpcClassicLinkDnsSupport": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to disable ClassicLink DNS support for a VPC",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisableVpcClassicLinkDnsSupport.html"
   },
   "ec2:DisassociateAddress": {
     "Access": "Write",
-    "Affects": {},
-    "Description": "Grants permission to disassociate an Elastic IP address from an instance or network interface",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisassociateAddress.html"
-  },
-  "ec2:DisassociateClientVpnTargetNetwork": {
-    "Access": "Write",
     "Affects": {
-      "AWS::Ec2::ClientVpnEndpoint": {
+      "AWS::Ec2::ElasticIp": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
-      }
-    },
-    "Description": "Grants permission to disassociate a target network from a Client VPN endpoint",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisassociateClientVpnTargetNetwork.html"
-  },
-  "ec2:DisassociateIamInstanceProfile": {
-    "Access": "Write",
-    "Affects": {
+      },
       "AWS::Ec2::Instance": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -3791,8 +7138,65 @@ ACTIONS = {
         ],
         "Dependant Actions": []
       },
-      "AWS::Iam::InstanceProfile": {
+      "AWS::Ec2::NetworkInterface": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to disassociate an Elastic IP address from an instance or network interface",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisassociateAddress.html"
+  },
+  "ec2:DisassociateClientVpnTargetNetwork": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::ClientVpnEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to disassociate a target network from a Client VPN endpoint",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisassociateClientVpnTargetNetwork.html"
+  },
+  "ec2:DisassociateEnclaveCertificateIamRole": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::Certificate": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      },
+      "AWS::Iam::Role": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to disassociate an ACM certificate from a IAM role",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisassociateEnclaveCertificateIamRole.html"
+  },
+  "ec2:DisassociateIamInstanceProfile": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -3811,13 +7215,44 @@ ACTIONS = {
   },
   "ec2:DisassociateRouteTable": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::RouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to disassociate a subnet from a route table",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisassociateRouteTable.html"
   },
   "ec2:DisassociateSubnetCidrBlock": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to disassociate a CIDR block from a subnet",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisassociateSubnetCidrBlock.html"
   },
@@ -3826,13 +7261,17 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Subnet": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -3840,6 +7279,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -3854,6 +7294,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -3861,6 +7302,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -3887,14 +7329,13 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Snapshot": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Owner",
           "ec2:ParentVolume",
           "ec2:Region",
-          "ec2:AvailabilityZone",
+          "ec2:ResourceTag/${TagKey}",
           "ec2:SnapshotTime",
-          "ec2:Encrypted",
-          "ec2:VolumeSize",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:VolumeSize"
         ],
         "Dependant Actions": []
       }
@@ -3907,6 +7348,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -3914,6 +7356,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -3925,13 +7368,47 @@ ACTIONS = {
   },
   "ec2:EnableVgwRoutePropagation": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::RouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpnGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to enable a virtual private gateway to propagate routes to a VPC route table",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_EnableVgwRoutePropagation.html"
   },
   "ec2:EnableVolumeIO": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Volume": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Encrypted",
+          "ec2:ParentSnapshot",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VolumeIops",
+          "ec2:VolumeSize",
+          "ec2:VolumeThroughput",
+          "ec2:VolumeType"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to enable I/O operations for a volume that had I/O operations disabled",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_EnableVolumeIO.html"
   },
@@ -3940,6 +7417,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Vpc": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -3948,6 +7426,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -3956,6 +7435,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -3964,6 +7444,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcFlowLog": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -3972,6 +7453,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcPeeringConnection": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Tenancy"
@@ -3984,51 +7466,151 @@ ACTIONS = {
   },
   "ec2:EnableVpcClassicLinkDnsSupport": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to enable a VPC to support DNS hostname resolution for ClassicLink",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_EnableVpcClassicLinkDnsSupport.html"
   },
   "ec2:ExportClientVpnClientCertificateRevocationList": {
     "Access": "List",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::ClientVpnEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to download the client certificate revocation list for a Client VPN endpoint",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ExportClientVpnClientCertificateRevocationList.html"
   },
   "ec2:ExportClientVpnClientConfiguration": {
     "Access": "List",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::ClientVpnEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to download the contents of the Client VPN endpoint configuration file for a Client VPN endpoint",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ExportClientVpnClientConfiguration.html"
   },
   "ec2:ExportImage": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Image": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:ImageType",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to export an Amazon Machine Image (AMI) to a VM file",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ExportImage.html"
   },
   "ec2:ExportTransitGatewayRoutes": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::TransitGatewayRouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to export routes from a transit gateway route table to an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ExportTransitGatewayRoutes.html"
   },
+  "ec2:GetAssociatedEnclaveCertificateIamRoles": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::Ec2::Certificate": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to get the list of roles associated with an ACM certificate",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetAssociatedEnclaveCertificateIamRoles.html"
+  },
+  "ec2:GetAssociatedIpv6PoolCidrs": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::Ec2::Ipv6PoolEc2": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to get information about the IPv6 CIDR block associations for a specified IPv6 address pool",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetAssociatedIpv6PoolCidrs.html"
+  },
   "ec2:GetCapacityReservationUsage": {
     "Access": "Read",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::CapacityReservation": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to get usage information about a Capacity Reservation",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetCapacityReservationUsage.html"
   },
-  "ec2:GetConsoleOutput": {
+  "ec2:GetCoipPoolUsage": {
     "Access": "Read",
     "Affects": {},
-    "Description": "Grants permission to get the console output for an instance",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetConsoleOutput.html"
+    "Description": "Grants permission to describe the allocations from the specified customer-owned address pool",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetCoipPoolUsage.html"
   },
-  "ec2:GetConsoleScreenshot": {
+  "ec2:GetConsoleOutput": {
     "Access": "Read",
     "Affects": {
       "AWS::Ec2::Instance": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -4040,9 +7622,17 @@ ACTIONS = {
           "ec2:Tenancy"
         ],
         "Dependant Actions": []
-      },
-      "AWS::Iam::InstanceProfile": {
+      }
+    },
+    "Description": "Grants permission to get the console output for an instance",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetConsoleOutput.html"
+  },
+  "ec2:GetConsoleScreenshot": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::Ec2::Instance": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -4077,51 +7667,206 @@ ACTIONS = {
     "Description": "Grants permission to describe whether EBS encryption by default is enabled for your account",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetEbsEncryptionByDefault.html"
   },
+  "ec2:GetGroupsForCapacityReservation": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Ec2::CapacityReservation": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to list the resource groups to which a Capacity Reservation has been added",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetGroupsForCapacityReservation.html"
+  },
   "ec2:GetHostReservationPurchasePreview": {
     "Access": "Read",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::DedicatedHost": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AutoPlacement",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Quantity",
+          "ec2:HostRecovery"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to preview a reservation purchase with configurations that match those of a Dedicated Host",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetHostReservationPurchasePreview.html"
   },
   "ec2:GetLaunchTemplateData": {
     "Access": "Read",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to get the configuration data of the specified instance for use with a new launch template or launch template version",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetLaunchTemplateData.html"
   },
+  "ec2:GetManagedPrefixListAssociations": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::Ec2::PrefixList": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to get information about the resources that are associated with the specified managed prefix list",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetManagedPrefixListAssociations.html"
+  },
+  "ec2:GetManagedPrefixListEntries": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::Ec2::PrefixList": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to get information about the entries for a specified managed prefix list",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetManagedPrefixListEntries.html"
+  },
   "ec2:GetPasswordData": {
     "Access": "Read",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to retrieve the encrypted administrator password for a running Windows instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetPasswordData.html"
   },
   "ec2:GetReservedInstancesExchangeQuote": {
     "Access": "Read",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::ReservedInstances": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Region",
+          "ec2:ReservedInstancesOfferingType",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to return a quote and exchange information for exchanging one or more Convertible Reserved Instances for a new Convertible Reserved Instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetReservedInstancesExchangeQuote.html"
   },
   "ec2:GetTransitGatewayAttachmentPropagations": {
     "Access": "List",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::TransitGatewayAttachment": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to list the route tables to which a resource attachment propagates routes",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetTransitGatewayAttachmentPropagations.html"
   },
   "ec2:GetTransitGatewayMulticastDomainAssociations": {
     "Access": "List",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::TransitGatewayMulticastDomain": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to get information about the associations for a transit gateway multicast domain",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetTransitGatewayMulticastDomainAssociations.html"
   },
+  "ec2:GetTransitGatewayPrefixListReferences": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Ec2::TransitGatewayRouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to get information about prefix list references for a transit gateway route table",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetTransitGatewayPrefixListReference.html"
+  },
   "ec2:GetTransitGatewayRouteTableAssociations": {
     "Access": "List",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::TransitGatewayRouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to get information about associations for a transit gateway route table",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetTransitGatewayRouteTableAssociations.html"
   },
   "ec2:GetTransitGatewayRouteTablePropagations": {
     "Access": "List",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::TransitGatewayRouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to get information about the route table propagations for a transit gateway route table",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetTransitGatewayRouteTablePropagations.html"
   },
@@ -4130,8 +7875,15 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::ClientVpnEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
         ],
         "Dependant Actions": []
       }
@@ -4141,25 +7893,101 @@ ACTIONS = {
   },
   "ec2:ImportImage": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Image": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:ImageType",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Snapshot": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Owner",
+          "ec2:ParentVolume",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:SnapshotTime",
+          "ec2:VolumeSize"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to import single or multi-volume disk images or EBS snapshots into an Amazon Machine Image (AMI)",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ImportImage.html"
   },
   "ec2:ImportInstance": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create an import instance task using metadata from a disk image",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ImportInstance.html"
   },
   "ec2:ImportKeyPair": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::KeyPair": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:KeyPairName",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to import a public key from an RSA key pair that was created with a third-party tool",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ImportKeyPair.html"
   },
   "ec2:ImportSnapshot": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Snapshot": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Owner",
+          "ec2:ParentVolume",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:SnapshotTime",
+          "ec2:VolumeSize"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to import a disk into an EBS snapshot",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ImportSnapshot.html"
   },
@@ -4169,11 +7997,24 @@ ACTIONS = {
     "Description": "Grants permission to create an import volume task using metadata from a disk image",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ImportVolume.html"
   },
+  "ec2:ModifyAddressAttribute": {
+    "Access": "Write",
+    "Affects": {},
+    "Description": "Grants permission to modify an attribute of the specified Elastic IP address",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyAddressAttribute.html"
+  },
+  "ec2:ModifyAvailabilityZoneGroup": {
+    "Access": "Write",
+    "Affects": {},
+    "Description": "Grants permission to modify the opt-in status of the Local Zone and Wavelength Zone group for your account",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyAvailabilityZoneGroup.html"
+  },
   "ec2:ModifyCapacityReservation": {
     "Access": "Write",
     "Affects": {
       "AWS::Ec2::CapacityReservation": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4188,8 +8029,33 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::ClientVpnEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       }
@@ -4211,19 +8077,126 @@ ACTIONS = {
   },
   "ec2:ModifyFleet": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Fleet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Image": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:ImageType",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::KeyPair": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:KeyPairName",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LaunchTemplate": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Snapshot": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Owner",
+          "ec2:ParentVolume",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:SnapshotTime",
+          "ec2:VolumeSize"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify an EC2 Fleet",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyFleet.html"
   },
   "ec2:ModifyFpgaImageAttribute": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::FpgaImage": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify an attribute of an Amazon FPGA Image (AFI)",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyFpgaImageAttribute.html"
   },
   "ec2:ModifyHosts": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::DedicatedHost": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AutoPlacement",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Quantity",
+          "ec2:HostRecovery"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify a Dedicated Host",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyHosts.html"
   },
@@ -4241,19 +8214,96 @@ ACTIONS = {
   },
   "ec2:ModifyImageAttribute": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Image": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:ImageType",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify an attribute of an Amazon Machine Image (AMI)",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyImageAttribute.html"
   },
   "ec2:ModifyInstanceAttribute": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Volume": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Encrypted",
+          "ec2:ParentSnapshot",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VolumeIops",
+          "ec2:VolumeSize",
+          "ec2:VolumeThroughput",
+          "ec2:VolumeType"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify an attribute of an instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyInstanceAttribute.html"
   },
   "ec2:ModifyInstanceCapacityReservationAttributes": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::CapacityReservation": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify the Capacity Reservation settings for a stopped instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyInstanceCapacityReservationAttributes.html"
   },
@@ -4261,11 +8311,18 @@ ACTIONS = {
     "Access": "Write",
     "Affects": {
       "AWS::Ec2::Instance": {
-        "Condition Keys": [],
-        "Dependant Actions": []
-      },
-      "AWS::Iam::InstanceProfile": {
-        "Condition Keys": [],
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
         "Dependant Actions": []
       }
     },
@@ -4277,13 +8334,16 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Instance": {
         "Condition Keys": [
-          "ec2:Region"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Iam::InstanceProfile": {
-        "Condition Keys": [
-          "ec2:Region"
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
         ],
         "Dependant Actions": []
       }
@@ -4293,13 +8353,67 @@ ACTIONS = {
   },
   "ec2:ModifyInstanceMetadataOptions": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify the metadata options for an instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyInstanceMetadataOptions.html"
   },
   "ec2:ModifyInstancePlacement": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::DedicatedHost": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AutoPlacement",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Quantity",
+          "ec2:HostRecovery"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::PlacementGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:PlacementGroupStrategy",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify the placement attributes for an instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyInstancePlacement.html"
   },
@@ -4308,6 +8422,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::LaunchTemplate": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4317,15 +8432,81 @@ ACTIONS = {
     "Description": "Grants permission to modify a launch template",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyLaunchTemplate.html"
   },
+  "ec2:ModifyManagedPrefixList": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::PrefixList": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to modify a managed prefix list",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyManagedPrefixList.html"
+  },
   "ec2:ModifyNetworkInterfaceAttribute": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify an attribute of a network interface",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyNetworkInterfaceAttribute.html"
   },
   "ec2:ModifyReservedInstances": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::ReservedInstances": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Region",
+          "ec2:ReservedInstancesOfferingType",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify attributes of one or more Reserved Instances",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyReservedInstances.html"
   },
@@ -4334,11 +8515,14 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Snapshot": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:OutpostArn",
           "ec2:Owner",
           "ec2:ParentVolume",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:SnapshotTime",
+          "ec2:SourceOutpostArn",
           "ec2:VolumeSize"
         ],
         "Dependant Actions": []
@@ -4349,13 +8533,33 @@ ACTIONS = {
   },
   "ec2:ModifySpotFleetRequest": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::SpotFleetRequest": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify a Spot Fleet request",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifySpotFleetRequest.html"
   },
   "ec2:ModifySubnetAttribute": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify an attribute of a subnet",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifySubnetAttribute.html"
   },
@@ -4364,6 +8568,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TrafficMirrorFilter": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4371,6 +8576,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TrafficMirrorFilterRule": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4385,6 +8591,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TrafficMirrorFilter": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4392,6 +8599,9 @@ ACTIONS = {
       },
       "AWS::Ec2::TrafficMirrorFilterRule": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
           "ec2:Region"
         ],
         "Dependant Actions": []
@@ -4405,6 +8615,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TrafficMirrorFilter": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4412,6 +8623,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TrafficMirrorSession": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4419,6 +8631,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TrafficMirrorTarget": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4428,11 +8641,12 @@ ACTIONS = {
     "Description": "Grants permission to modify a traffic mirror session",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyTrafficMirrorSession.html"
   },
-  "ec2:ModifyTransitGatewayVpcAttachment": {
+  "ec2:ModifyTransitGateway": {
     "Access": "Write",
     "Affects": {
-      "AWS::Ec2::Subnet": {
+      "AWS::Ec2::TransitGateway": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4440,6 +8654,90 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayConnectPeer": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayMulticastDomain": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayRouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to modify a transit gateway",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyTransitGateway.html"
+  },
+  "ec2:ModifyTransitGatewayPrefixListReference": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::PrefixList": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayAttachment": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayRouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to modify a transit gateway prefix list reference",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyTransitGatewayPrefixListReference.html"
+  },
+  "ec2:ModifyTransitGatewayVpcAttachment": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayAttachment": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4451,19 +8749,97 @@ ACTIONS = {
   },
   "ec2:ModifyVolume": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Volume": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Encrypted",
+          "ec2:ParentSnapshot",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VolumeIops",
+          "ec2:VolumeSize",
+          "ec2:VolumeThroughput",
+          "ec2:VolumeType"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify the parameters of an EBS volume",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyVolume.html"
   },
   "ec2:ModifyVolumeAttribute": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Volume": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Encrypted",
+          "ec2:ParentSnapshot",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VolumeIops",
+          "ec2:VolumeSize",
+          "ec2:VolumeThroughput",
+          "ec2:VolumeType"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify an attribute of a volume",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyVolumeAttribute.html"
   },
   "ec2:ModifyVpcAttribute": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify an attribute of a VPC",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyVpcAttribute.html"
   },
@@ -4472,27 +8848,35 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::RouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::SecurityGroup": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Subnet": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4500,6 +8884,7 @@ ACTIONS = {
       },
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4511,7 +8896,28 @@ ACTIONS = {
   },
   "ec2:ModifyVpcEndpointConnectionNotification": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VpceServicePrivateDnsName"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify a connection notification for a VPC endpoint or VPC endpoint service",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyVpcEndpointConnectionNotification.html"
   },
@@ -4520,9 +8926,10 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:VpceServicePrivateDnsName",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VpceServicePrivateDnsName"
         ],
         "Dependant Actions": []
       }
@@ -4535,8 +8942,10 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VpceServicePrivateDnsName"
         ],
         "Dependant Actions": []
       }
@@ -4546,24 +8955,122 @@ ACTIONS = {
   },
   "ec2:ModifyVpcPeeringConnectionOptions": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AccepterVpc",
+          "ec2:Region",
+          "ec2:RequesterVpc",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify the VPC peering connection options on one side of a VPC peering connection",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyVpcPeeringConnectionOptions.html"
   },
   "ec2:ModifyVpcTenancy": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Vpc": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpoint": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcFlowLog": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify the instance tenancy attribute of a VPC",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyVpcTenancy.html"
   },
   "ec2:ModifyVpnConnection": {
     "Access": "Write",
     "Affects": {
+      "AWS::Ec2::CustomerGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
       "AWS::Ec2::VpnConnection": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
-          "ec2:GatewayType"
+          "ec2:AuthenticationType",
+          "ec2:DPDTimeoutSeconds",
+          "ec2:GatewayType",
+          "ec2:IKEVersions",
+          "ec2:InsideTunnelCidr",
+          "ec2:Phase1DHGroupNumbers",
+          "ec2:Phase2DHGroupNumbers",
+          "ec2:Phase1EncryptionAlgorithms",
+          "ec2:Phase2EncryptionAlgorithms",
+          "ec2:Phase1IntegrityAlgorithms",
+          "ec2:Phase2IntegrityAlgorithms",
+          "ec2:Phase1LifetimeSeconds",
+          "ec2:Phase2LifetimeSeconds",
+          "ec2:PresharedKeys",
+          "ec2:RekeyFuzzPercentage",
+          "ec2:RekeyMarginTimeSeconds",
+          "ec2:RoutingType"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpnGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       }
@@ -4571,9 +9078,67 @@ ACTIONS = {
     "Description": "Grants permission to modify the target gateway of a Site-to-Site VPN connection",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyVpnConnection.html"
   },
+  "ec2:ModifyVpnConnectionOptions": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::VpnConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AuthenticationType",
+          "ec2:DPDTimeoutSeconds",
+          "ec2:GatewayType",
+          "ec2:IKEVersions",
+          "ec2:InsideTunnelCidr",
+          "ec2:Phase1DHGroupNumbers",
+          "ec2:Phase2DHGroupNumbers",
+          "ec2:Phase1EncryptionAlgorithms",
+          "ec2:Phase2EncryptionAlgorithms",
+          "ec2:Phase1IntegrityAlgorithms",
+          "ec2:Phase2IntegrityAlgorithms",
+          "ec2:Phase1LifetimeSeconds",
+          "ec2:Phase2LifetimeSeconds",
+          "ec2:PresharedKeys",
+          "ec2:RekeyFuzzPercentage",
+          "ec2:RekeyMarginTimeSeconds",
+          "ec2:RoutingType"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to modify the connection options for your Site-to-Site VPN connection",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyVpnConnectionOptions.html"
+  },
   "ec2:ModifyVpnTunnelCertificate": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::VpnConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AuthenticationType",
+          "ec2:DPDTimeoutSeconds",
+          "ec2:GatewayType",
+          "ec2:IKEVersions",
+          "ec2:InsideTunnelCidr",
+          "ec2:Phase1DHGroupNumbers",
+          "ec2:Phase2DHGroupNumbers",
+          "ec2:Phase1EncryptionAlgorithms",
+          "ec2:Phase2EncryptionAlgorithms",
+          "ec2:Phase1IntegrityAlgorithms",
+          "ec2:Phase2IntegrityAlgorithms",
+          "ec2:Phase1LifetimeSeconds",
+          "ec2:Phase2LifetimeSeconds",
+          "ec2:PresharedKeys",
+          "ec2:RekeyFuzzPercentage",
+          "ec2:RekeyMarginTimeSeconds",
+          "ec2:RoutingType"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to modify the certificate for a Site-to-Site VPN connection",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyVpnTunnelCertificate"
   },
@@ -4582,10 +9147,12 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::VpnConnection": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:AuthenticationType",
           "ec2:DPDTimeoutSeconds",
+          "ec2:GatewayType",
           "ec2:IKEVersions",
           "ec2:InsideTunnelCidr",
           "ec2:Phase1DHGroupNumbers",
@@ -4609,7 +9176,23 @@ ACTIONS = {
   },
   "ec2:MonitorInstances": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to enable detailed monitoring for a running instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_MonitorInstances.html"
   },
@@ -4627,13 +9210,42 @@ ACTIONS = {
   },
   "ec2:PurchaseHostReservation": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::DedicatedHost": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AutoPlacement",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Quantity",
+          "ec2:HostRecovery"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to purchase a reservation with configurations that match those of a Dedicated Host",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_PurchaseHostReservation.html"
   },
   "ec2:PurchaseReservedInstancesOffering": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::ReservedInstances": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Region",
+          "ec2:ReservedInstancesOfferingType",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to purchase a Reserved Instance offering",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_PurchaseReservedInstancesOffering.html"
   },
@@ -4648,20 +9260,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Instance": {
         "Condition Keys": [
-          "ec2:AvailabilityZone",
-          "ec2:EbsOptimized",
-          "ec2:InstanceProfile",
-          "ec2:InstanceType",
-          "ec2:PlacementGroup",
-          "ec2:Region",
-          "ec2:ResourceTag/${TagKey}",
-          "ec2:RootDeviceType",
-          "ec2:Tenancy"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Iam::InstanceProfile": {
-        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -4684,18 +9283,31 @@ ACTIONS = {
     "Description": "Grants permission to register an Amazon Machine Image (AMI)",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RegisterImage.html"
   },
+  "ec2:RegisterInstanceEventNotificationAttributes": {
+    "Access": "Write",
+    "Affects": {},
+    "Description": "Grants permission to add tags to the set of tags to include in notifications about scheduled events for your instances",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RegisterInstanceEventNotificationAttributes.html"
+  },
   "ec2:RegisterTransitGatewayMulticastGroupMembers": {
     "Access": "Write",
     "Affects": {
       "AWS::Ec2::NetworkInterface": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4710,13 +9322,20 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::NetworkInterface": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::TransitGatewayMulticastDomain": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4726,11 +9345,47 @@ ACTIONS = {
     "Description": "Grants permission to register one or more network interfaces as a source of a group IP address in a transit gateway multicast domain",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RegisterTransitGatewayMulticastGroupSources.html"
   },
+  "ec2:RejectTransitGatewayMulticastDomainAssociations": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayAttachment": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGatewayMulticastDomain": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to reject requests to associate cross-account subnets with a transit gateway multicast domain",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RejectTransitGatewayMulticastDomainAssociations.html"
+  },
   "ec2:RejectTransitGatewayPeeringAttachment": {
     "Access": "Write",
     "Affects": {
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4745,6 +9400,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4757,10 +9413,23 @@ ACTIONS = {
   "ec2:RejectVpcEndpointConnections": {
     "Access": "Write",
     "Affects": {
-      "AWS::Ec2::VpcEndpointService": {
+      "AWS::Ec2::VpcEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcEndpointService": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VpceServicePrivateDnsName"
         ],
         "Dependant Actions": []
       }
@@ -4773,6 +9442,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::VpcPeeringConnection": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AccepterVpc",
           "ec2:Region",
           "ec2:RequesterVpc",
@@ -4786,13 +9456,36 @@ ACTIONS = {
   },
   "ec2:ReleaseAddress": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::ElasticIp": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to release an Elastic IP address",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ReleaseAddress.html"
   },
   "ec2:ReleaseHosts": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::DedicatedHost": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AutoPlacement",
+          "ec2:AvailabilityZone",
+          "ec2:InstanceType",
+          "ec2:Quantity",
+          "ec2:HostRecovery"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to release one or more On-Demand Dedicated Hosts",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ReleaseHosts.html"
   },
@@ -4801,22 +9494,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Instance": {
         "Condition Keys": [
-          "ec2:AvailabilityZone",
-          "ec2:EbsOptimized",
-          "ec2:InstanceProfile",
-          "ec2:InstanceType",
-          "ec2:PlacementGroup",
-          "ec2:Region",
-          "ec2:ResourceTag/${TagKey}",
-          "ec2:RootDeviceType",
-          "ec2:Tenancy"
-        ],
-        "Dependant Actions": [
-          "iam:PassRole"
-        ]
-      },
-      "AWS::Iam::InstanceProfile": {
-        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -4837,24 +9515,151 @@ ACTIONS = {
   },
   "ec2:ReplaceNetworkAclAssociation": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::NetworkAcl": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to change which network ACL a subnet is associated with",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ReplaceNetworkAclAssociation.html"
   },
   "ec2:ReplaceNetworkAclEntry": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::NetworkAcl": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to replace an entry (rule) in a network ACL",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ReplaceNetworkAclEntry.html"
   },
   "ec2:ReplaceRoute": {
     "Access": "Write",
     "Affects": {
+      "AWS::Ec2::CarrierGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::EgressOnlyInternetGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::InternetGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LocalGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NatGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::PrefixList": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
       "AWS::Ec2::RouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::TransitGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpcPeeringConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AccepterVpc",
+          "ec2:Region",
+          "ec2:RequesterVpc",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpnGateway": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
         ],
         "Dependant Actions": []
       }
@@ -4864,7 +9669,17 @@ ACTIONS = {
   },
   "ec2:ReplaceRouteTableAssociation": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::RouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to change the route table that is associated with a subnet",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ReplaceRouteTableAssociation.html"
   },
@@ -4873,6 +9688,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::TransitGatewayAttachment": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4880,6 +9696,7 @@ ACTIONS = {
       },
       "AWS::Ec2::TransitGatewayRouteTable": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}"
         ],
@@ -4891,21 +9708,112 @@ ACTIONS = {
   },
   "ec2:ReportInstanceStatus": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to submit feedback about the status of an instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ReportInstanceStatus.html"
   },
   "ec2:RequestSpotFleet": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a Spot Fleet request",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RequestSpotFleet.html"
   },
   "ec2:RequestSpotInstances": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Image": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:ImageType",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::KeyPair": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:KeyPairName",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SpotInstancesRequest": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to create a Spot Instance request",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RequestSpotInstances.html"
+  },
+  "ec2:ResetAddressAttribute": {
+    "Access": "Write",
+    "Affects": {},
+    "Description": "Grants permission to reset the attribute of the specified IP address",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ResetAddressAttribute.html"
   },
   "ec2:ResetEbsDefaultKmsKeyId": {
     "Access": "Write",
@@ -4915,31 +9823,98 @@ ACTIONS = {
   },
   "ec2:ResetFpgaImageAttribute": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::FpgaImage": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to reset an attribute of an Amazon FPGA Image (AFI) to its default value",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ResetFpgaImageAttribute.html"
   },
   "ec2:ResetImageAttribute": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Image": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:ImageType",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to reset an attribute of an Amazon Machine Image (AMI) to its default value",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ResetImageAttribute.html"
   },
   "ec2:ResetInstanceAttribute": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to reset an attribute of an instance to its default value",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ResetInstanceAttribute.html"
   },
   "ec2:ResetNetworkInterfaceAttribute": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to reset an attribute of a network interface",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ResetNetworkInterfaceAttribute.html"
   },
   "ec2:ResetSnapshotAttribute": {
     "Access": "Permissions Management",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Snapshot": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Owner",
+          "ec2:ParentVolume",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:SnapshotTime",
+          "ec2:VolumeSize"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to reset permission settings for a snapshot",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ResetSnapshotAttribute.html"
   },
@@ -4949,13 +9924,35 @@ ACTIONS = {
     "Description": "Grants permission to restore an Elastic IP address that was previously moved to the EC2-VPC platform back to the EC2-Classic platform",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RestoreAddressToClassic.html"
   },
+  "ec2:RestoreManagedPrefixListVersion": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::PrefixList": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to restore the entries from a previous version of a managed prefix list to a new version of the prefix list",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RestoreManagedPrefixListVersion.html"
+  },
   "ec2:RevokeClientVpnIngress": {
     "Access": "Write",
     "Affects": {
       "AWS::Ec2::ClientVpnEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
         ],
         "Dependant Actions": []
       }
@@ -4968,6 +9965,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::SecurityGroup": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -4983,6 +9981,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::SecurityGroup": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -4996,17 +9995,33 @@ ACTIONS = {
   "ec2:RunInstances": {
     "Access": "Write",
     "Affects": {
+      "AWS::Ec2::CapacityReservation": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
       "AWS::Ec2::ElasticGpu": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
           "ec2:ElasticGpuType"
         ],
         "Dependant Actions": []
       },
       "AWS::Ec2::Image": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
           "ec2:ImageType",
-          "ec2:IsLaunchTemplateResource",
-          "ec2:LaunchTemplate",
           "ec2:Owner",
           "ec2:Public",
           "ec2:Region",
@@ -5017,165 +10032,9 @@ ACTIONS = {
       },
       "AWS::Ec2::Instance": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "aws:RequestTag/${TagKey}",
           "aws:TagKeys",
-          "ec2:AvailabilityZone",
-          "ec2:EbsOptimized",
-          "ec2:InstanceProfile",
-          "ec2:InstanceType",
-          "ec2:IsLaunchTemplateResource",
-          "ec2:LaunchTemplate",
-          "ec2:PlacementGroup",
-          "ec2:Region",
-          "ec2:RootDeviceType",
-          "ec2:Tenancy",
-          "ec2:MetadataHttpEndpoint",
-          "ec2:MetadataHttpTokens",
-          "ec2:MetadataHttpPutResponseHopLimit"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::KeyPair": {
-        "Condition Keys": [
-          "ec2:IsLaunchTemplateResource",
-          "ec2:LaunchTemplate",
-          "ec2:Region"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::LaunchTemplate": {
-        "Condition Keys": [
-          "ec2:IsLaunchTemplateResource",
-          "ec2:LaunchTemplate",
-          "ec2:Region"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::NetworkInterface": {
-        "Condition Keys": [
-          "ec2:AvailabilityZone",
-          "ec2:IsLaunchTemplateResource",
-          "ec2:LaunchTemplate",
-          "ec2:Region",
-          "ec2:ResourceTag/",
-          "ec2:Subnet",
-          "ec2:Vpc",
-          "ec2:AssociatePublicIpAddress"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::PlacementGroup": {
-        "Condition Keys": [
-          "ec2:IsLaunchTemplateResource",
-          "ec2:LaunchTemplate",
-          "ec2:PlacementGroupStrategy",
-          "ec2:Region"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::SecurityGroup": {
-        "Condition Keys": [
-          "ec2:IsLaunchTemplateResource",
-          "ec2:LaunchTemplate",
-          "ec2:Region",
-          "ec2:ResourceTag/${TagKey}",
-          "ec2:Vpc"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::Snapshot": {
-        "Condition Keys": [
-          "ec2:IsLaunchTemplateResource",
-          "ec2:LaunchTemplate",
-          "ec2:Owner",
-          "ec2:ParentVolume",
-          "ec2:Region",
-          "ec2:ResourceTag/${TagKey}",
-          "ec2:SnapshotTime",
-          "ec2:VolumeSize"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::Subnet": {
-        "Condition Keys": [
-          "ec2:AvailabilityZone",
-          "ec2:IsLaunchTemplateResource",
-          "ec2:LaunchTemplate",
-          "ec2:Region",
-          "ec2:ResourceTag/${TagKey}",
-          "ec2:Vpc"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Ec2::Volume": {
-        "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
-          "ec2:AvailabilityZone",
-          "ec2:Encrypted",
-          "ec2:IsLaunchTemplateResource",
-          "ec2:LaunchTemplate",
-          "ec2:ParentSnapshot",
-          "ec2:Region",
-          "ec2:VolumeIops",
-          "ec2:VolumeSize",
-          "ec2:VolumeType"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Iam::InstanceProfile": {
-        "Condition Keys": [
-          "aws:RequestTag/${TagKey}",
-          "aws:TagKeys",
-          "ec2:AvailabilityZone",
-          "ec2:EbsOptimized",
-          "ec2:InstanceProfile",
-          "ec2:InstanceType",
-          "ec2:IsLaunchTemplateResource",
-          "ec2:LaunchTemplate",
-          "ec2:PlacementGroup",
-          "ec2:Region",
-          "ec2:RootDeviceType",
-          "ec2:Tenancy",
-          "ec2:MetadataHttpEndpoint",
-          "ec2:MetadataHttpTokens",
-          "ec2:MetadataHttpPutResponseHopLimit"
-        ],
-        "Dependant Actions": []
-      }
-    },
-    "Description": "Grants permission to launch one or more instances",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RunInstances.html"
-  },
-  "ec2:RunScheduledInstances": {
-    "Access": "Write",
-    "Affects": {},
-    "Description": "Grants permission to launch one or more Scheduled Instances",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RunScheduledInstances.html"
-  },
-  "ec2:SearchLocalGatewayRoutes": {
-    "Access": "List",
-    "Affects": {},
-    "Description": "Grants permission to search for routes in a local gateway route table",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_SearchLocalGatewayRoutes.html"
-  },
-  "ec2:SearchTransitGatewayMulticastGroups": {
-    "Access": "List",
-    "Affects": {},
-    "Description": "Grants permission to search for groups, sources, and members in a transit gateway multicast domain",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_SearchTransitGatewayMulticastGroups.html"
-  },
-  "ec2:SearchTransitGatewayRoutes": {
-    "Access": "List",
-    "Affects": {},
-    "Description": "Grants permission to search for routes in a transit gateway route table",
-    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_SearchTransitGatewayRoutes.html"
-  },
-  "ec2:SendDiagnosticInterrupt": {
-    "Access": "Write",
-    "Affects": {
-      "AWS::Ec2::Instance": {
-        "Condition Keys": [
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -5188,8 +10047,263 @@ ACTIONS = {
         ],
         "Dependant Actions": []
       },
-      "AWS::Iam::InstanceProfile": {
+      "AWS::Ec2::KeyPair": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:KeyPairName",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LaunchTemplate": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::PlacementGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:PlacementGroupStrategy",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Snapshot": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Owner",
+          "ec2:ParentVolume",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:SnapshotTime",
+          "ec2:VolumeSize"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Volume": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:AvailabilityZone",
+          "ec2:Encrypted",
+          "ec2:ParentSnapshot",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VolumeIops",
+          "ec2:VolumeSize",
+          "ec2:VolumeThroughput",
+          "ec2:VolumeType"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::ElasticInference::Accelerator": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to launch one or more instances",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RunInstances.html"
+  },
+  "ec2:RunScheduledInstances": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::Image": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:ImageType",
+          "ec2:Owner",
+          "ec2:Public",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::KeyPair": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:KeyPairName",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::PlacementGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:PlacementGroupStrategy",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::SecurityGroup": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Snapshot": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Owner",
+          "ec2:ParentVolume",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:SnapshotTime",
+          "ec2:VolumeSize"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::Subnet": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to launch one or more Scheduled Instances",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RunScheduledInstances.html"
+  },
+  "ec2:SearchLocalGatewayRoutes": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Ec2::LocalGatewayRouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LocalGatewayRouteTableVirtualInterfaceGroupAssociation": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::LocalGatewayRouteTableVpcAssociation": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to search for routes in a local gateway route table",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_SearchLocalGatewayRoutes.html"
+  },
+  "ec2:SearchTransitGatewayMulticastGroups": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Ec2::TransitGatewayMulticastDomain": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to search for groups, sources, and members in a transit gateway multicast domain",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_SearchTransitGatewayMulticastGroups.html"
+  },
+  "ec2:SearchTransitGatewayRoutes": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Ec2::TransitGatewayRouteTable": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to search for routes in a transit gateway route table",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_SearchTransitGatewayRoutes.html"
+  },
+  "ec2:SendDiagnosticInterrupt": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -5211,20 +10325,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Instance": {
         "Condition Keys": [
-          "ec2:AvailabilityZone",
-          "ec2:EbsOptimized",
-          "ec2:InstanceProfile",
-          "ec2:InstanceType",
-          "ec2:PlacementGroup",
-          "ec2:Region",
-          "ec2:ResourceTag/${TagKey}",
-          "ec2:RootDeviceType",
-          "ec2:Tenancy"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Iam::InstanceProfile": {
-        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -5241,13 +10342,33 @@ ACTIONS = {
     "Description": "Grants permission to start a stopped instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_StartInstances.html"
   },
+  "ec2:StartNetworkInsightsAnalysis": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Ec2::NetworkInsightsPath": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "aws:RequestTag/${TagKey}",
+          "aws:TagKeys",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Vpc"
+        ],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to start analyzing a specified path",
+    "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_StartNetworkInsightsAnalysis.html"
+  },
   "ec2:StartVpcEndpointServicePrivateDnsVerification": {
     "Access": "Write",
     "Affects": {
       "AWS::Ec2::VpcEndpointService": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:VpceServicePrivateDnsName"
         ],
         "Dependant Actions": []
       }
@@ -5260,20 +10381,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Instance": {
         "Condition Keys": [
-          "ec2:AvailabilityZone",
-          "ec2:EbsOptimized",
-          "ec2:InstanceProfile",
-          "ec2:InstanceType",
-          "ec2:PlacementGroup",
-          "ec2:Region",
-          "ec2:ResourceTag/${TagKey}",
-          "ec2:RootDeviceType",
-          "ec2:Tenancy"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Iam::InstanceProfile": {
-        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -5295,8 +10403,40 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::ClientVpnEndpoint": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
-          "ec2:ResourceTag/${TagKey}"
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:ServerCertificateArn",
+          "ec2:ClientRootCertificateChainArn",
+          "ec2:DirectoryArn",
+          "ec2:SamlProviderArn",
+          "ec2:CloudwatchLogGroupArn",
+          "ec2:CloudwatchLogStreamArn"
+        ],
+        "Dependant Actions": []
+      },
+      "AWS::Ec2::VpnConnection": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:AuthenticationType",
+          "ec2:DPDTimeoutSeconds",
+          "ec2:GatewayType",
+          "ec2:IKEVersions",
+          "ec2:InsideTunnelCidr",
+          "ec2:Phase1DHGroupNumbers",
+          "ec2:Phase2DHGroupNumbers",
+          "ec2:Phase1EncryptionAlgorithms",
+          "ec2:Phase2EncryptionAlgorithms",
+          "ec2:Phase1IntegrityAlgorithms",
+          "ec2:Phase2IntegrityAlgorithms",
+          "ec2:Phase1LifetimeSeconds",
+          "ec2:Phase2LifetimeSeconds",
+          "ec2:PresharedKeys",
+          "ec2:RekeyFuzzPercentage",
+          "ec2:RekeyMarginTimeSeconds",
+          "ec2:RoutingType"
         ],
         "Dependant Actions": []
       }
@@ -5309,20 +10449,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::Instance": {
         "Condition Keys": [
-          "ec2:AvailabilityZone",
-          "ec2:EbsOptimized",
-          "ec2:InstanceProfile",
-          "ec2:InstanceType",
-          "ec2:PlacementGroup",
-          "ec2:Region",
-          "ec2:ResourceTag/${TagKey}",
-          "ec2:RootDeviceType",
-          "ec2:Tenancy"
-        ],
-        "Dependant Actions": []
-      },
-      "AWS::Iam::InstanceProfile": {
-        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:AvailabilityZone",
           "ec2:EbsOptimized",
           "ec2:InstanceProfile",
@@ -5341,19 +10468,63 @@ ACTIONS = {
   },
   "ec2:UnassignIpv6Addresses": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to unassign one or more IPv6 addresses from a network interface",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_UnassignIpv6Addresses.html"
   },
   "ec2:UnassignPrivateIpAddresses": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::NetworkInterface": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AuthorizedService",
+          "ec2:AvailabilityZone",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:Subnet",
+          "ec2:Vpc",
+          "ec2:AssociatePublicIpAddress"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to unassign one or more secondary private IP addresses from a network interface",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_UnassignPrivateIpAddresses.html"
   },
   "ec2:UnmonitorInstances": {
     "Access": "Write",
-    "Affects": {},
+    "Affects": {
+      "AWS::Ec2::Instance": {
+        "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
+          "ec2:AvailabilityZone",
+          "ec2:EbsOptimized",
+          "ec2:InstanceProfile",
+          "ec2:InstanceType",
+          "ec2:PlacementGroup",
+          "ec2:Region",
+          "ec2:ResourceTag/${TagKey}",
+          "ec2:RootDeviceType",
+          "ec2:Tenancy"
+        ],
+        "Dependant Actions": []
+      }
+    },
     "Description": "Grants permission to disable detailed monitoring for a running instance",
     "Reference": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_UnmonitorInstances.html"
   },
@@ -5362,6 +10533,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::SecurityGroup": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -5377,6 +10549,7 @@ ACTIONS = {
     "Affects": {
       "AWS::Ec2::SecurityGroup": {
         "Condition Keys": [
+          "aws:ResourceTag/${TagKey}",
           "ec2:Region",
           "ec2:ResourceTag/${TagKey}",
           "ec2:Vpc"
@@ -5409,7 +10582,9 @@ ACTIONS = {
     "Affects": {
       "AWS::Iam::InstanceProfile": {
         "Condition Keys": [],
-        "Dependant Actions": []
+        "Dependant Actions": [
+          "iam:PassRole"
+        ]
       }
     },
     "Description": "Grants permission to add an IAM role to the specified instance profile",
@@ -5865,11 +11040,11 @@ ACTIONS = {
   "iam:DeleteVirtualMFADevice": {
     "Access": "Write",
     "Affects": {
-      "AWS::Iam::VirtualMfaDevice": {
+      "AWS::Iam::SmsMfa": {
         "Condition Keys": [],
         "Dependant Actions": []
       },
-      "AWS::Iam::SmsMfa": {
+      "AWS::Iam::VirtualMfaDevice": {
         "Condition Keys": [],
         "Dependant Actions": []
       }
@@ -6283,6 +11458,17 @@ ACTIONS = {
     "Description": "Grants permission to list the IAM groups that the specified IAM user belongs to",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListGroupsForUser.html"
   },
+  "iam:ListInstanceProfileTags": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Iam::InstanceProfile": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to list the tags that are attached to the specified instance profile",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListInstanceProfileTags.html"
+  },
   "iam:ListInstanceProfiles": {
     "Access": "List",
     "Affects": {
@@ -6305,6 +11491,17 @@ ACTIONS = {
     "Description": "Grants permission to list the instance profiles that have the specified associated IAM role",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListInstanceProfilesForRole.html"
   },
+  "iam:ListMFADeviceTags": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Iam::VirtualMfaDevice": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to list the tags that are attached to the specified virtual mfa device",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListMFADeviceTags.html"
+  },
   "iam:ListMFADevices": {
     "Access": "List",
     "Affects": {
@@ -6315,6 +11512,17 @@ ACTIONS = {
     },
     "Description": "Grants permission to list the MFA devices for an IAM user",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListMFADevices.html"
+  },
+  "iam:ListOpenIDConnectProviderTags": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Iam::OidcProvider": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to list the tags that are attached to the specified OpenID Connect provider",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListOpenIDConnectProviderTags.html"
   },
   "iam:ListOpenIDConnectProviders": {
     "Access": "List",
@@ -6333,6 +11541,17 @@ ACTIONS = {
     "Affects": {},
     "Description": "Grants permission to list information about the policies that grant an entity access to a specific service",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListPoliciesGrantingServiceAccess.html"
+  },
+  "iam:ListPolicyTags": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Iam::Policy": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to list the tags that are attached to the specified managed policy",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListPolicyTags.html"
   },
   "iam:ListPolicyVersions": {
     "Access": "List",
@@ -6364,7 +11583,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Grants permission to list the tags that are attached to the specified IAM role.",
+    "Description": "Grants permission to list the tags that are attached to the specified IAM role",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListRoleTags.html"
   },
   "iam:ListRoles": {
@@ -6372,6 +11591,17 @@ ACTIONS = {
     "Affects": {},
     "Description": "Grants permission to list the IAM roles that have the specified path prefix",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListRoles.html"
+  },
+  "iam:ListSAMLProviderTags": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Iam::SamlProvider": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to list the tags that are attached to the specified SAML provider",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListSAMLProviderTags.html"
   },
   "iam:ListSAMLProviders": {
     "Access": "List",
@@ -6389,6 +11619,17 @@ ACTIONS = {
     },
     "Description": "Grants permission to list information about the SSH public keys that are associated with the specified IAM user",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListSSHPublicKeys.html"
+  },
+  "iam:ListServerCertificateTags": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Iam::ServerCertificate": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to list the tags that are attached to the specified server certificate",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListServerCertificateTags.html"
   },
   "iam:ListServerCertificates": {
     "Access": "List",
@@ -6437,7 +11678,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Grants permission to list the tags that are attached to the specified IAM user.",
+    "Description": "Grants permission to list the tags that are attached to the specified IAM user",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListUserTags.html"
   },
   "iam:ListUsers": {
@@ -6615,6 +11856,50 @@ ACTIONS = {
     "Description": "Grants permission to simulate whether an identity-based policy that is attached to a specified IAM entity (user or role) provides permissions for specific API operations and resources",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_SimulatePrincipalPolicy.html"
   },
+  "iam:TagInstanceProfile": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::Iam::InstanceProfile": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to add tags to an instance profile",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_TagInstanceProfile.html"
+  },
+  "iam:TagMFADevice": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::Iam::VirtualMfaDevice": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to add tags to a virtual mfa device",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_TagMFADevice.html"
+  },
+  "iam:TagOpenIDConnectProvider": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::Iam::OidcProvider": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to add tags to an OpenID Connect provider",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_TagOpenIDConnectProvider.html"
+  },
+  "iam:TagPolicy": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::Iam::Policy": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to add tags to a managed policy",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_TagPolicy.html"
+  },
   "iam:TagRole": {
     "Access": "Tagging",
     "Affects": {
@@ -6623,8 +11908,30 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Grants permission to add tags to an IAM role.",
+    "Description": "Grants permission to add tags to an IAM role",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_TagRole.html"
+  },
+  "iam:TagSAMLProvider": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::Iam::SamlProvider": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to add tags to a SAML Provider",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_TagSAMLProvider.html"
+  },
+  "iam:TagServerCertificate": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::Iam::ServerCertificate": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to add tags to a server certificate",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_TagServerCertificate.html"
   },
   "iam:TagUser": {
     "Access": "Tagging",
@@ -6634,8 +11941,52 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Grants permission to add tags to an IAM user.",
+    "Description": "Grants permission to add tags to an IAM user",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_TagUser.html"
+  },
+  "iam:UntagInstanceProfile": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::Iam::InstanceProfile": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to remove the specified tags from the instance profile",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_UntagInstanceProfile.html"
+  },
+  "iam:UntagMFADevice": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::Iam::VirtualMfaDevice": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to remove the specified tags from the virtual mfa device",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_UntagMFADevice.html"
+  },
+  "iam:UntagOpenIDConnectProvider": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::Iam::OidcProvider": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to remove the specified tags from the OpenID Connect provider",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_UntagOpenIDConnectProvider.html"
+  },
+  "iam:UntagPolicy": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::Iam::Policy": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to remove the specified tags from the managed policy",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_UntagPolicy.html"
   },
   "iam:UntagRole": {
     "Access": "Tagging",
@@ -6645,8 +11996,30 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Grants permission to remove the specified tags from the role.",
+    "Description": "Grants permission to remove the specified tags from the role",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_UntagRole.html"
+  },
+  "iam:UntagSAMLProvider": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::Iam::SamlProvider": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to remove the specified tags from the SAML Provider",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_UntagSAMLProvider.html"
+  },
+  "iam:UntagServerCertificate": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::Iam::ServerCertificate": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to remove the specified tags from the server certificate",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_UntagServerCertificate.html"
   },
   "iam:UntagUser": {
     "Access": "Tagging",
@@ -6656,7 +12029,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Grants permission to remove the specified tags from the user.",
+    "Description": "Grants permission to remove the specified tags from the user",
     "Reference": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_UntagUser.html"
   },
   "iam:UpdateAccessKey": {
@@ -6874,6 +12247,17 @@ ACTIONS = {
     "Description": "Grants permission to create an alias for a Lambda function version",
     "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_CreateAlias.html"
   },
+  "lambda:CreateCodeSigningConfig": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Lambda::CodeSigningConfig": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to create an AWS Lambda code signing config",
+    "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_CreateCodeSigningConfig.html"
+  },
   "lambda:CreateEventSourceMapping": {
     "Access": "Write",
     "Affects": {},
@@ -6902,6 +12286,17 @@ ACTIONS = {
     "Description": "Grants permission to delete an AWS Lambda function alias",
     "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_DeleteAlias.html"
   },
+  "lambda:DeleteCodeSigningConfig": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Lambda::CodeSigningConfig": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to delete an AWS Lambda code signing config",
+    "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_DeleteCodeSigningConfig.html"
+  },
   "lambda:DeleteEventSourceMapping": {
     "Access": "Write",
     "Affects": {
@@ -6923,6 +12318,17 @@ ACTIONS = {
     },
     "Description": "Grants permission to delete an AWS Lambda function",
     "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_DeleteFunction.html"
+  },
+  "lambda:DeleteFunctionCodeSigningConfig": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Lambda::Function": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to detach a code signing config from an AWS Lambda function",
+    "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_DeleteFunctionCodeSigningConfig.html"
   },
   "lambda:DeleteFunctionConcurrency": {
     "Access": "Write",
@@ -7007,6 +12413,17 @@ ACTIONS = {
     "Description": "Grants permission to view details about an AWS Lambda function alias",
     "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_GetAlias.html"
   },
+  "lambda:GetCodeSigningConfig": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::Lambda::CodeSigningConfig": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to view details about an AWS Lambda code signing config",
+    "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_GetCodeSigningConfig.html"
+  },
   "lambda:GetEventSourceMapping": {
     "Access": "Read",
     "Affects": {
@@ -7028,6 +12445,17 @@ ACTIONS = {
     },
     "Description": "Grants permission to view details about an AWS Lambda function",
     "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_GetFunction.html"
+  },
+  "lambda:GetFunctionCodeSigningConfig": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::Lambda::Function": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to view the code signing config arn attached to an AWS Lambda function",
+    "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_GetFunctionCodeSigningConfig.html"
   },
   "lambda:GetFunctionConcurrency": {
     "Access": "Read",
@@ -7070,7 +12498,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Grants permission to view details about a version of an AWS Lambda layer",
+    "Description": "Grants permission to view details about a version of an AWS Lambda layer. Note this action also supports GetLayerVersionByArn API",
     "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_GetLayerVersion.html"
   },
   "lambda:GetLayerVersionByArn": {
@@ -7150,6 +12578,12 @@ ACTIONS = {
     "Description": "Grants permission to retrieve a list of aliases for an AWS Lambda function",
     "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_ListAliases.html"
   },
+  "lambda:ListCodeSigningConfigs": {
+    "Access": "List",
+    "Affects": {},
+    "Description": "Grants permission to retrieve a list of AWS Lambda code signing configs",
+    "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_ListCodeSigningConfigs.html"
+  },
   "lambda:ListEventSourceMappings": {
     "Access": "List",
     "Affects": {},
@@ -7172,6 +12606,17 @@ ACTIONS = {
     "Affects": {},
     "Description": "Grants permission to retrieve a list of AWS Lambda functions, with the version-specific configuration of each function",
     "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_ListFunctions.html"
+  },
+  "lambda:ListFunctionsByCodeSigningConfig": {
+    "Access": "List",
+    "Affects": {
+      "AWS::Lambda::CodeSigningConfig": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to retrieve a list of AWS Lambda functions by the code signing config assigned",
+    "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_ListFunctionsByCodeSigningConfig.html"
   },
   "lambda:ListLayerVersions": {
     "Access": "List",
@@ -7243,6 +12688,21 @@ ACTIONS = {
     },
     "Description": "Grants permission to create an AWS Lambda function version",
     "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_PublishVersion.html"
+  },
+  "lambda:PutFunctionCodeSigningConfig": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Lambda::CodeSigningConfig": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      },
+      "AWS::Lambda::Function": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to attach a code signing config to an AWS Lambda function",
+    "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_PutFunctionCodeSigningConfig.html"
   },
   "lambda:PutFunctionConcurrency": {
     "Access": "Write",
@@ -7332,6 +12792,17 @@ ACTIONS = {
     "Description": "Grants permission to update the configuration of an AWS Lambda function's alias",
     "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_UpdateAlias.html"
   },
+  "lambda:UpdateCodeSigningConfig": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Lambda::CodeSigningConfig": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to update an AWS Lambda code signing config",
+    "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_UpdateCodeSigningConfig.html"
+  },
   "lambda:UpdateEventSourceMapping": {
     "Access": "Write",
     "Affects": {
@@ -7353,6 +12824,21 @@ ACTIONS = {
     },
     "Description": "Grants permission to update the code of an AWS Lambda function",
     "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_UpdateFunctionCode.html"
+  },
+  "lambda:UpdateFunctionCodeSigningConfig": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::Lambda::CodeSigningConfig": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      },
+      "AWS::Lambda::Function": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to update the code signing config of an AWS Lambda function",
+    "Reference": "https://docs.aws.amazon.com/lambda/latest/dg/API_UpdateFunctionCodeSigningConfig.html"
   },
   "lambda:UpdateFunctionConfiguration": {
     "Access": "Write",
@@ -7382,9 +12868,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "Aborts a multipart upload.",
+    "Description": "Grants permission to abort a multipart upload",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_AbortMultipartUpload.html"
   },
   "s3:BypassGovernanceRetention": {
@@ -7393,10 +12883,14 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "Allows circumvention of governance-mode object retention settings",
-    "Reference": ""
+    "Description": "Grants permission to allow circumvention of governance-mode object retention settings",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lock-managing.html#object-lock-managing-bypass"
   },
   "s3:CreateAccessPoint": {
     "Access": "Write",
@@ -7406,8 +12900,19 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Creates a new access point.",
+    "Description": "Grants permission to create a new access point",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_CreateAccessPoint.html"
+  },
+  "s3:CreateAccessPointForObjectLambda": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to create an object lambda enabled accesspoint",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_CreateAccessPointForObjectLambda.html"
   },
   "s3:CreateBucket": {
     "Access": "Write",
@@ -7417,13 +12922,13 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Creates a new bucket.",
+    "Description": "Grants permission to create a new bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateBucket.html"
   },
   "s3:CreateJob": {
     "Access": "Write",
     "Affects": {},
-    "Description": "Creates a new Amazon S3 Batch Operations job.",
+    "Description": "Grants permission to create a new Amazon S3 Batch Operations job",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_CreateJob.html"
   },
   "s3:DeleteAccessPoint": {
@@ -7434,8 +12939,19 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Deletes the access point named in the URI",
+    "Description": "Grants permission to delete the access point named in the URI",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_DeleteAccessPoint.html"
+  },
+  "s3:DeleteAccessPointForObjectLambda": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to delete the object lambda enabled access point named in the URI",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_DeleteAccessPointForObjectLambda.html"
   },
   "s3:DeleteAccessPointPolicy": {
     "Access": "Permissions Management",
@@ -7445,8 +12961,19 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Delete the policy on a specified access point",
+    "Description": "Grants permission to delete the policy on a specified access point",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_DeleteAccessPointPolicy.html"
+  },
+  "s3:DeleteAccessPointPolicyForObjectLambda": {
+    "Access": "Permissions Management",
+    "Affects": {
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to delete the policy on a specified object lambda enabled access point",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_DeleteAccessPointPolicyForObjectLambda.html"
   },
   "s3:DeleteBucket": {
     "Access": "Write",
@@ -7456,8 +12983,19 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Deletes the bucket named in the URI",
+    "Description": "Grants permission to delete the bucket named in the URI",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucket.html"
+  },
+  "s3:DeleteBucketOwnershipControls": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::S3::Bucket": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to delete ownership controls on a bucket",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucketOwnershipControls.html"
   },
   "s3:DeleteBucketPolicy": {
     "Access": "Permissions Management",
@@ -7467,7 +13005,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Delete the policy on a specified bucket",
+    "Description": "Grants permission to delete the policy on a specified bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucketPolicy.html"
   },
   "s3:DeleteBucketWebsite": {
@@ -7478,8 +13016,19 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Removes the website configuration for a bucket.",
+    "Description": "Grants permission to remove the website configuration for a bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucketWebsite.html"
+  },
+  "s3:DeleteJobTagging": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::S3::Job": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to remove tags from an existing Amazon S3 Batch Operations job",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_DeleteJobTagging.html"
   },
   "s3:DeleteObject": {
     "Access": "Write",
@@ -7487,9 +13036,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "Removes the null version (if there is one) of an object and inserts a delete marker, which becomes the current version of the object.",
+    "Description": "Grants permission to remove the null version of an object and insert a delete marker, which becomes the current version of the object",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html"
   },
   "s3:DeleteObjectTagging": {
@@ -7498,9 +13051,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "This implementation of the DELETE operation uses the tagging subresource to remove the entire tag set from the specified object.",
+    "Description": "Grants permission to use the tagging subresource to remove the entire tag set from the specified object",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjectTagging.html"
   },
   "s3:DeleteObjectVersion": {
@@ -7509,9 +13066,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "To remove a specific version of a object, you must be the bucket owner and you must use the versionId subresource.",
+    "Description": "Grants permission to remove a specific version of an object",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html"
   },
   "s3:DeleteObjectVersionTagging": {
@@ -7520,10 +13081,36 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "DELETE Object tagging (for a Specific Version of the Object)",
+    "Description": "Grants permission to remove the entire tag set for a specific version of the object",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjectTagging.html"
+  },
+  "s3:DeleteStorageLensConfiguration": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::S3::StorageLensConfiguration": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to delete an existing Amazon S3 Storage Lens configuration",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_DeleteStorageLensConfiguration.html"
+  },
+  "s3:DeleteStorageLensConfigurationTagging": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::S3::StorageLensConfiguration": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to remove tags from an existing Amazon S3 Storage Lens configuration",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_DeleteStorageLensConfigurationTagging.html"
   },
   "s3:DescribeJob": {
     "Access": "Read",
@@ -7533,7 +13120,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Retrieves the configuration parameters and status for an Amazon S3 batch operations job.",
+    "Description": "Grants permission to retrieve the configuration parameters and status for a batch operations job",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_DescribeJob.html"
   },
   "s3:GetAccelerateConfiguration": {
@@ -7544,14 +13131,36 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "This implementation of the GET operation uses the accelerate subresource to return the Transfer Acceleration state of a bucket, which is either Enabled or Suspended.",
+    "Description": "Grants permission to uses the accelerate subresource to return the Transfer Acceleration state of a bucket, which is either Enabled or Suspended",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketAccelerateConfiguration.html"
   },
   "s3:GetAccessPoint": {
     "Access": "Read",
     "Affects": {},
-    "Description": "Retrieve access point metadata",
+    "Description": "Grants permission to return configuration information about the specified access point",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetAccessPoint.html"
+  },
+  "s3:GetAccessPointConfigurationForObjectLambda": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to retrieve the configuration of the object lambda enabled access point",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetAccessPointConfigurationForObjectLambda.html"
+  },
+  "s3:GetAccessPointForObjectLambda": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to create an object lambda enabled accesspoint",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetAccessPointForObjectLambda.html"
   },
   "s3:GetAccessPointPolicy": {
     "Access": "Read",
@@ -7561,8 +13170,19 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Return the policy of a specified access point.",
+    "Description": "Grants permission to returns the access point policy associated with the specified access point",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetAccessPointPolicy.html"
+  },
+  "s3:GetAccessPointPolicyForObjectLambda": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to returns the access point policy associated with the specified object lambda enabled access point",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetAccessPointPolicyForObjectLambda.html"
   },
   "s3:GetAccessPointPolicyStatus": {
     "Access": "Read",
@@ -7572,13 +13192,24 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Retrieve the policy status for an specific access point's policy",
+    "Description": "Grants permission to return the policy status for a specific access point policy",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetAccessPointPolicyStatus.html"
+  },
+  "s3:GetAccessPointPolicyStatusForObjectLambda": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to return the policy status for a specific object lambda access point policy",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetAccessPointPolicyStatusForObjectLambda.html"
   },
   "s3:GetAccountPublicAccessBlock": {
     "Access": "Read",
     "Affects": {},
-    "Description": "Retrieve the PublicAccessBlock configuration for an AWS account",
+    "Description": "Grants permission to retrieve the PublicAccessBlock configuration for an AWS account",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetPublicAccessBlock.html"
   },
   "s3:GetAnalyticsConfiguration": {
@@ -7589,7 +13220,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "This implementation of the GET operation returns an analytics configuration (identified by the analytics configuration ID) from the bucket.",
+    "Description": "Grants permission to get an analytics configuration from an Amazon S3 bucket, identified by the analytics configuration ID",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketAnalyticsConfiguration.html"
   },
   "s3:GetBucketAcl": {
@@ -7600,7 +13231,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Return the access control list (ACL) of a bucket.",
+    "Description": "Grants permission to use the acl subresource to return the access control list (ACL) of an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketAcl.html"
   },
   "s3:GetBucketCORS": {
@@ -7611,7 +13242,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Returns the CORS configuration information set for the bucket.",
+    "Description": "Grants permission to return the CORS configuration information set for an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketCors.html"
   },
   "s3:GetBucketLocation": {
@@ -7622,7 +13253,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Return a bucket's region.",
+    "Description": "Grants permission to return the Region that an Amazon S3 bucket resides in",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketLocation.html"
   },
   "s3:GetBucketLogging": {
@@ -7633,7 +13264,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Return the logging status of a bucket and the permissions users have to view and modify that status.",
+    "Description": "Grants permission to return the logging status of an Amazon S3 bucket and the permissions users have to view or modify that status",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketLogging.html"
   },
   "s3:GetBucketNotification": {
@@ -7644,7 +13275,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Return the notification configuration of a bucket.",
+    "Description": "Grants permission to get the notification configuration of an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketNotification.html"
   },
   "s3:GetBucketObjectLockConfiguration": {
@@ -7655,8 +13286,19 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "GET Object Lock configuration for a specific bucket",
+    "Description": "Grants permission to get the Object Lock configuration of an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectLockConfiguration.html"
+  },
+  "s3:GetBucketOwnershipControls": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::S3::Bucket": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to retrieve ownership controls on a bucket",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketOwnershipControls.html"
   },
   "s3:GetBucketPolicy": {
     "Access": "Read",
@@ -7666,7 +13308,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Return the policy of a specified bucket.",
+    "Description": "Grants permission to return the policy of the specified bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketPolicy.html"
   },
   "s3:GetBucketPolicyStatus": {
@@ -7677,7 +13319,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Retrieve the policy status for an specific S3 bucket, indicating whether the bucket is public.",
+    "Description": "Grants permission to retrieve the policy status for a specific Amazon S3 bucket, which indicates whether the bucket is public",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketPolicyStatus.html"
   },
   "s3:GetBucketPublicAccessBlock": {
@@ -7688,7 +13330,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Retrieve the PublicAccessBlock configuration for a specific S3 bucket.",
+    "Description": "Grants permission to retrieve the PublicAccessBlock configuration for an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetPublicAccessBlock.html"
   },
   "s3:GetBucketRequestPayment": {
@@ -7699,7 +13341,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Return the request payment configuration of a bucket.",
+    "Description": "Grants permission to return the request payment configuration for an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketRequestPayment.html"
   },
   "s3:GetBucketTagging": {
@@ -7710,7 +13352,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Return the tag set associated with the bucket.",
+    "Description": "Grants permission to return the tag set associated with an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketTagging.html"
   },
   "s3:GetBucketVersioning": {
@@ -7721,7 +13363,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Return the versioning state of a bucket.",
+    "Description": "Grants permission to return the versioning state of an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketVersioning.html"
   },
   "s3:GetBucketWebsite": {
@@ -7732,7 +13374,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Returns the website configuration associated with a bucket.",
+    "Description": "Grants permission to return the website configuration for an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketWebsite.html"
   },
   "s3:GetEncryptionConfiguration": {
@@ -7743,8 +13385,19 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Returns the encryption configuration information set on the bucket.",
+    "Description": "Grants permission to return the default encryption configuration an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketEncryption.html"
+  },
+  "s3:GetIntelligentTieringConfiguration": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::S3::Bucket": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to get an or list all Amazon S3 Intelligent Tiering configuration in a S3 Bucket",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketIntelligentTieringConfiguration.html"
   },
   "s3:GetInventoryConfiguration": {
     "Access": "Read",
@@ -7754,8 +13407,19 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "This implementation of the GET operation returns an inventory configuration (identified by the inventory configuration ID) from the bucket.",
+    "Description": "Grants permission to return an inventory configuration from an Amazon S3 bucket, identified by the inventory configuration ID",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketInventoryConfiguration.html"
+  },
+  "s3:GetJobTagging": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::S3::Job": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to return the tag set of an existing Amazon S3 Batch Operations job",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetJobTagging.html"
   },
   "s3:GetLifecycleConfiguration": {
     "Access": "Read",
@@ -7765,7 +13429,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Returns the lifecycle configuration information set on the bucket.",
+    "Description": "Grants permission to return the lifecycle configuration information set on an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketLifecycleConfiguration.html"
   },
   "s3:GetMetricsConfiguration": {
@@ -7776,7 +13440,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Gets a metrics configuration for the CloudWatch request metrics (specified by the metrics configuration ID) from the bucket. Note that this doesn't include the daily storage metrics.",
+    "Description": "Grants permission to get a metrics configuration from an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketMetricsConfiguration.html"
   },
   "s3:GetObject": {
@@ -7785,9 +13449,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "Retrieves objects from Amazon S3.",
+    "Description": "Grants permission to retrieve objects from Amazon S3",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html"
   },
   "s3:GetObjectAcl": {
@@ -7796,9 +13464,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "Return the access control list (ACL) of an object.",
+    "Description": "Grants permission to return the access control list (ACL) of an object",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectAcl.html"
   },
   "s3:GetObjectLegalHold": {
@@ -7807,9 +13479,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "GET Object Legal Hold for a specific object",
+    "Description": "Grants permission to get an object's current Legal Hold status",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectLegalHold.html"
   },
   "s3:GetObjectRetention": {
@@ -7818,9 +13494,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "GET Object Legal Hold for a specific object",
+    "Description": "Grants permission to retrieve the retention settings for an object",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectRetention.html"
   },
   "s3:GetObjectTagging": {
@@ -7829,9 +13509,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "This implementation of the GET operation returns the tags associated with an object. You send the GET request against the tagging subresource associated with the object.",
+    "Description": "Grants permission to return the tag set of an object",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectTagging.html"
   },
   "s3:GetObjectTorrent": {
@@ -7840,9 +13524,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "return torrent files from a bucket.",
+    "Description": "Grants permission to return torrent files from an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectTorrent.html"
   },
   "s3:GetObjectVersion": {
@@ -7851,9 +13539,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "To return a different version, use the versionId subresource.",
+    "Description": "Grants permission to retrieve a specific version of an object",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html"
   },
   "s3:GetObjectVersionAcl": {
@@ -7862,9 +13554,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "To return ACL information about a different version, use the versionId subresource.",
+    "Description": "Grants permission to return the access control list (ACL) of a specific object version",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectAcl.html"
   },
   "s3:GetObjectVersionForReplication": {
@@ -7873,10 +13569,14 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "Permission exercised by S3 replication",
-    "Reference": ""
+    "Description": "Grants permission to replicate both unencrypted objects and objects encrypted with SSE-S3 or SSE-KMS",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/dev/replication-config-for-kms-objects.html"
   },
   "s3:GetObjectVersionTagging": {
     "Access": "Read",
@@ -7884,10 +13584,14 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "GET Object tagging (for a Specific Version of the Object)",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectTagging.html"
+    "Description": "Grants permission to return the tag set for a specific version of the object",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/dev/setting-repl-config-perm-overview.html"
   },
   "s3:GetObjectVersionTorrent": {
     "Access": "Read",
@@ -7895,9 +13599,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "To return Torrent files about a different version, use the versionId subresource.",
+    "Description": "Grants permission to get Torrent files about a different version using the versionId subresource",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectTorrent.html"
   },
   "s3:GetReplicationConfiguration": {
@@ -7908,19 +13616,58 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Returns the replication configuration information set on the bucket.",
+    "Description": "Grants permission to get the replication configuration information set on an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketReplication.html"
+  },
+  "s3:GetStorageLensConfiguration": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::S3::StorageLensConfiguration": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to get an Amazon S3 Storage Lens configuration",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetStorageLensConfiguration.html"
+  },
+  "s3:GetStorageLensConfigurationTagging": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::S3::StorageLensConfiguration": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to get the tag set of an existing Amazon S3 Storage Lens configuration",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetStorageLensConfigurationTagging.html"
+  },
+  "s3:GetStorageLensDashboard": {
+    "Access": "Read",
+    "Affects": {
+      "AWS::S3::StorageLensConfiguration": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to get an Amazon S3 Storage Lens dashboard",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/dev/storage_lens_dashboard.html"
   },
   "s3:ListAccessPoints": {
     "Access": "Read",
     "Affects": {},
-    "Description": "Lists access points.",
+    "Description": "Grants permission to list access points",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_ListAccessPoints.html"
+  },
+  "s3:ListAccessPointsForObjectLambda": {
+    "Access": "Read",
+    "Affects": {},
+    "Description": "Grants permission to list object lambda enabled accesspoints",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_ListAccessPointsForObjectLambda.html"
   },
   "s3:ListAllMyBuckets": {
     "Access": "List",
     "Affects": {},
-    "Description": "Returns a list of all buckets owned by the authenticated sender of the request.",
+    "Description": "Grants permission to list all buckets owned by the authenticated sender of the request",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html"
   },
   "s3:ListBucket": {
@@ -7931,47 +13678,57 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Returns some or all (up to 1000) of the objects in a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html"
+    "Description": "Grants permission to list some or all of the objects in an Amazon S3 bucket (up to 1000)",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html"
   },
   "s3:ListBucketMultipartUploads": {
-    "Access": "Read",
+    "Access": "List",
     "Affects": {
       "AWS::S3::Bucket": {
         "Condition Keys": [],
         "Dependant Actions": []
       }
     },
-    "Description": "Lists in-progress multipart uploads.",
+    "Description": "Grants permission to list in-progress multipart uploads",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListMultipartUploads.html"
   },
   "s3:ListBucketVersions": {
-    "Access": "Read",
+    "Access": "List",
     "Affects": {
       "AWS::S3::Bucket": {
         "Condition Keys": [],
         "Dependant Actions": []
       }
     },
-    "Description": "Use the versions subresource to list metadata about all of the versions of objects in a bucket.",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html"
+    "Description": "Grants permission to list metadata about all the versions of objects in an Amazon S3 bucket",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectVersions.html"
   },
   "s3:ListJobs": {
-    "Access": "Read",
+    "Access": "List",
     "Affects": {},
-    "Description": "Lists current jobs and jobs that have ended recently.",
+    "Description": "Grants permission to list current jobs and jobs that have ended recently",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_ListJobs.html"
   },
   "s3:ListMultipartUploadParts": {
-    "Access": "Read",
+    "Access": "List",
     "Affects": {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "Lists the parts that have been uploaded for a specific multipart upload.",
+    "Description": "Grants permission to list the parts that have been uploaded for a specific multipart upload",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListParts.html"
+  },
+  "s3:ListStorageLensConfigurations": {
+    "Access": "List",
+    "Affects": {},
+    "Description": "Grants permission to list Amazon S3 Storage Lens configurations",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_ListStorageLensConfigurations.html"
   },
   "s3:ObjectOwnerOverrideToBucketOwner": {
     "Access": "Permissions Management",
@@ -7979,10 +13736,14 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "Permission exercised by S3 replication",
-    "Reference": ""
+    "Description": "Grants permission to change replica ownership",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/dev/replication-change-owner.html#repl-ownership-add-role-permission"
   },
   "s3:PutAccelerateConfiguration": {
     "Access": "Write",
@@ -7992,8 +13753,19 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "This implementation of the PUT operation uses the accelerate subresource to set the Transfer Acceleration state of an existing bucket.",
+    "Description": "Grants permission to use the accelerate subresource to set the Transfer Acceleration state of an existing S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketAccelerateConfiguration.html"
+  },
+  "s3:PutAccessPointConfigurationForObjectLambda": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to set the configuration of the object lambda enabled access point",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_PutAccessPointConfigurationForObjectLambda.html"
   },
   "s3:PutAccessPointPolicy": {
     "Access": "Permissions Management",
@@ -8003,13 +13775,24 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Add to or replace a data policy on a access point.",
+    "Description": "Grants permission to associate an access policy with a specified access point",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_PutAccessPointPolicy.html"
+  },
+  "s3:PutAccessPointPolicyForObjectLambda": {
+    "Access": "Permissions Management",
+    "Affects": {
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to associate an access policy with a specified object lambda enabled access point",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_PutAccessPointPolicyForObjectLambda.html"
   },
   "s3:PutAccountPublicAccessBlock": {
     "Access": "Permissions Management",
     "Affects": {},
-    "Description": "Create or modify the PublicAccessBlock configuration for an AWS account.",
+    "Description": "Grants permission to create or modify the PublicAccessBlock configuration for an AWS account",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_PutPublicAccessBlock.html"
   },
   "s3:PutAnalyticsConfiguration": {
@@ -8020,7 +13803,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "This implementation of the PUT operation adds an analytics configuration (identified by the analytics ID) to the bucket. You can have up to 1,000 analytics configurations per bucket.",
+    "Description": "Grants permission to set an analytics configuration for the bucket, specified by the analytics configuration ID",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketAnalyticsConfiguration.html"
   },
   "s3:PutBucketAcl": {
@@ -8031,7 +13814,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Set the permissions on an existing bucket using access control lists (ACL).",
+    "Description": "Grants permission to set the permissions on an existing bucket using access control lists (ACLs)",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketAcl.html"
   },
   "s3:PutBucketCORS": {
@@ -8042,7 +13825,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Sets the CORS configuration for your bucket.",
+    "Description": "Grants permission to set the CORS configuration for an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketCors.html"
   },
   "s3:PutBucketLogging": {
@@ -8053,7 +13836,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Set the logging parameters for a bucket.",
+    "Description": "Grants permission to set the logging parameters for an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLogging.html"
   },
   "s3:PutBucketNotification": {
@@ -8064,7 +13847,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Enables you to receive notifications when certain events happen in your bucket.",
+    "Description": "Grants permission to receive notifications when certain events happen in an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketNotification.html"
   },
   "s3:PutBucketObjectLockConfiguration": {
@@ -8075,8 +13858,19 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "PUT Object Lock configuration on a specific bucket",
+    "Description": "Grants permission to put Object Lock configuration on a specific bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectLockConfiguration.html"
+  },
+  "s3:PutBucketOwnershipControls": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::S3::Bucket": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to add or replace ownership controls on a bucket",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketOwnershipControls.html"
   },
   "s3:PutBucketPolicy": {
     "Access": "Permissions Management",
@@ -8086,7 +13880,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Add to or replace a policy on a bucket.",
+    "Description": "Grants permission to add or replace a bucket policy on a bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketPolicy.html"
   },
   "s3:PutBucketPublicAccessBlock": {
@@ -8097,7 +13891,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Create or modify the PublicAccessBlock configuration for an specific S3 bucket.",
+    "Description": "Grants permission to create or modify the PublicAccessBlock configuration for a specific Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutPublicAccessBlock.html"
   },
   "s3:PutBucketRequestPayment": {
@@ -8108,7 +13902,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Set the request payment configuration of a bucket.",
+    "Description": "Grants permission to set the request payment configuration of a bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketRequestPayment.html"
   },
   "s3:PutBucketTagging": {
@@ -8119,7 +13913,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Add a set of tags to an existing bucket.",
+    "Description": "Grants permission to add a set of tags to an existing Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketTagging.html"
   },
   "s3:PutBucketVersioning": {
@@ -8130,7 +13924,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Set the versioning state of an existing bucket.",
+    "Description": "Grants permission to set the versioning state of an existing Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketVersioning.html"
   },
   "s3:PutBucketWebsite": {
@@ -8141,7 +13935,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Sets the configuration of the website that is specified in the website subresource.",
+    "Description": "Grants permission to set the configuration of the website that is specified in the website subresource",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketWebsite.html"
   },
   "s3:PutEncryptionConfiguration": {
@@ -8152,8 +13946,19 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Sets the encryption configuration for the bucket.",
+    "Description": "Grants permission to set the encryption configuration for an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketEncryption.html"
+  },
+  "s3:PutIntelligentTieringConfiguration": {
+    "Access": "Write",
+    "Affects": {
+      "AWS::S3::Bucket": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to create new or update or delete an existing Amazon S3 Intelligent Tiering configuration",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketIntelligentTieringConfiguration.html"
   },
   "s3:PutInventoryConfiguration": {
     "Access": "Write",
@@ -8163,8 +13968,19 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "This implementation of the PUT operation adds an inventory configuration (identified by the inventory ID) to the bucket. You can have up to 1,000 inventory configurations per bucket.",
+    "Description": "Grants permission to add an inventory configuration to the bucket, identified by the inventory ID",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketInventoryConfiguration.html"
+  },
+  "s3:PutJobTagging": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::S3::Job": {
+        "Condition Keys": [],
+        "Dependant Actions": []
+      }
+    },
+    "Description": "Grants permission to replace tags on an existing Amazon S3 Batch Operations job",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_PutJobTagging.html"
   },
   "s3:PutLifecycleConfiguration": {
     "Access": "Write",
@@ -8174,7 +13990,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Creates a new lifecycle configuration for the bucket or replaces an existing lifecycle configuration.",
+    "Description": "Grants permission to create a new lifecycle configuration for the bucket or replace an existing lifecycle configuration",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html"
   },
   "s3:PutMetricsConfiguration": {
@@ -8185,7 +14001,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Sets or updates a metrics configuration for the CloudWatch request metrics (specified by the metrics configuration ID) from the bucket.",
+    "Description": "Grants permission to set or update a metrics configuration for the CloudWatch request metrics from an Amazon S3 bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketMetricsConfiguration.html"
   },
   "s3:PutObject": {
@@ -8194,9 +14010,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "Adds an object to a bucket.",
+    "Description": "Grants permission to add an object to a bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html"
   },
   "s3:PutObjectAcl": {
@@ -8205,9 +14025,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "Set the access control list (ACL) permissions for an object that already exists in a bucket.",
+    "Description": "Grants permission to set the access control list (ACL) permissions for new or existing objects in an S3 bucket.",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectAcl.html"
   },
   "s3:PutObjectLegalHold": {
@@ -8216,9 +14040,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "PUT Object Legal Hold on a specific object",
+    "Description": "Grants permission to apply a Legal Hold configuration to the specified object",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectLegalHold.html"
   },
   "s3:PutObjectRetention": {
@@ -8227,9 +14055,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "PUT Object Retention on a specific object",
+    "Description": "Grants permission to place an Object Retention configuration on an object",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectRetention.html"
   },
   "s3:PutObjectTagging": {
@@ -8238,9 +14070,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "This implementation of the PUT operation uses the tagging subresource to add a set of tags to an existing object.",
+    "Description": "Grants permission to set the supplied tag-set to an object that already exists in a bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectTagging.html"
   },
   "s3:PutObjectVersionAcl": {
@@ -8249,9 +14085,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "The ACL of an object is set at the object version level.",
+    "Description": "Grants permission to use the acl subresource to set the access control list (ACL) permissions for an object that already exists in a bucket",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectAcl.html"
   },
   "s3:PutObjectVersionTagging": {
@@ -8260,9 +14100,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "PUT Object tagging (for a Specific Version of the Object)",
+    "Description": "Grants permission to set the supplied tag-set for a specific version of an object",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectTagging.html"
   },
   "s3:PutReplicationConfiguration": {
@@ -8270,11 +14114,30 @@ ACTIONS = {
     "Affects": {
       "AWS::S3::Bucket": {
         "Condition Keys": [],
+        "Dependant Actions": [
+          "iam:PassRole"
+        ]
+      }
+    },
+    "Description": "Grants permission to create a new replication configuration or replace an existing one",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketReplication.html"
+  },
+  "s3:PutStorageLensConfiguration": {
+    "Access": "Write",
+    "Affects": {},
+    "Description": "Grants permission to create or update an Amazon S3 Storage Lens configuration",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_PutStorageLensConfiguration.html"
+  },
+  "s3:PutStorageLensConfigurationTagging": {
+    "Access": "Tagging",
+    "Affects": {
+      "AWS::S3::StorageLensConfiguration": {
+        "Condition Keys": [],
         "Dependant Actions": []
       }
     },
-    "Description": "In a versioning-enabled bucket, this operation creates a new replication configuration (or replaces an existing one, if present).",
-    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketReplication.html"
+    "Description": "Grants permission to put or replace tags on an existing Amazon S3 Storage Lens configuration",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_PutStorageLensConfigurationTagging.html"
   },
   "s3:ReplicateDelete": {
     "Access": "Write",
@@ -8282,10 +14145,14 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "Permission exercised by S3 replication",
-    "Reference": ""
+    "Description": "Grants permission to replicate delete markers to the destination bucket",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/dev/setting-repl-config-perm-overview.html"
   },
   "s3:ReplicateObject": {
     "Access": "Write",
@@ -8293,10 +14160,14 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "Permission exercised by S3 replication",
-    "Reference": ""
+    "Description": "Grants permission to replicate objects and object tags to the destination bucket",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/dev/setting-repl-config-perm-overview.html"
   },
   "s3:ReplicateTags": {
     "Access": "Tagging",
@@ -8304,10 +14175,14 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "Permission exercised by S3 replication",
-    "Reference": ""
+    "Description": "Grants permission to replicate object tags to the destination bucket",
+    "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/dev/setting-repl-config-perm-overview.html"
   },
   "s3:RestoreObject": {
     "Access": "Write",
@@ -8315,9 +14190,13 @@ ACTIONS = {
       "AWS::S3::Object": {
         "Condition Keys": [],
         "Dependant Actions": []
+      },
+      "AWS::S3::ObjectLambdaAccessPoint": {
+        "Condition Keys": [],
+        "Dependant Actions": []
       }
     },
-    "Description": "Restores a temporary copy of an archived object.",
+    "Description": "Grants permission to restore an archived copy of an object back into Amazon S3",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_RestoreObject.html"
   },
   "s3:UpdateJobPriority": {
@@ -8328,7 +14207,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Updates an existing job's priority.",
+    "Description": "Grants permission to update the priority of an existing job",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_UpdateJobPriority.html"
   },
   "s3:UpdateJobStatus": {
@@ -8339,7 +14218,7 @@ ACTIONS = {
         "Dependant Actions": []
       }
     },
-    "Description": "Updates the status for the specified job.",
+    "Description": "Grants permission to update the status for the specified job",
     "Reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_UpdateJobStatus.html"
   },
   "sts:AssumeRole": {
@@ -8403,6 +14282,12 @@ ACTIONS = {
     },
     "Description": "Returns a set of temporary security credentials (consisting of an access key ID, a secret access key, and a security token) for a federated user",
     "Reference": "https://docs.aws.amazon.com/STS/latest/APIReference/API_GetFederationToken.html"
+  },
+  "sts:GetServiceBearerToken": {
+    "Access": "Read",
+    "Affects": {},
+    "Description": "Returns a STS bearer token for an AWS root user, IAM role, or an IAM user",
+    "Reference": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_bearer.html"
   },
   "sts:GetSessionToken": {
     "Access": "Read",
