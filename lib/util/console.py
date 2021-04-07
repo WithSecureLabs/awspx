@@ -82,9 +82,11 @@ class Log(Handler):
 class Operation(Progress):
 
     table = None
+    live = None
 
     def __init__(self, table):
         super().__init__()
+        self.live.vertical_overflow = "visible"
         self.table = table
 
     def get_renderables(self):
@@ -162,7 +164,7 @@ class Console(Table):
 
         service = self.__class__(name=message)
         service.add_column(message, justify="center")
-        service.thread = self.thread
+        service.thread = self.thread.live
 
         self.add_row(service)
         self.spacer()
@@ -285,7 +287,7 @@ class Console(Table):
 
                 while True:
 
-                    with console.thread._lock:
+                    with console.thread.live._lock:
                         char = readchar()
                         # Enter
                         if ord(char) == 13:
@@ -382,15 +384,15 @@ class Console(Table):
         self.refresh()
 
     def start(self):
-        if not console.thread._started:
+        if not console.thread.live._started:
             self.thread.start()
 
     def refresh(self):
-        if self.thread is not None and self.thread._started:
+        if self.thread is not None:
             self.thread.refresh()
 
     def stop(self):
-        if console.thread._started:
+        if console.thread.live._started:
             self.thread.stop()
             self.console.print()
 
