@@ -43,7 +43,7 @@ class Resources(dict):
         "AWS::Ec2::NetworkInsightsAnalysis":                                   "arn:aws:ec2:{Region}:{Account}:network-insights-analysis/{NetworkInsightsAnalysisId}",
         "AWS::Ec2::NetworkInsightsPath":                                       "arn:aws:ec2:{Region}:{Account}:network-insights-path/{NetworkInsightsPathId}",
         "AWS::Ec2::NetworkInterface":                                          "arn:aws:ec2:{Region}:{Account}:network-interface/{NetworkInterfaceId}",
-        "AWS::Ec2::PlacementGroup":                                            "arn:aws:ec2:{Region}:{Account}:placement-group/{PlacementGroup}",
+        "AWS::Ec2::PlacementGroup":                                            "arn:aws:ec2:{Region}:{Account}:placement-group/{GroupName}",
         "AWS::Ec2::PrefixList":                                                "arn:aws:ec2:{Region}:{Account}:prefix-list/{PrefixListId}",
         "AWS::Ec2::ReservedInstances":                                         "arn:aws:ec2:{Region}:{Account}:reserved-instances/{ReservationId}",
         "AWS::Ec2::RouteTable":                                                "arn:aws:ec2:{Region}:{Account}:route-table/{RouteTableId}",
