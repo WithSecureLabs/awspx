@@ -9,6 +9,7 @@ import subprocess
 import zlib
 from base64 import b64decode
 from datetime import datetime
+from itertools import combinations
 
 from botocore.exceptions import (ClientError,
                                  PartialCredentialsError, ProfileNotFound)
@@ -738,51 +739,61 @@ class Ingestor(Elements):
                        for association in self.associations
                        if resource.label() in association]:
 
-                refs = {}
+                refs = []
                 required = list(re.compile(RESOURCES[rt]).groupindex.keys())
 
                 # We have all the information we need using just the ARN
                 if all([k in arn_refs for k in required]):
-                    refs = arn_refs
+                    refs = [arn_refs]
                 else:
+
                     # Check the resource's properties (once)
                     if len(prop_refs) == 0:
                         set_references(prop_refs,
                                        resource.properties())
 
                     # Use property and ARN refs (ARN values take precedence)
-                    refs = {
+                    refs = [{
                         **{k: v for k, v in prop_refs.items()
                            if k in required},
                         **{k: v for k, v in arn_refs.items()
                            if k in required},
-                    }
+                    }]
 
                     # There isn't enough information to create a reference ARN
-                    if not all([k in refs for k in required]):
+                    if not all([k in refs[0] for k in required]):
                         continue
 
-                # Hopefully, this never happens
-                if not all([len(v) == 1 for v in refs.values()]):
-                    continue
+                # Some references are ambiguous, construct and try all valid combinations
+                if not all([len(v) == 1 for v in refs[0].values()]):
 
-                # Construct a reference ARN and get the associated resource
-                arn = RESOURCES.types[rt].format(
-                    **{k: list(v)[0] for k, v in refs.items()})
+                    ambiguous = {k: v for k, v in refs[0].items()
+                                 if len(v) > 1}
 
-                associate = next((r for r in self
-                                  if r.id() == arn), None)
+                    refs = [{**c, **{k: list(refs[0][k])[0] for k in refs[0] if k not in ambiguous}}
+                            for c in [{k: v for d in list(x) for k, v in d.items()}
+                                      for x in combinations([{K: v} for K, V in ambiguous.items()
+                                                             for v in V], len(ambiguous))]
+                            if len(c) == len(ambiguous)]
 
-                if associate is None:
-                    # self.console.debug(f"Couldn't create association: resource ({arn}), "
-                    #                    f"referenced by {resource}, doesn't exist ")
-                    continue
+                for ref in refs:
 
-                (source, target) = sorted((resource, associate),
-                                          key=lambda r: r.id())
+                    # Construct a reference ARN and get the associated resource
+                    arn = RESOURCES.types[rt].format(**{k: str(list(v)[0] if type(v) == set else v)
+                                                        for k, v in ref.items()})
+                    associate = next((r for r in self
+                                      if r.id() == arn), None)
 
-                self.add(Associative(properties={"Name": "Attached"},
-                                     source=source, target=target))
+                    if associate is None:
+                        # self.console.debug(f"Couldn't create association: resource ({arn}), "
+                        #                    f"referenced by {resource}, doesn't exist ")
+                        continue
+
+                    (source, target) = sorted((resource, associate),
+                                              key=lambda r: r.id())
+
+                    self.add(Associative(properties={"Name": "Attached"},
+                                         source=source, target=target))
 
     def update(self, elements):
         for element in elements:
