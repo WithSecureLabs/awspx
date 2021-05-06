@@ -1,28 +1,24 @@
-import boto3
 import csv
 import json
 import os
 import re
 import shutil
-import sys
 import subprocess
+import sys
 import zlib
 from base64 import b64decode
 from datetime import datetime
 from itertools import combinations
 
-from botocore.exceptions import (ClientError,
-                                 PartialCredentialsError, ProfileNotFound)
-
+import boto3
+from botocore.exceptions import (ClientError, PartialCredentialsError,
+                                 ProfileNotFound)
 from lib.aws.actions import ACTIONS
-from lib.aws.policy import (BucketACL, IdentityBasedPolicy,
-                            ObjectACL, ResourceBasedPolicy)
-
+from lib.aws.policy import (BucketACL, IdentityBasedPolicy, ObjectACL,
+                            ResourceBasedPolicy)
 from lib.aws.resources import RESOURCES
 from lib.graph.base import Elements, Node
-from lib.graph.edges import (Action, Associative,
-                             Transitive, Trusts)
-
+from lib.graph.edges import Action, Associative, Transitive, Trusts
 from lib.graph.nodes import Generic, Resource
 
 
