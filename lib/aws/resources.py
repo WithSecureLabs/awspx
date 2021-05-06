@@ -99,11 +99,11 @@ class Resources(dict):
         "AWS::S3::StorageLensConfiguration":                                   "arn:aws:s3:{Region}:{Account}:storage-lens/{ConfigId}"
     }
     regex = {
-        "Region":   "([a-z0-9-]*)",
-        "Account":  "(\d{12})?",
-        "Provider": "(.*)",
-        "Key":      "(.*)",
-        "Default":  "([A-Za-z0-9-_]*)",
+        "Region":   r"([a-z0-9-]*)",
+        "Account":  r"(\d{12})?",
+        "Provider": r"(.*)",
+        "Key":      r"(.*)",
+        "Default":  r"([A-Za-z0-9-_]*)",
     }
 
     def __init__(self):
