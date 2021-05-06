@@ -1052,6 +1052,7 @@ class EC2(Ingestor):
         ("AWS::Ec2::Instance", "AWS::Ec2::NetworkInterface"),
         ("AWS::Ec2::Instance", "AWS::Ec2::KeyPair"),
         ("AWS::Ec2::Instance", "AWS::Ec2::Volume"),
+        ("AWS::Ec2::Instance", "AWS::Ec2::PlacementGroup"),
         ("AWS::Ec2::NatGateway", "AWS::Ec2::NetworkInterface"),
         ("AWS::Ec2::NetworkInterface", "AWS::Ec2::SecurityGroup"),
         ("AWS::Ec2::NetworkInterface", "AWS::Ec2::Subnet"),
