@@ -37,14 +37,19 @@ export default {
     },
     highlight(value) {
       if (typeof value !== "string" || value.length === 0) return value;
-      const re = new RegExp(this.search, "gi");
       let v = value.replace("<b>", "").replace("</b>");
-      Array.from(new Set(v.match(re))).map(
-        m => (v = v.replace(m, `<b>${m}</b>`))
-      );
+      if (this.search !== null) {
+        const re = new RegExp(
+          this.search.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"),
+          "gi"
+        );
+        Array.from(new Set(v.match(re))).map(
+          (m) => (v = v.replace(m, `<b>${m}</b>`))
+        );
+      }
       return v;
-    }
-  }
+    },
+  },
 };
 </script>
 
