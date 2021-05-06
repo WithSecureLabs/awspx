@@ -175,10 +175,11 @@ export default {
     },
     filter(item, search, text) {
       this.menu = true;
-      return (
-        item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.id.toLowerCase().includes(search.toLowerCase())
-      );
+      return [
+        item.name,
+        item.id,
+        ...Object.keys(item.tags).map(k => `${k}: ${item.tags[k]}`),
+      ].some((k) => k.toLowerCase().includes(search.toLowerCase()));
     },
   },
   watch: {

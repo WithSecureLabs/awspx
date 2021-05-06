@@ -3,7 +3,7 @@
     <!-- Database connection form -->
     <v-card :disabled="form.loading && page == 0">
       <v-card-title>Database settings</v-card-title>
-      <v-card-subtitle>{{form.values.status}}</v-card-subtitle>
+      <v-card-subtitle>{{ form.values.status }}</v-card-subtitle>
       <div v-if="page == 0">
         <v-card-text class="mt-5 px-12">
           <v-form class="db-settings" ref="form" :value="test.value">
@@ -41,24 +41,32 @@
         </v-card-text>
 
         <v-card-actions class="px-5">
-          <v-btn text :disabled="!db.populated" @click="db_settings_close()">Close</v-btn>
+          <v-btn text :disabled="!db.populated" @click="db_settings_close()"
+            >Close</v-btn
+          >
           <v-spacer></v-spacer>
-          <v-btn outlined @click="db_settings_test()" :loading="test.busy">Test</v-btn>
+          <v-btn outlined @click="db_settings_test()" :loading="test.busy"
+            >Test</v-btn
+          >
           <v-btn
             outlined
             @click="db_settings_apply()"
             :loading="form.loading"
             :disabled="!test.value"
-          >Connect</v-btn>
+            >Connect</v-btn
+          >
         </v-card-actions>
       </div>
 
       <!-- Empty database helper -->
       <div v-else-if="page == 1">
-        <v-card-title class="justify-center">Hold up, this database appears to be empty...</v-card-title>
-        <v-card-subtitle
-          class="text-center"
-        >You'll need to populate it with something before continuing</v-card-subtitle>
+        <v-card-title class="justify-center"
+          >Hold up, this database appears to be empty...</v-card-title
+        >
+        <v-card-subtitle class="text-center"
+          >You'll need to populate it with something before
+          continuing</v-card-subtitle
+        >
         <v-card-text>
           <v-row class="ma-2">
             <v-col />
@@ -67,16 +75,29 @@
                 You can run the
                 <a
                   href="https://github.com/FSecureLABS/awspx/wiki/Data-Collection#ingestion"
-                >ingestor</a> (to load an AWS account to explore):
+                  >ingestor</a
+                >
+                (to load an AWS account to explore):
               </div>
 
-              <v-card outlined color="#f6f8fa" class="pa-2" style="font-size: 11px">awspx ingest</v-card>
+              <v-card
+                outlined
+                color="#f6f8fa"
+                class="pa-2"
+                style="font-size: 11px"
+                >awspx ingest</v-card
+              >
               <div class="mt-5 mb-2">
-                <p
-                  class="text--secondary"
-                >or load the sample dataset (if you just want to play around):</p>
+                <p class="text--secondary">
+                  or load the sample dataset (if you just want to play around):
+                </p>
               </div>
-              <v-card outlined color="#f6f8fa" class="pa-2" style="font-size: 11px">
+              <v-card
+                outlined
+                color="#f6f8fa"
+                class="pa-2"
+                style="font-size: 11px"
+              >
                 awspx db --load-zip sample.zip
                 <br />awspx attacks
               </v-card>
@@ -87,7 +108,9 @@
         <v-card-actions>
           <v-btn text @click="page = 0">Back</v-btn>
           <v-spacer></v-spacer>
-          <v-btn outlined @click="db_settings_apply()" :loading="form.loading">Check Again</v-btn>
+          <v-btn outlined @click="db_settings_apply()" :loading="form.loading"
+            >Check Again</v-btn
+          >
         </v-card-actions>
       </div>
     </v-card>
@@ -247,10 +270,21 @@ export default {
               const classification = r.classes
                 .filter((c) => types.indexOf(c) != -1)
                 .concat("")[0];
+
               const id =
                 typeof r.data.properties.Arn !== "undefined"
                   ? r.data.properties.Arn
                   : r.data.name;
+
+              const tags = (typeof r.data.properties.Tags === "undefined"
+                ? []
+                : JSON.parse(r.data.properties.Tags)
+              ).reduce((O, o) => {
+                let k = o.Key;
+                let v = o.Value;
+                O[k] = v;
+                return O;
+              }, {});
 
               return {
                 name: r.data.name,
@@ -258,6 +292,7 @@ export default {
                 type: r.data.name === "Effective Admin" ? "Admin" : r.data.type,
                 class:
                   r.data.name === "Effective Admin" ? "Admin" : classification,
+                tags: tags,
                 element: r,
               };
             }).sort((a, b) => {
