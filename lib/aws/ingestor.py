@@ -1024,6 +1024,7 @@ class EC2(Ingestor):
         'AWS::Ec2::Instance',
         'AWS::Ec2::InternetGateway',
         'AWS::Ec2::KeyPair',
+        'AWS::Ec2::NatGateway',
         'AWS::Ec2::NetworkAcl',
         'AWS::Ec2::NetworkInterface',
         'AWS::Ec2::PlacementGroup',
@@ -1040,6 +1041,7 @@ class EC2(Ingestor):
         ("AWS::Ec2::Instance", "AWS::Ec2::NetworkInterface"),
         ("AWS::Ec2::Instance", "AWS::Ec2::KeyPair"),
         ("AWS::Ec2::Instance", "AWS::Ec2::Volume"),
+        ("AWS::Ec2::NatGateway", "AWS::Ec2::NetworkInterface"),
         ("AWS::Ec2::NetworkInterface", "AWS::Ec2::SecurityGroup"),
         ("AWS::Ec2::NetworkInterface", "AWS::Ec2::Subnet"),
         ("AWS::Ec2::Vpc", "AWS::Ec2::VpcPeeringConnection"),
@@ -1056,6 +1058,37 @@ class EC2(Ingestor):
 
         if not self.quick:
             self.get_instance_user_data()
+
+    def load_resources(self):
+        self.get_nat_gateways()
+        super().load_resources()
+
+    def get_nat_gateways(self):
+
+        if 'AWS::Ec2::NatGateway' not in self.types:
+            return
+
+        for nat_gateway in [ng for r in self.console.tasklist(
+            "Adding NatGateways",
+            iterables=self.client.get_paginator(
+                "describe_nat_gateways").paginate(),
+            wait="Awaiting response to ec2:DescribeNatGateways",
+            done="Added "
+        ) for ng in r["NatGateways"]]:
+
+            nat_gateway["Name"] = nat_gateway["NatGatewayId"]
+            nat_gateway["Arn"] = RESOURCES.definition("AWS::Ec2::NatGateway").format(
+                Region=self.session.region_name,
+                Account=self.account,
+                **nat_gateway)
+
+            del nat_gateway["NatGatewayId"]
+
+            nat_gateway = Resource(
+                properties=nat_gateway,
+                labels=['AWS::Ec2::NatGateway'])
+
+            self.add(nat_gateway)
 
     def get_instance_user_data(self):
 
