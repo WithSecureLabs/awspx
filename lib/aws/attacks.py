@@ -696,7 +696,9 @@ class Attacks:
         CYPHER = ""
         VARs = {
             "name": name,
-            "description": definition["Description"],
+            "description": list([definition["Description"]]
+                                if isinstance(definition["Description"], str)
+                                else definition["Description"]),
             "commands": definition["Commands"],
             "depends": attack["Depends"] if "Depends" in attack else "",
             "affects": attack["Affects"],
@@ -1148,7 +1150,7 @@ class Attacks:
             % ("CREATE" if OPTs["CreateAction"] \
                 else "ATTACK"),
             "ON CREATE SET ",
-            "edge.Description = \"{description}\",",
+            "edge.Description = {description},",
             "edge.Commands = commands,",
             "edge.Weight = SIZE(commands),",
             "edge.Option = ID(option)",
@@ -1162,7 +1164,7 @@ class Attacks:
             "MERGE (pattern)-[edge:OPTION{{Name:'Option'}}]->(option) "
             "ON CREATE SET "
             "edge.Weight = SIZE(commands), "
-            "edge.Description = \"{description}\", "
+            "edge.Description = {description}, "
             "edge.Commands = commands " \
             if ("Depends" in attack and attack["Depends"] != attack["Affects"]) \
             or "Grants" in attack \
@@ -1263,16 +1265,31 @@ class Attacks:
                            "WHERE LENGTH(attack.Commands) > 0 "
                            "WITH COLLECT(DISTINCT attack) AS attacks "
                            "UNWIND attacks AS attack "
-                           "WITH attacks, COLLECT(DISTINCT ["
-                           "    attack.Commands[LENGTH(attack.Commands) - 1], "
-                           "    attack.Description]) as commands "
+
+                           # Construct a lookup table comprising of command, description pairs.
+                           "WITH attacks, attack, "
+                           "   LENGTH(attack.Commands) - LENGTH(attack.Description) AS offset "
+                           "WITH attacks, offset, attack, "
+                           "   EXTRACT(i IN RANGE(0, LENGTH(attack.Commands) -1)|[attack.Commands[i], "
+                           "       CASE WHEN i - offset < 0 THEN NULL "
+                           "       ELSE attack.Description[i - offset] END]) "
+                           "   AS lookups "
+
+                           # Remove NULL value command, description pairs
+                           "WITH attacks, lookups "
+                           "UNWIND lookups AS lookup "
+                           "WITH DISTINCT attacks, lookup "
+                           "   WHERE lookup[1] IS NOT NULL "
+                           "WITH COLLECT(lookup) AS lookups, attacks "
                            "UNWIND attacks AS attack "
-                           "WITH attack, commands WHERE TYPE(attack) = 'ATTACK' "
-                           "WITH attack, EXTRACT(command IN attack.Commands|"
-                           "    COALESCE([description IN commands "
-                           "        WHERE command = description[0]][0][1], "
-                           "        attack.Description)) AS descriptions "
-                           "WITH attack, descriptions "
+
+                           # Map attack commands to descriptions
+                           "WITH attack, lookups, ["
+                           "   description IN EXTRACT(command IN attack.Commands|"
+                           "       [lookup in lookups WHERE lookup[0] = command][0][1]) "
+                           "   WHERE description IS NOT NULL"
+                           "] AS descriptions "
+
                            "SET attack.Descriptions = descriptions "
                            "REMOVE attack.Description"
                            )
