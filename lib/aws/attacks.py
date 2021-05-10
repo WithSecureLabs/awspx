@@ -899,6 +899,21 @@ class Attacks:
                 "WITH admin, source, COLLECT([option, commands]) AS options, [NULL, []] AS grants "
             )
 
+        # No dependencies: source may be any Resource/External (excluding those known to grant Admin).
+        
+        else:
+
+            CYPHER += (
+                "MATCH (source) "
+                "WHERE NOT source IN admin AND (source:Resource OR source:External) "
+
+                "WITH admin, source, options, grants "
+            )
+
+        # Patterns including a "Grants" value grant transitivity to a resource type that may not the
+        # affected type (e.g. iam:AttachGroupPolicy affects a group but grants transitivity to a policy).
+        # The grants type can either be a resource or a creatable generic, reachable directly or indirectly.
+
         if "Grants" in attack:
 
             CYPHER += ''.join((
