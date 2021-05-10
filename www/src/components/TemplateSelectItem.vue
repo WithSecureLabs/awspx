@@ -52,7 +52,7 @@ export default {
     highlight(value) {
       if (typeof value !== "string" || value.length === 0) return value;
       let v = value.replace("<b>", "").replace("</b>");
-      if (this.search !== null) {
+      if (typeof this.search === 'string') {
         const re = new RegExp(
           this.search.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"),
           "gi"
