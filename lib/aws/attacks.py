@@ -1217,18 +1217,42 @@ class Attacks:
             range(max_iterations * len(self.definitions)),
             done="Added attack paths"
         ):
+
             if converged:
                 continue
 
-            # First iteration
-            elif (i % len(self.definitions) == 0):
+            # First pattern definition (iteration i)
+            if (i % len(self.definitions) == 0):
                 self.console.info("Temporarily adding Admin label "
                                   "to Generic Policy")
                 db.run("MATCH (gp:`AWS::Iam::Policy`:Generic) SET gp:Admin")
 
-            # Last iteration, check for convergence
-            elif ((i + 1) % len(self.definitions) == 0):
+            pattern = list(self.definitions.keys())[i % len(self.definitions)]
+            iteration = int(i / len(self.definitions)) + 1
+            definition = self.definitions[pattern]
+            timestamp = time.time()
 
+            self.console.info(f"Searching for attack: {pattern} "
+                              f"(iteration: {iteration} of max: {max_iterations})")
+
+            cypher = self._pattern_cypher(pattern, definition,
+                                          max_search_depth)
+
+            summary = db.run(cypher)._summary
+
+            self.stats.append({
+                "pattern": pattern,
+                "iteration": iteration,
+                "nodes_created": 0,
+                "relationships_created": 0,
+                "properties_set": 0,
+                "labels_added": 0,
+                "time_elapsed": time.time() - timestamp,
+                ** summary.counters.__dict__
+            })
+
+            # Last pattern definition (iteration i)
+            if ((i + 1) % len(self.definitions) == 0):
                 self.console.info("Removing Admin label from Generic Policy")
                 db.run("MATCH (admin:`AWS::Iam::Policy`:Generic) "
                        "REMOVE admin:Admin")
@@ -1317,32 +1341,6 @@ class Attacks:
                     db.run("OPTIONAL MATCH ()-[:ATTACK]->(:Pattern)-[attack:ATTACK]->(:Generic) "
                            "DELETE attack"
                            )
-
-                    continue
-
-            pattern = list(self.definitions.keys())[i % len(self.definitions)]
-            iteration = int(i / len(self.definitions)) + 1
-            definition = self.definitions[pattern]
-            timestamp = time.time()
-
-            self.console.info(f"Searching for attack: {pattern} "
-                              f"(iteration: {iteration} of max: {max_iterations})")
-
-            cypher = self._pattern_cypher(pattern, definition,
-                                          max_search_depth)
-
-            summary = db.run(cypher)._summary
-
-            self.stats.append({
-                "pattern": pattern,
-                "iteration": iteration,
-                "nodes_created": 0,
-                "relationships_created": 0,
-                "properties_set": 0,
-                "labels_added": 0,
-                "time_elapsed": time.time() - timestamp,
-                ** summary.counters.__dict__
-            })
 
         db.close()
 
