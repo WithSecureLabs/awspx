@@ -900,7 +900,7 @@ class Attacks:
             )
 
         # No dependencies: source may be any Resource/External (excluding those known to grant Admin).
-        
+
         else:
 
             CYPHER += (
@@ -919,8 +919,7 @@ class Attacks:
             CYPHER += ''.join((
 
                 "OPTIONAL MATCH (grant:`{grants}`) WHERE NOT grant:Generic ",
-                str("AND grant:Resource " if attack["Grants"] != "Admin"
-                    else ""),
+                "AND grant:Resource " if attack["Grants"] != "Admin" else "",
                 "OPTIONAL MATCH creation=shortestPath((source)-"
                 "[:TRANSITIVE|ATTACK|CREATE*..{depth}]->(generic:Generic:`{grants}`)) ",
                 "WHERE source <> generic ",
@@ -1162,8 +1161,7 @@ class Attacks:
             "WITH DISTINCT pattern, options, grant, option, commands ",
             "MATCH (grant) "
             "MERGE (pattern)-[edge:%s{{Name:'{name}'}}]->(grant)" \
-            % ("CREATE" if OPTs["CreateAction"] \
-                else "ATTACK"),
+            % ("CREATE" if OPTs["CreateAction"] and VARs["grants"] == "" else "ATTACK"),
             "ON CREATE SET ",
             "edge.Description = {description},",
             "edge.Commands = commands,",
@@ -1172,7 +1170,6 @@ class Attacks:
             ", edge.Admin = True " if OPTs["Admin"] else ""
 
             # Create pattern options
-
             "WITH pattern, options "
             "UNWIND options AS option "
             "WITH pattern, option[0] AS option, option[1] AS commands "
