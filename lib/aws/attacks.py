@@ -1288,13 +1288,19 @@ class Attacks:
                        "DELETE attack "
                        )
 
-                if sum([s["nodes_created"] + s["relationships_created"]
-                        for s in self.stats[-(len(self.definitions)):]]) == 0:
-
+                if (sum([s["nodes_created"] + s["relationships_created"]
+                         for s in self.stats[-(len(self.definitions)):]]) == 0
+                    ):
                     converged = True
                     self.console.info("Search converged on iteration: "
                                       f"{iteration} of max: {max_iterations} - "
                                       "Tidying up")
+
+                if converged or (i + 1) >= (max_iterations * len(self.definitions)):
+
+                    if not converged:
+                        self.console.info("Reached maximum number of iterations "
+                                          f"({max_iterations}) - Tidying up")
 
                     # Update attack descriptions
                     db.run("MATCH (:Pattern)-[attack:ATTACK|OPTION|CREATE]->() "
