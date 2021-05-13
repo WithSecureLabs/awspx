@@ -310,7 +310,7 @@ def main():
                      help=(f"One or more services to ingest (eg: {' '.join([s.__name__ for s in SERVICES])})."))
     snr.add_argument('--quick', dest='quick', action='store_true', default=False,
                      help=("Skips supplementary ingestion functions "
-                           "(i.e. speed at the cost of infromation)."))
+                           "(i.e. speed at the cost of information)."))
 
     type_args = snr.add_mutually_exclusive_group()
     type_args.add_argument('--only-types', dest='only_types', default=[], nargs="+", type=resource,
