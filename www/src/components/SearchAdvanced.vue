@@ -553,7 +553,7 @@ export default {
           styleActiveLine: true,
           extraKeys: {
             Tab: "autocomplete",
-            "Ctrl-R": this.editor_run,
+            "Ctrl-Enter": this.editor_run,
           },
           hintOptions: {
             completeSingle: false,
