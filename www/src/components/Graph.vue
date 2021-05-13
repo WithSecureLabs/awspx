@@ -756,7 +756,7 @@ export default {
           case "s":
             if (event.ctrlKey) {
               event.preventDefault();
-              this.search.visible = true;
+              this.search.visible = !this.search.visible;
             }
             break;
           // TODO: Add panning using arrow keys
