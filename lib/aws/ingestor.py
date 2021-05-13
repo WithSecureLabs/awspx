@@ -236,7 +236,7 @@ class IngestionManager(Elements):
                 # Skip AWS::Domain principals
                 self.update(Elements(principal
                                      for principal in resource_based_policy.principals()
-                                     if not principal.type("AWS::Domain")))
+                                     ))
 
                 # Only actions beginning with sts:AssumeRole are valid
                 for action in [action for action in resource_based_policy.actions()
@@ -252,10 +252,6 @@ class IngestionManager(Elements):
                                              for entity in entities))
 
                     else:
-                        # Skip AWS::Domain actions
-                        if action.source().type("AWS::Domain"):
-                            continue
-
                         self.add(action)
                         self.add(Trusts(properties=action.properties(),
                                         source=action.target(),

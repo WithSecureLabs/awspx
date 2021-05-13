@@ -9,7 +9,7 @@ from lib.aws.resources import RESOURCES
 
 from lib.graph.base import Element, Elements
 from lib.graph.edges import Action, Trusts
-from lib.graph.nodes import Resource, External
+from lib.graph.nodes import Resource, External, Node
 
 from lib.util.console import console
 
@@ -153,7 +153,7 @@ class Statement:
                 else:
                     labels = ["Internet::Domain"]
 
-                principals.add(External(
+                principals.add(Node(
                     key="Name",
                     labels=labels,
                     properties={
