@@ -16,7 +16,7 @@ definitions = {
 
         "Commands": [
             "aws create-policy-version "
-            "--policy-arn ${AWS::Iam::Policy}.Arn "
+            "--policy-arn ${AWS::Iam::Policy.Arn} "
             "--set-as-default "
             "--policy-document file://<(cat <<EOF\n"
             "{\n"
@@ -87,7 +87,7 @@ definitions = {
 
         "Commands": [
             "aws sts assume-role "
-            "--role-arn ${AWS::Iam::Role}.Arn "
+            "--role-arn ${AWS::Iam::Role.Arn} "
             "--role-session-name AssumeRole"
         ],
 
@@ -168,7 +168,7 @@ definitions = {
         "Commands": [
             "aws iam attach-group-policy "
             "--group-name ${AWS::Iam::Group} "
-            "--policy-arn ${AWS::Iam::Policy}.Arn",
+            "--policy-arn ${AWS::Iam::Policy.Arn}",
         ],
 
         "Attack": {
@@ -194,7 +194,7 @@ definitions = {
         "Commands": [
             "aws iam attach-role-policy "
             "--role-name ${AWS::Iam::Role} "
-            "--policy-arn ${AWS::Iam::Policy}.Arn"
+            "--policy-arn ${AWS::Iam::Policy.Arn}"
         ],
 
         "Attack": {
@@ -220,7 +220,7 @@ definitions = {
         "Commands": [
             "aws iam attach-user-policy "
             "--user-name ${AWS::Iam::User} "
-            "--policy-arn ${AWS::Iam::Policy}.Arn",
+            "--policy-arn ${AWS::Iam::Policy.Arn}",
         ],
 
         "Attack": {
@@ -539,7 +539,7 @@ definitions = {
             "      \"Action\": \"sts:AssumeRole\",\n"
             "      \"Principal\": {\n"
             "        \"AWS\": [\n"
-            "          \"${}.Arn\"\n"
+            "          \"${.Arn}\"\n"
             "        ]\n"
             "      }\n"
             "    }\n"
@@ -549,7 +549,7 @@ definitions = {
             ")",
 
             "aws sts assume-role "
-            "--role-arn ${AWS::Iam::Role}.Arn "
+            "--role-arn ${AWS::Iam::Role.Arn} "
             "--role-session-name AssumeRole"
         ],
 
@@ -604,7 +604,7 @@ definitions = {
             "Affects": "AWS::Iam::User",
 
             "Cypher": [
-                "${AWS::Iam::User}.LoginProfile IS NULL"
+                "${AWS::Iam::User.LoginProfile} IS NULL"
             ]
         }
     },
@@ -628,7 +628,7 @@ definitions = {
 
             "Cypher": [
                 "(COALESCE(SIZE(SPLIT("
-                "${AWS::Iam::User}.AccessKeys,"
+                "${AWS::Iam::User.AccessKeys},"
                 "'Status')), 1) - 1) < 2",
             ]
 
@@ -658,7 +658,7 @@ definitions = {
 
             "Cypher": [
                 "(SIZE(SPLIT("
-                "${AWS::Iam::User}.AccessKeys,"
+                "${AWS::Iam::User.AccessKeys},"
                 "'Status')) - 1) > 0",
             ]
 
@@ -673,16 +673,19 @@ class Attacks:
     definitions = definitions
     stats = []
 
-    def __init__(self, skip_attacks=[], only_attacks=[], skip_conditional_actions=True, console=None):
+    def __init__(self, skip_attacks=[], only_attacks=[],
+                 skip_conditional_actions=True, console=None
+                 ):
 
         if console is None:
             from lib.util.console import console
-        self.console = console
 
+        self.console = console
         self.ignore_actions_with_conditions = skip_conditional_actions
         self.definitions = {k: v for k, v in self.definitions.items()
-                            if k not in skip_attacks
-                            and (only_attacks == [] or k in only_attacks)}
+                            if (k not in skip_attacks
+                                and (only_attacks == [] or k in only_attacks))
+                            }
 
     def _pattern_cypher(
             self,
@@ -716,44 +719,47 @@ class Attacks:
 
         def cypher_resolve_commands(history=False):
 
-            # A nested REPLACE operation must occur for every placeholder in the
-            # format string, each of which has to be resolved. Resolution occurs
-            # by performing a type comparison against fields in the pattern's
+            # A nested REPLACE operation must occur for every placeholder in the format string.
+            # Resolution occurs by performing a type comparison against fields in the pattern's
             # definition.
 
             _CYPHER_ = "_"
 
             for (placeholder, attr) in sorted(
-                re.findall(r"\$\{(AWS\:\:[A-Za-z0-9]+\:\:[A-Za-z0-9]+)?\}(\.[A-Za-z]+)?",
-                           ';'.join(VARs["commands"])),
-                key=lambda x: len(x[0]+x[1]),
+                    re.findall(r"\$\{(AWS\:\:[A-Za-z0-9]+\:\:[A-Za-z0-9]+)?(\.[A-Za-z]+)?\}",
+                               ';'.join(VARs["commands"])
+                               ),
+                    key=lambda x: len(x[0]+x[1]),
                     reverse=True):
 
                 substitute = None
 
                 if placeholder == attack["Affects"]:
                     substitute = "grant" if "Grants" not in attack else "option"
-                elif "Depends" in attack \
-                        and placeholder == attack["Depends"]:
+
+                elif ("Depends" in attack
+                      and placeholder == attack["Depends"]):
                     substitute = "option"
-                elif "Grants" in attack \
-                        and placeholder == attack["Grants"]:
+
+                elif ("Grants" in attack
+                      and placeholder == attack["Grants"]):
                     substitute = "grant"
+
                 elif placeholder == '':
                     substitute = "source"
+
                 else:
                     self.console.debug(f"Unknown placeholder: '{placeholder}'")
                     continue
 
-                placeholder = f"${{{placeholder}}}"
-
                 if len(attr) == 0:
                     substitute += ".Name"
+
                 else:
                     substitute += attr
                     placeholder += attr
 
-                _CYPHER_ = "REPLACE(%s, \"%s\", %s)" \
+                _CYPHER_ = "REPLACE(%s, \"${%s}\", %s)" \
                     % (_CYPHER_, placeholder, substitute)
 
             _CYPHER_ = ("EXTRACT(_ IN %s|%s)" % (VARs["commands"], _CYPHER_)
@@ -774,51 +780,61 @@ class Attacks:
 
         def resolve_placeholder(placeholder):
 
-            if "${}" == placeholder:
+            if placeholder == "":
                 return "source"
 
-            elif "${%s}" % attack["Affects"] == placeholder:
+            elif placeholder == attack["Affects"]:
                 return "target"
 
-            elif "Depends" in attack  \
-                    and "${%s}" % attack["Depends"] == placeholder:
+            elif ("Depends" in attack
+                  and placeholder == attack["Depends"]):
                 return "option"
 
-            elif "Grants" in attack  \
-                    and "${%s}" % attack["Grants"] == placeholder:
+            elif ("Grants" in attack
+                  and placeholder == attack["Grants"]):
                 return "grant"
 
             else:
-                r = re.compile(
-                    "\$\{(AWS\:\:[A-Za-z0-9:]+)\}").match(placeholder)
+                r = re.compile("(AWS\:\:[A-Za-z0-9:]+)"
+                               ).match(placeholder)
 
                 if r.group(1) is not None:
-                    return "%s:`%s`" % (r.group(1).replace(':', '').lower(), r.group(1))
-
-                # else:
-                #     notice("subject %s malformed" % placeholder, True)
+                    return str(f"{r.group(1).replace(':', '').lower()}"
+                               f":`{r.group(1)}`")
 
         def process_cypher():
 
-            WITH = ["source", "edge", "options",
-                    "target", "path", "grants", "admin"]
+            WITH = [
+                "source", "edge", "options",
+                "target", "path", "grants",
+                "admin"
+            ]
+
             CONSTRAINTS = attack["Cypher"]
             UNWIND = []
 
             placeholders = {
-                k: resolve_placeholder(k) for k in set(
-                    [r for (r, _) in re.findall(
-                        r"(\$\{(AWS\:\:[A-Za-z0-9]+\:\:[A-Za-z0-9]+)?\})",
-                        ' '.join(attack["Cypher"]))])
+                k: resolve_placeholder(k) for k in set([
+                    r for (r, _) in re.findall(
+                        r"\$\{(AWS\:\:[A-Za-z0-9]+\:\:[A-Za-z0-9]+)?(\.[A-Za-z]+)?\}",
+                        ' '.join(attack["Cypher"])
+                    )
+                ])
             }
 
             for i in range(len(CONSTRAINTS)):
 
                 for k, v in placeholders.items():
-                    if v not in UNWIND \
-                            and (v == "option" or v == "grant"):
+                    if (v not in UNWIND
+                            and v in ["option", "grant"]):
                         UNWIND.append(v)
-                    CONSTRAINTS[i] = CONSTRAINTS[i].replace(k, v)
+
+                    CONSTRAINTS[i] = re.sub(
+                        rf"\${{{k}(?P<property>\.[a-zA-Z]+)?}}",
+                        lambda x: (f"{v}{x.groupdict()['property']}"
+                                   if x.groupdict()['property'] is not None else v),
+                        CONSTRAINTS[i]
+                    )
 
                 CONSTRAINTS[i] = CONSTRAINTS[i].replace(
                     "{", "{{").replace(
@@ -1289,8 +1305,8 @@ class Attacks:
                        )
 
                 if (sum([s["nodes_created"] + s["relationships_created"]
-                         for s in self.stats[-(len(self.definitions)):]]) == 0
-                    ):
+                             for s in self.stats[-(len(self.definitions)):]]) == 0
+                        ):
                     converged = True
                     self.console.info("Search converged on iteration: "
                                       f"{iteration} of max: {max_iterations} - "
