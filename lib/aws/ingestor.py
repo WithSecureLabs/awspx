@@ -400,6 +400,7 @@ class SessionClientWrapper(object):
         'AccessDenied',
         'AccessDeniedException',
         'IllegalLocationConstraintException',
+        'UnauthorizedOperation'
     ]
 
     def __init__(self, client, console=None):
