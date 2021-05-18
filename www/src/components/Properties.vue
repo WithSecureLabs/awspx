@@ -284,6 +284,39 @@ export default {
         });
     },
 
+    permissions_boundary_resolve(permissions_boundary) {
+      const arn = permissions_boundary.PermissionsBoundaryArn;
+
+      return this.neo4j
+        .run(
+          `MATCH (p:\`AWS::Iam::Policy\`{Arn:'${arn}'}) ` +
+            "RETURN p.Document AS doc",
+          false
+        )
+        .then((r) => {
+          if (r.Text.length === 0) throw `Failed to match Policy (${arn})`;
+
+          const policy = r.Text.map((p) => {
+            return JSON.stringify(JSON.parse(p.doc)[0].DefaultVersion, null, 2)
+              .replace(/ /g, "&nbsp;")
+              .replace(/\n/g, "<br>");
+          })[0];
+
+          return {
+            key: arn.split("/")[1],
+            value: policy,
+          };
+        })
+        .catch((e) => {
+          return {
+            key: "",
+            value: JSON.stringify(permissions_boundary, null, 2)
+              .replace(/ /g, "&nbsp;")
+              .replace(/\n/g, "<br>"),
+          };
+        });
+    },
+
     view_set(element) {
       let tabs = [];
       this.notes.enabled = true;
@@ -372,7 +405,14 @@ export default {
           content = [].concat.apply([], content);
 
           //Everything else
-        } else
+        } else {
+          if (title == "PermissionsBoundary") {
+            this.permissions_boundary_resolve(content).then((r) => {
+              content[0].key = r.key;
+              content[0].value = r.value;
+            });
+          }
+
           content = [
             {
               key: "",
@@ -381,6 +421,7 @@ export default {
                 .replace(/\n/g, "<br>"),
             },
           ];
+        }
 
         tabs.push({
           title: title,
