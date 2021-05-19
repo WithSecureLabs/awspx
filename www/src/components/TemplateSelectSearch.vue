@@ -3,6 +3,7 @@
     v-on="data.on"
     :color="close ? '#484848' : '#696969'"
     @click:close="$emit('close')"
+    @click="$emit('add', data.item.element)"
     :close="close"
     class="ma-0 mr-2"
     outlined

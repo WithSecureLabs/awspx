@@ -50,6 +50,7 @@
             <TemplateSelectSearch
               :data="data"
               close
+              @add="select"
               @close="
                 search.value = search.value.filter((s) => s.id !== data.item.id)
               "
@@ -165,6 +166,12 @@ export default {
     };
   },
   methods: {
+    select(event) {
+      this.menu = false;
+      this.$emit("add", event);
+      this.$emit("select", event);
+    },
+
     focus() {
       this.active = true;
     },
@@ -178,7 +185,7 @@ export default {
       return [
         item.name,
         item.id,
-        ...Object.keys(item.tags).map(k => `${k}: ${item.tags[k]}`),
+        ...Object.keys(item.tags).map((k) => `${k}: ${item.tags[k]}`),
       ].some((k) => k.toLowerCase().includes(search.toLowerCase()));
     },
   },

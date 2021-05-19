@@ -110,6 +110,7 @@
       ref="search"
       @add="add"
       @clear="clear"
+      @select="select"
       @show="search.visible = $event"
       @advanced="search.advanced = $event"
       @visual_queries_active="search.visual_queries_active = $event"
@@ -631,6 +632,23 @@ export default {
 
     clear() {
       return cy.elements().remove();
+    },
+
+    select(elements) {
+      let collection = "length" in elements ? elements : [elements];
+      if (collection.length < 1) return;
+
+      const ids = collection.map((e) => e.data.id);
+      const selection = cy.elements().filter((e) => {
+        return ids.includes(e.data("id"));
+      });
+
+      cy.elements()
+        .difference(selection)
+        .removeClass("selected")
+        .addClass("unselected");
+        
+      selection.removeClass("unselected").addClass("selected");
     },
 
     run_layout() {

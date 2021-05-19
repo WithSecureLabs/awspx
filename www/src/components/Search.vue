@@ -22,6 +22,7 @@
           :append="{enabled: true, icon: 'mdi-tune', description: 'Advanced Search'}"
           :resources="!advanced ? resources : []"
           @append="$emit('advanced', true)"
+          @select="$emit('select', $event)"
           @add="$emit('add', $event)"
           @clear="$emit('clear')"
           :key="advanced ? 0: 1"
