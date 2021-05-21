@@ -51,7 +51,7 @@ def handle_profile(args, console=console):
 
     if args.create_profile:
         profile.create(args.create_profile)
-        if args.profile in Profile().credentials.sections():
+        if args.create_profile in Profile().credentials.sections():
             console.notice(f"Saved profile '{args.create_profile}'")
         else:
             sys.exit()
