@@ -223,7 +223,8 @@ class Console(Table):
 
             yield iterable
 
-            if wait is not None: 
+            if (wait is not None and ('__len__' not in dir(iterables)
+                                      or completed != len(iterables))):
                 self.debug(wait if wait.__class__.__name__ != 'function'
                            else wait(completed))
 
