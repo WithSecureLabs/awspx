@@ -873,7 +873,7 @@ class Attacks:
 
         CYPHER += (
             "OPTIONAL MATCH (admin)-[:ATTACK|TRANSITIVE*0..]->(:Admin), "
-            "(default:Admin{{Arn:'arn:aws:iam::${{Account}}:policy/Admin'}}) "
+            "(default:Admin{{Arn:'arn:aws:iam::{{Account}}:policy/Admin'}}) "
             "WHERE NOT (admin:Pattern OR admin:Admin) "
             "WITH COLLECT(DISTINCT COALESCE(admin, default)) AS admin, "
             "[[NULL, []]] AS options, [NULL, []] AS grants "
@@ -1222,7 +1222,7 @@ class Attacks:
                               "MERGE (admin:Admin:`AWS::Iam::Policy`{"
                               "Name: 'Effective Admin', "
                               "Description: 'Pseudo-Policy representing full and unfettered access.', "
-                              "Arn: 'arn:aws:iam::${Account}:policy/Admin', "
+                              "Arn: 'arn:aws:iam::{Account}:policy/Admin', "
                               'Document: \'[{"DefaultVersion": {"Version": "2012-10-17", '
                               '"Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"'
                               '}]}}]\''
