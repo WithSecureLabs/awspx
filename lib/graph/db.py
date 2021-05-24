@@ -284,13 +284,16 @@ class Neo4j(object):
 
     def run(self, cypher):
 
+        results = [] 
+
         if not self.available():
             self._start()
 
         try:
             with self.driver.session() as session:
-                results = session.run(cypher)
-            return results
+                results = session.run(cypher).data()
 
         except exceptions.CypherSyntaxError as e:
             self.console.error(str(e))
+        
+        return results
