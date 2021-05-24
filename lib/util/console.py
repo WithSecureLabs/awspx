@@ -227,6 +227,9 @@ class Console(Table):
 
             progress.update(completed=completed)
 
+        if done.__class__.__name__ == 'function':
+            done = done(iterables)
+
         if done is not None:
             self.notice(done, silent=True)
             text._text = [done]
