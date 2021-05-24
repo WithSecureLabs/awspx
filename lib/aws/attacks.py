@@ -671,10 +671,12 @@ class Attacks:
 
         self.console = console
         self.ignore_actions_with_conditions = skip_conditional_actions
-        self.definitions = {k: v for k, v in self.definitions.items()
-                            if (k not in skip_attacks
-                                and (only_attacks == [] or k in only_attacks))
-                            }
+
+        self.definitions = {
+            k: v for k, v in self.definitions.items()
+            if (k not in skip_attacks
+                and (only_attacks == [] or k in only_attacks))
+        }
 
     def _pattern_cypher(
             self,
@@ -738,7 +740,7 @@ class Attacks:
                     substitute = "source"
 
                 else:
-                    self.console.debug(f"Unknown placeholder: '{placeholder}'")
+                    self.console.error(f"Unknown placeholder: '{placeholder}'")
                     continue
 
                 if len(attr) == 0:
@@ -873,10 +875,10 @@ class Attacks:
 
         CYPHER += (
             "OPTIONAL MATCH (admin)-[:ATTACK|TRANSITIVE*0..]->(:Admin), "
-            "(default:Admin{{Arn:'arn:aws:iam::{{Account}}:policy/Admin'}}) "
-            "WHERE NOT (admin:Pattern OR admin:Admin) "
+            "   (default:Admin{{Arn:'arn:aws:iam::{{Account}}:policy/Admin'}}) "
+            "   WHERE NOT (admin:Pattern OR admin:Admin) "
             "WITH COLLECT(DISTINCT COALESCE(admin, default)) AS admin, "
-            "[[NULL, []]] AS options, [NULL, []] AS grants "
+            "   [[NULL, []]] AS options, [NULL, []] AS grants "
         )
 
         # Patterns including a "Depends" value require an additional argument, which must
@@ -891,29 +893,28 @@ class Attacks:
             VARs["option_type"] = attack["Depends"]
 
             CYPHER += (
-                "MATCH path=(source)-"
-                "[:TRANSITIVE|ATTACK*0..{depth}]->()-[:CREATE*0..1]->(option:`{option_type}`) "
-                "WHERE NOT source IN admin AND NOT option IN NODES(path)[1..-1] "
-                "AND (source:Resource OR source:External) AND (option:Resource OR option:Generic) "
+                "MATCH path=(source)-[:TRANSITIVE|ATTACK*0..{depth}]->()-[:CREATE*0..1]->(option:`{option_type}`) "
+                "   WHERE NOT source IN admin AND NOT option IN NODES(path)[1..-1] "
+                "   AND (source:Resource OR source:External) AND (option:Resource OR option:Generic) "
 
                 "WITH DISTINCT source, option, admin, "
-                "FILTER(_ IN RELS(path) WHERE STARTNODE(_):Pattern) AS dependencies "
+                "   FILTER(_ IN RELS(path) WHERE STARTNODE(_):Pattern) AS dependencies "
 
                 "WITH admin, COLLECT([source, option, REDUCE("
-                "commands=[], _ IN dependencies|"
-                "CASE WHEN _ IN commands THEN commands "
-                "ELSE commands + _.Commands END)]"
-                ") AS results "
+                "   commands=[], _ IN dependencies|"
+                "       CASE WHEN _ IN commands THEN commands "
+                "       ELSE commands + _.Commands END)]"
+                "   ) AS results "
 
                 "UNWIND results AS result "
 
                 "WITH admin, results, result[0] AS source, result[1] AS option, "
-                "MIN(SIZE(result[2])) AS weight "
+                "   MIN(SIZE(result[2])) AS weight "
 
                 "UNWIND results AS result "
                 "WITH admin, result, source, option, weight, result[2] AS commands "
-                "WHERE source = result[0] AND option = result[1] "
-                "AND weight = SIZE(result[2]) "
+                "   WHERE source = result[0] AND option = result[1] "
+                "   AND weight = SIZE(result[2]) "
 
                 "WITH admin, source, option, commands, weight ORDER BY weight "
                 "WITH admin, source, COLLECT([option, commands]) AS options, [NULL, []] AS grants "
@@ -938,19 +939,19 @@ class Attacks:
 
             CYPHER += ''.join((
 
-                "OPTIONAL MATCH (grant:`{grants}`) WHERE NOT grant:Generic ",
-                "AND grant:Resource " if attack["Grants"] != "Admin" else "",
-                "OPTIONAL MATCH creation=shortestPath((source)-"
-                "[:TRANSITIVE|ATTACK|CREATE*..{depth}]->(generic:Generic:`{grants}`)) ",
-                "WHERE source <> generic ",
+                "OPTIONAL MATCH (grant:`{grants}`) ",
+                "   WHERE NOT grant:Generic ",
+                "   AND grant:Resource " if attack["Grants"] != "Admin" else "",
+                "OPTIONAL MATCH creation=shortestPath((source)-[:TRANSITIVE|ATTACK|CREATE*..{depth}]->(generic:Generic:`{grants}`)) ",
+                "   WHERE source <> generic ",
 
                 "WITH DISTINCT source, options, admin, ",
                 "grant, generic, REDUCE(commands=[], _ IN EXTRACT(",
-                "_ IN FILTER(_ IN RELS(creation) ",
-                "WHERE STARTNODE(_):Pattern)|_.Commands)|",
-                "CASE WHEN _ IN commands THEN commands ",
-                "ELSE commands + _ END",
-                ") AS commands ",
+                "   _ IN FILTER(_ IN RELS(creation) ",
+                "       WHERE STARTNODE(_):Pattern)|_.Commands)|",
+                "   CASE WHEN _ IN commands THEN commands ",
+                "   ELSE commands + _ END",
+                "   ) AS commands ",
 
                 "WITH source, options, admin, ",
                 "COLLECT([grant, []]) + COLLECT([generic, commands]) AS grants ",
@@ -977,17 +978,17 @@ class Attacks:
                 "->(target:`{affects}`) ",
 
                 "WHERE NOT source:Pattern ",
-                "AND ALL(_ IN REVERSE(TAIL(REVERSE(NODES(path)))) WHERE NOT _ IN admin) ",
-                "AND edge.Condition = '[]' " if self.ignore_actions_with_conditions else "",
+                "   AND ALL(_ IN REVERSE(TAIL(REVERSE(NODES(path)))) WHERE NOT _ IN admin) ",
+                "   AND edge.Condition = '[]' " if self.ignore_actions_with_conditions else "",
 
-                # TODO: This is just a quick fix for target types that are dependant on being reachable transitively.
-                # As is, it will still produce false positives - just less than before.
+                # target types that are dependant on being reachable transitively.
 
-                'AND target IN [_ IN options|_[0]] ' if "Depends" in attack and attack["Depends"] == attack["Affects"] else "",
+                '   AND target IN [_ IN options|_[0]] ' if ("Depends" in attack
+                                                            and attack["Depends"] == attack["Affects"]) else "",
 
                 process_cypher() if "Cypher" in attack else "",
 
-                "WITH source, target, [] AS commands, options, grants, admin ",
+                "WITH  source, target, [] AS commands, options, grants, admin ",
             ))
         else:
 
@@ -996,36 +997,32 @@ class Attacks:
 
             CYPHER += ' '.join((
 
-                "MATCH path=(source)-"
-                "[:TRANSITIVE|ATTACK*0..{depth}]->()"
-                "-[edge:ACTION]->(target:`{affects}`)",
-
-                "WHERE NOT source:Pattern",
-                "AND ALL(_ IN REVERSE(TAIL(REVERSE(NODES(path)))) WHERE NOT _ IN admin)",
-                "AND edge.Name IN {requires} AND edge.Effect = 'Allow' ",
-                "AND edge.Condition = '[]' " if self.ignore_actions_with_conditions else "",
-                'AND target IN [_ IN options|_[0]] ' if "Depends" in attack and attack["Depends"] == attack["Affects"] else "",
+                "MATCH path=(source)-[:TRANSITIVE|ATTACK*0..{depth}]->()-[edge:ACTION]->(target:`{affects}`)",
+                "   WHERE NOT source:Pattern",
+                "   AND ALL(_ IN REVERSE(TAIL(REVERSE(NODES(path)))) WHERE NOT _ IN admin)",
+                "   AND edge.Name IN {requires} AND edge.Effect = 'Allow' ",
+                "   AND edge.Condition = '[]' " if self.ignore_actions_with_conditions else "",
+                '   AND target IN [_ IN options|_[0]] ' if "Depends" in attack and attack["Depends"] == attack["Affects"] else "",
 
                 process_cypher() if "Cypher" in attack else "",
 
                 "WITH COLLECT([source, edge.Name, target, path, options, grants]) AS results, admin",
-
                 "UNWIND results AS result",
                 "WITH results, result[0] AS source,",
-                "result[1] AS edge, result[2] AS target, admin",
+                "   result[1] AS edge, result[2] AS target, admin",
 
                 # Eliminate all source nodes that incorporate other source nodes
                 # producing the same edge to the same target. Nodes are validated
                 # by counting the number of distinct edges produced.
 
                 "WITH results, source,",
-                "SIZE(COLLECT(DISTINCT edge)) AS size, target, admin",
-                "WHERE size = {size}",
+                "   SIZE(COLLECT(DISTINCT edge)) AS size, target, admin",
+                "   WHERE size = {size}",
 
                 "WITH results, target, ",
-                "COLLECT(DISTINCT source) AS sources, admin ",
+                "   COLLECT(DISTINCT source) AS sources, admin ",
                 "WITH results, ",
-                "COLLECT(DISTINCT [target, sources]) AS pairs, admin ",
+                "   COLLECT(DISTINCT [target, sources]) AS pairs, admin ",
 
                 "UNWIND pairs AS pair ",
                 "UNWIND results AS result ",
@@ -1034,18 +1031,18 @@ class Attacks:
                 "result[0] AS source, result[2] AS target, ",
                 "pair[0] AS t, pair[1] AS s, ",
                 "TAIL(REVERSE(TAIL(NODES(result[3])))) AS intermediaries, admin ",
-                "WHERE ALL(_ IN intermediaries WHERE NOT _ IN s) ",
-                "AND target = t ",
+                "   WHERE ALL(_ IN intermediaries WHERE NOT _ IN s) ",
+                "   AND target = t ",
 
                 "WITH source, target, results, admin ",
                 "UNWIND results AS result "
                 "WITH source, target, result, admin "
-                "WHERE result[0] = source "
-                "AND result[2] = target "
+                "   WHERE result[0] = source "
+                "   AND result[2] = target "
 
                 "WITH result[0] AS source, result[2] AS target, ",
-                "result[3] AS path, result[4] AS options, ",
-                "result[5] AS grants, admin ",
+                "   result[3] AS path, result[4] AS options, ",
+                "   result[5] AS grants, admin ",
 
                 # Attack path weight: Each outcome is representative of a distinct
                 # requirement that must be satisfied for the associated path to be traversed.
@@ -1054,16 +1051,16 @@ class Attacks:
                 # the associated weight - or the number of steps required - will be zero.
 
                 "WITH source, target, options, grants,",
-                "FILTER(_ IN RELS(path) WHERE STARTNODE(_):Pattern) AS dependencies,",
-                "LAST(EXTRACT(_ IN RELS(path)|_.Name)) AS outcome, admin",
+                "   FILTER(_ IN RELS(path) WHERE STARTNODE(_):Pattern) AS dependencies,",
+                "   LAST(EXTRACT(_ IN RELS(path)|_.Name)) AS outcome, admin",
 
                 # [source, target, options, outcome, commands, grants, admin]
 
                 "WITH COLLECT([source, target, options, outcome,",
-                "REDUCE(commands=[], _ IN dependencies|",
-                "CASE WHEN _ IN commands THEN commands ",
-                "ELSE commands + _.Commands END), grants]",
-                ") AS results, admin",
+                "   REDUCE(commands=[], _ IN dependencies|",
+                "       CASE WHEN _ IN commands THEN commands ",
+                "       ELSE commands + _.Commands END), grants]",
+                "   ) AS results, admin",
 
                 # Attack the combined minimum weight associated with each distinct source,
                 # target node pair - all other results are discarded.
@@ -1071,17 +1068,17 @@ class Attacks:
 
                 "UNWIND results AS result",
                 "WITH results, result[0] AS source, result[1] AS target,",
-                "result[3] AS outcome, MIN(SIZE(result[4])) AS weight, admin",
+                "   result[3] AS outcome, MIN(SIZE(result[4])) AS weight, admin",
 
                 "UNWIND results AS result",
                 "WITH result, source, target, outcome, weight, admin",
-                "WHERE source = result[0] AND target = result[1]",
-                "AND outcome = result[3] AND weight = SIZE(result[4])",
+                "   WHERE source = result[0] AND target = result[1]",
+                "   AND outcome = result[3] AND weight = SIZE(result[4])",
 
                 "WITH source, target,",
-                "REDUCE(commands=[], _ IN COLLECT(result[4])|",
-                "CASE WHEN _ IN commands THEN commands",
-                "ELSE _ + commands END) AS commands,",
+                "   REDUCE(commands=[], _ IN COLLECT(result[4])|",
+                "       CASE WHEN _ IN commands THEN commands",
+                "       ELSE _ + commands END) AS commands,",
                 "result[2] AS options, result[5] AS grants, admin ",
             ))
 
@@ -1102,16 +1099,15 @@ class Attacks:
 
             CYPHER += ' '.join((
 
-                "OPTIONAL MATCH (source)-[:TRANSITIVE|ATTACK*0..{depth}]->()"
-                "-->(:Pattern)-[edge:CREATE]->(target:Generic)",
+                "OPTIONAL MATCH (source)-[:TRANSITIVE|ATTACK*0..{depth}]->()-->(:Pattern)-[edge:CREATE]->(target:Generic)",
 
                 # Previous patterns may have already satisfied Dependency requirements. In order
                 # to avoid duplicate steps, weights must be recomputed.
 
                 "WITH source, target, options, grants,",
-                "REDUCE(commands=[], _ IN commands + COALESCE(edge.Commands,[])|",
-                "CASE WHEN _ IN commands THEN commands ",
-                "ELSE commands + _ END",
+                "   REDUCE(commands=[], _ IN commands + COALESCE(edge.Commands,[])|",
+                "       CASE WHEN _ IN commands THEN commands ",
+                "       ELSE commands + _ END",
                 ") AS commands, admin",
 
                 "WHERE (NOT edge IS NULL AND target:Generic) OR target:Resource "
@@ -1140,68 +1136,71 @@ class Attacks:
             "WITH source, target, commands, grants, [[NULL, []]] AS options, admin "
             "WHERE target = option "
 
-            if "Depends" in attack \
-            and attack["Depends"] == attack["Affects"]
+            if ("Depends" in attack and attack["Depends"] == attack["Affects"])
             else "ORDER BY SIZE(commands)",
 
             "WITH source, target, commands, options, grants, admin",
             "ORDER BY SIZE(commands)",
 
-            "WITH DISTINCT source, options, COLLECT([target, commands]) AS grants, admin " \
-            if "Grants" not in attack else \
+            "WITH DISTINCT source, options, COLLECT([target, commands]) AS grants, admin " if ("Grants" not in attack) else
             "WITH DISTINCT source, COLLECT([target, commands]) AS options, grants, admin ",
 
             # if any grant in admin: grants = grants ∩ admin
 
             "UNWIND grants AS grant ",
             "WITH source, options, grant[0] AS grant, grant[1] AS commands, ",
-            "ANY(_ IN EXTRACT(_ IN grants| _[0] IN admin) WHERE _) AS isadmin ",
+            "   ANY(_ IN EXTRACT(_ IN grants| _[0] IN admin) WHERE _) AS isadmin ",
             "WHERE NOT isadmin OR grant IN admin ",
 
             "WITH DISTINCT source, options, COLLECT([grant, commands]) AS grants ",
 
-            "MERGE (source)-[:ATTACK{{Name:'{name}'}}]-> "
-            "(pattern:Pattern:{name}{{Name:'{name}'}})",
-            "ON CREATE SET ",
-            "pattern.Requires = {requires},",
-            "pattern.Depends = \"{depends}\"",
+            "MERGE (source)-[:ATTACK{{Name:'{name}'}}]->(pattern:Pattern:{name}{{Name:'{name}'}})",
+            "ON CREATE SET pattern.Requires = {requires},",
+            "   pattern.Depends = \"{depends}\"",
 
             "WITH DISTINCT source, pattern, options, grants",
             "UNWIND grants AS grant",
 
-            "WITH source, pattern, options,",
-            "grant[0] AS grant, options[0][0] AS option,",
-            "REDUCE(commands=[], _ IN options[0][1] + grant[1]|",
-            "CASE WHEN _ IN commands THEN commands",
-            "ELSE commands + _ END",
-            ") AS history",
+            "WITH source, pattern, options, grant[0] AS grant, options[0][0] AS option,",
+            "   REDUCE(commands=[], _ IN options[0][1] + grant[1]|",
+            "       CASE WHEN _ IN commands THEN commands",
+            "       ELSE commands + _ END",
+            "   ) AS history",
 
             "WITH source, pattern, options, grant, option, ",
             "%s" % cypher_resolve_commands(True),
 
             "WITH DISTINCT pattern, options, grant, option, commands ",
             "MATCH (grant) "
-            "MERGE (pattern)-[edge:%s{{Name:'{name}'}}]->(grant)" \
-            % ("CREATE" if OPTs["CreateAction"] and VARs["grants"] == "" else "ATTACK"),
-            "ON CREATE SET ",
-            "edge.Description = {description},",
-            "edge.Commands = commands,",
-            "edge.Weight = SIZE(commands),",
-            "edge.Option = ID(option)",
-            ", edge.Admin = True " if OPTs["Admin"] else ""
+            "MERGE (pattern)-[edge:%s{{Name:'{name}'}}]->(grant)" % str("CREATE" if (OPTs["CreateAction"] and VARs["grants"] == "")
+                                                                        else "ATTACK"),
+            "ON CREATE SET edge.Description = {description},",
+            "   edge.Created = True,",
+            "   edge.Commands = commands,",
+            "   edge.Weight = SIZE(commands),",
+            "   edge.Option = ID(option)",
+            ",  edge.Admin = True " if OPTs["Admin"] else ""
+            ",  patten.Created = True " if OPTs["Admin"] else ""
 
             # Create pattern options
             "WITH pattern, options "
             "UNWIND options AS option "
             "WITH pattern, option[0] AS option, option[1] AS commands "
             "MERGE (pattern)-[edge:OPTION{{Name:'Option'}}]->(option) "
-            "ON CREATE SET "
-            "edge.Weight = SIZE(commands), "
-            "edge.Description = {description}, "
-            "edge.Commands = commands " \
-            if ("Depends" in attack and attack["Depends"] != attack["Affects"]) \
-            or "Grants" in attack \
-            else ""
+            "ON CREATE SET edge.Weight = SIZE(commands), "
+            "   edge.Description = {description}, "
+            "   edge.Commands = commands " if (("Depends" in attack and attack["Depends"] != attack["Affects"])
+                                               or "Grants" in attack) else "",
+
+            # Used for stats
+            "WITH pattern",
+            "MATCH (source)-->(pattern)-[edge:ATTACK|CREATE]->(grant) WHERE edge.Created",
+            "OPTIONAL MATCH (pattern)-[:OPTION]->(option)",
+            "REMOVE edge.Created",
+            "RETURN COALESCE(source.Arn, source.Name) AS source, "
+            "   grant.Arn AS grant, "
+            "   TYPE(edge) AS edge, "
+            "   COLLECT(COALESCE(option.Arn, option.Name)) AS options"
         ))
 
         CYPHER = CYPHER.format(**VARs)
@@ -1210,12 +1209,20 @@ class Attacks:
 
     def compute(self, max_iterations=5, max_search_depth=""):
 
-        converged = False
+        converged = 0
+        pruned = 0
+
         db = Neo4j(console=self.console)
 
-        self.console.task("Removing all existing attack patterns",
-                          db.run,  args=["MATCH (p:Pattern) DETACH DELETE p"],
-                          done="Removed all existing attack patterns")
+        self.console.task("Removing all existing attacks",
+                          db.run, args=["MATCH (p) "
+                                        "WHERE p:Admin OR p:Pattern "
+                                        "OPTIONAL MATCH (p)-[a:ATTACK]->() "
+                                        "DETACH DELETE p "
+                                        "RETURN COUNT(a) AS deleted"
+                                        ],
+                          done="Removed all existing attacks"
+                          )
 
         self.console.task("Creating pseudo Admin",
                           db.run,  args=[
@@ -1230,96 +1237,98 @@ class Attacks:
                           ],
                           done="Created pseudo Admin")
 
-        for i in self.console.tasklist(
-            "Adding attack paths (this search can take a while)",
-            range(max_iterations * len(self.definitions)),
-            done="Added attack paths"
+        attacks = [
+            (list(self.definitions.keys())[i % len(self.definitions)],  # pattern name
+             int(i / len(self.definitions)) + 1,  # iteration
+             i % len(self.definitions) + 1  # pattern index
+             ) for i in range(max_iterations * len(self.definitions))
+        ]
+
+        for (pattern, iteration, i) in self.console.tasklist(
+            "Computing attack paths (this search can take a while)",
+            attacks,
+            done=lambda results: str("Added {count} potential attack paths"
+                                     ).format(count=sum([len(s["results"]) if "results" in s else 0
+                                                         for s in self.stats]) - pruned),
         ):
 
-            if converged:
+            if converged != 0:
                 continue
 
-            # First pattern definition (iteration i)
-            if (i % len(self.definitions) == 0):
-                self.console.info("Temporarily adding Admin label "
-                                  "to Generic Policy")
+            # Temporarily set the generic policy to Admin at the beginning of each iteration
+            if (i == 1):
+
+                self.console.info(
+                    "Temporarily adding Admin label to Generic Policy")
                 db.run("MATCH (gp:`AWS::Iam::Policy`:Generic) SET gp:Admin")
 
-            pattern = list(self.definitions.keys())[i % len(self.definitions)]
-            iteration = int(i / len(self.definitions)) + 1
-            definition = self.definitions[pattern]
             timestamp = time.time()
 
-            self.console.info(f"Searching for attack: {pattern} "
-                              f"(iteration: {iteration} of max: {max_iterations})")
+            self.console.info(f"Searching for attack ({i:02}/{len(self.definitions):02}): "
+                              f"{pattern} (iteration: {iteration} of max: {max_iterations})")
 
-            cypher = self._pattern_cypher(pattern, definition,
-                                          max_search_depth)
-
-            summary = db.run(cypher)._summary
+            results = db.run(self._pattern_cypher(pattern, self.definitions[pattern],
+                                                  max_search_depth))
 
             self.stats.append({
                 "pattern": pattern,
                 "iteration": iteration,
-                "nodes_created": 0,
-                "relationships_created": 0,
-                "properties_set": 0,
-                "labels_added": 0,
                 "time_elapsed": time.time() - timestamp,
-                ** summary.counters.__dict__
+                "results": results
             })
 
-            # Last pattern definition (iteration i)
-            if ((i + 1) % len(self.definitions) == 0):
+            # Remove Admin from the generic policy and mark redundant paths at the end of each iteration
+            if (i == len(self.definitions)):
+
                 self.console.info("Removing Admin label from Generic Policy")
                 db.run("MATCH (admin:`AWS::Iam::Policy`:Generic) "
                        "REMOVE admin:Admin")
 
-                self.console.info("Pruning attack paths")
+                # Only retain 'cheapest' paths to Admin, favouring transitive relationships over attacks.
+                # Unfavourable paths are marked as redundant.
 
-                # Only keep the 'cheapest' paths to admin, favouring transitive
-                # relationships over attacks
+                self.console.info("Pruning attack paths")
                 db.run("MATCH shortestPath((admin)-[:ATTACK|TRANSITIVE*1..]->(:Admin)) "
-                       "WHERE NOT (admin:Pattern OR admin:Admin) "
+                       "    WHERE NOT (admin:Pattern OR admin:Admin) "
                        "WITH admin MATCH path=(admin)-[:ATTACK|:TRANSITIVE*..]->(:Admin) "
                        "WITH DISTINCT admin, path, "
-                       "REDUCE(sum=0, _ IN EXTRACT(_ IN RELS(path)|"
-                       "COALESCE(_.Weight, 0))|sum + _) AS weight "
+                       "    REDUCE(sum=0, _ IN EXTRACT(_ IN RELS(path)|"
+                       "        COALESCE(_.Weight, 0))|sum + _"
+                       "    ) AS weight "
                        "ORDER BY admin, weight "
                        "WITH admin, COLLECT([weight, path]) AS paths "
-                       "WITH admin, FILTER(attack IN NODES(paths[0][1]) "
-                       "WHERE attack:Pattern) AS cheapest "
+                       "WITH admin, FILTER(attack IN NODES(paths[0][1]) WHERE attack:Pattern) AS cheapest "
                        "MATCH path=(admin)-[:ATTACK]->(pattern:Pattern) "
-                       "WHERE NOT pattern IN cheapest "
+                       "    WHERE NOT pattern IN cheapest "
                        "WITH pattern MATCH (source)-[attack:ATTACK]->(pattern) "
-                       "MERGE (source)-[_attack_:_ATTACK_]->(pattern) "
-                       "ON CREATE SET _attack_ = attack "
-                       "DELETE attack"
+                       "MERGE (source)-[redundant:REDUNDANT]->(pattern) "
+                       "    ON CREATE SET redundant = attack "
+                       "DELETE attack "
                        )
-
                 db.run("MATCH (admin)-[:ATTACK*..2]->(:Admin) "
                        "WITH COLLECT(DISTINCT admin) AS admins "
                        "WITH admins UNWIND admins AS admin "
                        "MATCH (source)-[:TRANSITIVE*1..]->(target) "
-                       "WHERE target IN admins "
+                       "    WHERE target IN admins "
                        "WITH DISTINCT source "
                        "MATCH (source)-[attack:ATTACK]->(pattern:Pattern) "
-                       "MERGE (source)-[_attack_:_ATTACK_]->(pattern) "
-                       "ON CREATE SET _attack_ = attack "
+                       "MERGE (source)-[redundant:REDUNDANT]->(pattern) "
+                       "    ON CREATE SET redundant = attack "
                        "DELETE attack "
                        )
 
-                if (sum([s["nodes_created"] + s["relationships_created"]
-                             for s in self.stats[-(len(self.definitions)):]]) == 0
-                        ):
-                    converged = True
+                # Achieved convergence: no new attacks were discovered during the iteration
+                if (sum([len(s["results"]) for s in self.stats[-(len(self.definitions)):]]) == 0):
+
                     self.console.info("Search converged on iteration: "
-                                      f"{iteration} of max: {max_iterations} - "
-                                      "Tidying up")
+                                      f"{iteration} of max: {max_iterations} - Tidying up")
+                    converged = iteration
 
-                if converged or (i + 1) >= (max_iterations * len(self.definitions)):
+                # Tidy up
+                if converged != 0 or iteration == max_iterations:
 
-                    if not converged:
+                    if converged == 0:
+
                         self.console.info("Reached maximum number of iterations "
                                           f"({max_iterations}) - Tidying up")
 
@@ -1358,18 +1367,17 @@ class Attacks:
                            )
 
                     # Remove redundant attack paths
-                    db.run("MATCH ()-[:_ATTACK_]->(pattern:Pattern) "
-                           "DETACH DELETE pattern"
-                           )
+                    pruned += db.run(
+                        "MATCH ()-[:REDUNDANT]->(pattern:Pattern)-[redundant:ATTACK|CREATE]->() "
+                        "DETACH DELETE pattern "
+                        "RETURN COUNT(DISTINCT redundant) AS pruned"
+                    )[0]["pruned"]
+
                     # Remove attacks affecting generic resources
-                    db.run("OPTIONAL MATCH ()-[:ATTACK]->(:Pattern)-[attack:ATTACK]->(:Generic) "
-                           "DELETE attack"
-                           )
+                    pruned += db.run(
+                        "MATCH (:Pattern)-[attack:ATTACK|CREATE]->(:Generic) "
+                        "DELETE attack "
+                        "RETURN COUNT(attack) AS pruned"
+                    )[0]["pruned"]
 
         db.close()
-
-        discovered = sum([s["nodes_created"] if "nodes_created" in s
-                          else 0 for s in self.stats])
-
-        self.console.notice(f"{discovered} potential attack paths "
-                            "were added to the database")
