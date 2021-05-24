@@ -211,7 +211,8 @@ class Console(Table):
         (text, progress, busy) = self._add(message, iterables=iterables)
 
         if wait is not None:
-            self.debug(wait)
+            self.debug(wait if wait.__class__.__name__ != 'function'
+                       else wait(0))
         else:
             self._annotate()
 
@@ -222,8 +223,9 @@ class Console(Table):
 
             yield iterable
 
-            if wait is not None:
-                self.debug(wait)
+            if wait is not None: 
+                self.debug(wait if wait.__class__.__name__ != 'function'
+                           else wait(completed))
 
             progress.update(completed=completed)
 
