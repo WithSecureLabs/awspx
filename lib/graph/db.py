@@ -181,6 +181,7 @@ class Neo4j(object):
                 "--report-file /dev/null",
                 "--ignore-missing-nodes=true",
                 "--ignore-duplicate-nodes=true",
+                "--multiline-fields=true",
                 f"--database {db}",
                 ' '.join([f"--nodes={n}" for n in nodes]),
                 ' '.join([f"--relationships={e}" for e in edges]),
