@@ -21,8 +21,8 @@ class Keywords:
 
 class Regex:
 
-    resource = '(AWS(::[A-Za-z0-9-]*){1,2})'
-    integer = '(^|\s)([\(]?)([0-9]+)([.\)])?(\s|$)'
-    archive = '((/opt/awspx/data/)?[0-9]+_[A-Za-z0-9]+.zip)'
-    database = '([A-Za-z0-9]+.db)'
-    arn = '(arn(:[{}A-Za-z0-9-_/.]*){5})'
+    arn = r'arn:aws:([a-z0-9]+):({Region}|[a-z0-9-]*):({Account}|[0-9]{12}|aws)?:([a-z0-9-]+)([A-Za-z0-9-_\.:/{}]+)?'
+    resource = r'(AWS(::[A-Za-z0-9-]*){1,2})'
+    integer = r'[0-9]+'
+    archive = r'((/opt/awspx/data/)?[0-9]+_[A-Za-z0-9]+.zip)'
+    database = r'([A-Za-z0-9]+.db)'
