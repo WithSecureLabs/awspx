@@ -52,14 +52,18 @@ class Log(Handler):
         from lib.util.keywords import Keywords, Regex
 
         message = Text(self.format(record))
-        message.highlight_regex(Regex.arn, 'dim')
-        message.highlight_regex(Regex.resource, 'i')
+
+        message.highlight_words(sorted([*Keywords.resource,
+                                        *Keywords.action,
+                                        *Keywords.edge,
+                                        *Keywords.node,
+                                        *Keywords.attack
+                                        ], key=len, reverse=True),
+                                'i')
+
         message.highlight_regex(Regex.integer, 'bold i')
-        message.highlight_words(Keywords.resource, 'i')
-        message.highlight_words(Keywords.action, 'i')
-        message.highlight_words(Keywords.edge, 'i')
-        message.highlight_words(Keywords.node, 'i')
-        message.highlight_words(Keywords.attack, 'i')
+        message.highlight_regex(Regex.resource, 'i not bold')
+        message.highlight_regex(Regex.arn, 'dim not bold not i')
 
         return message
 
