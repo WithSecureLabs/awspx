@@ -663,7 +663,8 @@ class Attacks:
     stats = []
 
     def __init__(self, skip_attacks=[], only_attacks=[],
-                 skip_conditional_actions=True, console=None
+                 skip_conditional_actions=True, max_search_depth="",
+                 console=None
                  ):
 
         if console is None:
@@ -676,6 +677,11 @@ class Attacks:
             k: v for k, v in self.definitions.items()
             if (k not in skip_attacks
                 and (only_attacks == [] or k in only_attacks))
+        }
+
+        self.cypher = {
+            k: self._pattern_cypher(k, v, max_search_depth)
+            for k, v in self.definitions.items()
         }
 
     def _pattern_cypher(
@@ -1207,7 +1213,7 @@ class Attacks:
 
         return CYPHER
 
-    def compute(self, max_iterations=5, max_search_depth=""):
+    def compute(self, max_iterations=5):
 
         converged = 0
         pruned = 0
@@ -1267,8 +1273,7 @@ class Attacks:
             self.console.info(f"Searching for attack ({i:02}/{len(self.definitions):02}): "
                               f"{pattern} (iteration: {iteration} of max: {max_iterations})")
 
-            results = db.run(self._pattern_cypher(pattern, self.definitions[pattern],
-                                                  max_search_depth))
+            results = db.run(self.cypher[pattern])
 
             self.stats.append({
                 "pattern": pattern,

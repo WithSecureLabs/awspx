@@ -163,12 +163,12 @@ def handle_attacks(args, console=console):
 
     attacks = Attacks(skip_conditional_actions=args.include_conditional_attacks == False,
                       skip_attacks=args.skip_attacks, only_attacks=args.only_attacks,
+                      max_search_depth=str(args.max_attack_depth
+                                           if args.max_attack_depth is not None
+                                           else ""),
                       console=console)
 
-    attacks.compute(max_iterations=args.max_attack_iterations,
-                    max_search_depth=str(args.max_attack_depth
-                                         if args.max_attack_depth is not None
-                                         else ""))
+    attacks.compute(max_iterations=args.max_attack_iterations)
 
 
 def handle_db(args, console=console):
