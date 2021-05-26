@@ -239,16 +239,13 @@ definitions = {
 
         "Description": "Create a new group and add the specified user to it:",
 
-        "Options": [
-            "CreateAction"
-        ],
+        "Options": {
+            "CreateAction": True,
+            "Transitive": False
+        },
 
         "Commands": [
-            "aws iam create-group --group-name ${AWS::Iam::Group}",
-
-            "aws iam add-user-to-group"
-            "   --group-name ${AWS::Iam::Group}"
-            "   --user-name ${AWS::Iam::User}"
+            "aws iam create-group --group-name ${AWS::Iam::Group}"
         ],
 
         "Attack": {
@@ -256,8 +253,7 @@ definitions = {
             "Depends": "AWS::Iam::User",
 
             "Requires": [
-                "iam:CreateGroup",
-                "iam:AddUserToGroup",
+                "iam:CreateGroup"
             ],
 
             "Affects": "AWS::Iam::Group"
@@ -269,9 +265,10 @@ definitions = {
 
         "Description": "Launch a new EC2 instance:",
 
-        "Options": [
-            "CreateAction"
-        ],
+        "Options": {
+            "CreateAction": True,
+            "Transitive": True
+        },
 
         "Commands": [
             "aws ec2 run-instances"
@@ -295,12 +292,14 @@ definitions = {
 
         "Description": "Create a new instance profile:",
 
-        "Options": [
-            "CreateAction"
-        ],
+        "Options": {
+            "CreateAction": True,
+            "Transitive": False
+        },
 
         "Commands": [
-            "aws iam create-instance-profile --instance-profile-name ${AWS::Iam::InstanceProfile}"
+            "aws iam create-instance-profile"
+            "   --instance-profile-name ${AWS::Iam::InstanceProfile}"
         ],
 
 
@@ -319,9 +318,10 @@ definitions = {
 
         "Description": "Create a new managed policy:",
 
-        "Options": [
-            "CreateAction"
-        ],
+        "Options": {
+            "CreateAction": True,
+            "Transitive": False
+        },
 
         "Commands": [
             "aws iam create-policy"
@@ -359,9 +359,10 @@ definitions = {
             "Retrieve a set of temporary security credentials from assuming the target role:"
         ],
 
-        "Options": [
-            "CreateAction"
-        ],
+        "Options": {
+            "CreateAction": True,
+            "Transitive": True
+        },
 
         "Commands": [
             "aws iam create-role"
@@ -403,9 +404,10 @@ definitions = {
 
         "Description": "Create a new user:",
 
-        "Options": [
-            "CreateAction"
-        ],
+        "Options": {
+            "CreateAction": True,
+            "Transitive": False
+        },
 
         "Commands": [
             "aws iam create-user --user-name ${AWS::Iam::User}",
@@ -417,12 +419,8 @@ definitions = {
                 "iam:CreateUser"
             ],
 
-            "Affects": "AWS::Iam::User",
+            "Affects": "AWS::Iam::User"
 
-            "Cypher": [
-                "(EXISTS((${})-[:I|ACTION{Name:'iam:CreateLoginProfile'}]->(${AWS::Iam::User}))",
-                "   OR EXISTS((${})-[:I|ACTION{Name:'iam:CreateAccessKey'}]->(${AWS::Iam::User})))"
-            ]
         }
     },
 
@@ -652,7 +650,7 @@ definitions = {
             ]
 
         }
-    },
+    }
 
 }
 
@@ -671,7 +669,7 @@ class Attacks:
             from lib.util.console import console
 
         self.console = console
-        self.ignore_actions_with_conditions = skip_conditional_actions
+        self.conditional = skip_conditional_actions
 
         self.definitions = {k: self.definitions[k]
                             for k in list(self.definitions.keys()
@@ -679,40 +677,48 @@ class Attacks:
                                           else only_attacks)
                             if k not in skip_attacks
                             }
+        self.queries = {k: self._pattern_cypher(k, v, max_search_depth)
+                        for k, v in self.definitions.items()
+                        }
 
-        self.cypher = {
-            k: self._pattern_cypher(k, v, max_search_depth)
-            for k, v in self.definitions.items()
-        }
+    def _pattern_cypher(self, name, definition,
+                        max_search_depth=""
+                        ):
 
-    def _pattern_cypher(
-            self,
-            name,
-            definition,
-            max_search_depth=""):
-
-        definition = copy.deepcopy(definition)
         attack = definition["Attack"]
+        cypher = str()
 
-        CYPHER = ""
-        VARs = {
+        strings = {
             "name": name,
             "description": list([definition["Description"]]
                                 if isinstance(definition["Description"], str)
                                 else definition["Description"]),
+
             "commands": definition["Commands"],
-            "depends": attack["Depends"] if "Depends" in attack else "",
-            "affects": attack["Affects"],
             "requires": attack["Requires"],
-            "grants": attack["Grants"] if "Grants" in attack else "",
+            "affects": attack["Affects"],
+
+            "depends": str(attack["Depends"]
+                           if "Depends" in attack
+                           else ""),
+            "grants": str(attack["Grants"]
+                          if "Grants" in attack
+                          else ""),
+
             "depth": max_search_depth,
-            "steps": len(definition["Commands"]),
             "size": len(attack["Requires"]),
         }
 
-        OPTs = {
-            "CreateAction": True if "Options" in definition and "CreateAction" in definition["Options"] else False,
-            "Admin": True if "Grants" in attack and attack["Grants"] == "Admin" else False
+        options = {
+            "CreateAction": False,
+            "Transitive": True,
+            ** dict(definition["Options"]
+                    if "Options" in definition
+                    else {}),
+            "Admin": bool(True
+                          if "Grants" in attack
+                          and attack["Grants"] == "Admin"
+                          else False),
         }
 
         def cypher_resolve_commands(history=False):
@@ -721,11 +727,11 @@ class Attacks:
             # Resolution occurs by performing a type comparison against fields in the pattern's
             # definition.
 
-            CYPHER = "_"
+            resolved = "_"
 
             for (placeholder, attr) in sorted(
                     re.findall(r"\$\{(AWS\:\:[A-Za-z0-9]+\:\:[A-Za-z0-9]+)?(\.[A-Za-z]+)?\}",
-                               ';'.join(VARs["commands"])
+                               ';'.join(strings["commands"])
                                ),
                     key=lambda x: len(x[0]+x[1]),
                     reverse=True):
@@ -757,25 +763,25 @@ class Attacks:
                     substitute += attr
                     placeholder += attr
 
-                CYPHER = f"REPLACE({CYPHER}, \"${{{placeholder}}}\", {substitute})"
+                resolved = f"REPLACE({resolved}, \"${{{placeholder}}}\", {substitute})"
 
-            CYPHER = ("EXTRACT(_ IN %s|%s)" % (VARs["commands"], CYPHER)
-                      ).replace('{', '{{').replace('}', '}}')
+            resolved = ("EXTRACT(_ IN %s|%s)" % (strings["commands"], resolved)
+                        ).replace('{', '{{').replace('}', '}}')
 
             if history:
 
-                CYPHER = (
+                resolved = (
                     "REDUCE(commands=[], _ IN history + %s|"
                     "CASE WHEN _ IN commands THEN commands "
                     "ELSE commands + _ END) "
-                    "AS commands") % (CYPHER)
+                    "AS commands") % (resolved)
 
             else:
-                CYPHER += " AS commands"
+                resolved += " AS commands"
 
-            return CYPHER
+            return resolved
 
-        def resolve_placeholder(placeholder):
+        def cypher_resolve_placeholder(placeholder):
 
             if placeholder == "":
                 return "source"
@@ -799,41 +805,41 @@ class Attacks:
                     return str(f"{r.group(1).replace(':', '').lower()}"
                                f":`{r.group(1)}`")
 
-        def process_cypher():
+        def cypher_inject():
 
-            CYPHER = ' '.join(attack["Cypher"])
-            WITH = [
-                "source", "edge", "options",
-                "target", "path", "grants", "admin"
-            ]
-            UNWIND = []
+            inject = ' '.join(attack["Cypher"])
+            retain = ["source", "edge", "options", "target",
+                      "path", "grants", "admin"
+                      ]
+
+            unwound = []
 
             for k, v in {
-                    k: resolve_placeholder(k) for k in set([
+                    k: cypher_resolve_placeholder(k) for k in set([
                         r for (r, _) in re.findall(
                             r"\$\{(AWS\:\:[A-Za-z0-9]+\:\:[A-Za-z0-9]+)?(\.[A-Za-z]+)?\}",
-                            CYPHER
+                            inject
                         )
                     ])}.items():
 
-                if (v not in UNWIND and v in ["option", "grant"]):
-                    UNWIND.append(v)
+                if (v not in unwound and v in ["option", "grant"]):
+                    unwound.append(v)
 
-                CYPHER = re.sub(
+                inject = re.sub(
                     rf"\${{{k}(?P<property>\.[a-zA-Z]+)?}}",
                     lambda x: (f"{v}{x.groupdict()['property']}"
                                if x.groupdict()['property'] is not None
                                else v),
-                    CYPHER)
+                    inject)
 
             # Expand ACTION shorthand
-            CYPHER = re.sub(
+            inject = re.sub(
                 r"\[:((?P<directive>I|D)?\|)?(?P<type>ACTION|TRUSTS)(\{(?P<properties>[^}.]*)\})?\]",
                 lambda x: ''.join([
                     str(  # D (Direct)
-                        f"[:TRANSITIVE|ATTACK*0..{VARs['depth']}]->()-" if x.groupdict()['directive'] == "I"
+                        f"[:TRANSITIVE|ATTACK*0..{strings['depth']}]->()-" if x.groupdict()['directive'] == "I"
                         # I (Indirect)
-                        else f"[:TRANSITIVE*0..{VARs['depth']}]->()-" if x.groupdict()['directive'] == "D"
+                        else f"[:TRANSITIVE*0..{strings['depth']}]->()-" if x.groupdict()['directive'] == "D"
                         # None
                         else ""
                     ),
@@ -849,38 +855,38 @@ class Attacks:
                                                    }.items()]),
                     "}]"
                 ]),
-                CYPHER)
+                inject)
 
-            if len(UNWIND) > 0:
+            if len(unwound) > 0:
 
-                CYPHER = " ".join((
-                    "WITH " + ", ".join(WITH),
+                inject = " ".join((
+                    "WITH " + ", ".join(retain),
                     " ".join(["UNWIND %s AS %s" % (i, i[:-1])
-                              for i in WITH
-                              if i[:-1] in UNWIND
+                              for i in retain
+                              if i[:-1] in unwound
                               ]),
                     "WITH " + ", ".join([i
-                                         if i[:-1] not in UNWIND
+                                         if i[:-1] not in unwound
                                          else "{i}[0] AS {i}, {i}[1] AS _{i}".format(i=i[:-1])
-                                         for i in WITH
+                                         for i in retain
                                          ]),
-                    "WHERE " + CYPHER,  # Cypher injection point
-                    "WITH " + ", ".join([i if i[:-1] not in UNWIND
+                    "WHERE " + inject,  # Cypher injection point
+                    "WITH " + ", ".join([i if i[:-1] not in unwound
                                          else "COLLECT([{i},_{i}]) AS {j}".format(i=i[:-1], j=i)
-                                         for i in WITH
+                                         for i in retain
                                          ])
                 ))
 
             else:
-                CYPHER = "AND " + CYPHER
+                inject = "AND " + inject
 
-            return re.sub("([{}]+)", lambda x: x.groups()[0] * 2, CYPHER)
+            return re.sub("([{}]+)", lambda x: x.groups()[0] * 2, inject)
 
-        # If a node, or edge, is identified to grant Admin, it is excluded from
-        # search. This is because all patterns incorporating Admin are implied
-        # - searching further would be redundant.
+        # If a node, or edge, is identified to grant Admin, it is excluded from search.
+        # This is because all patterns incorporating Admin are implied - searching further
+        # would be redundant.
 
-        CYPHER += (
+        cypher += (
             "OPTIONAL MATCH (admin)-[:ATTACK|TRANSITIVE*0..]->(:Admin), "
             "   (default:Admin{{Arn:'arn:aws:iam::{{Account}}:policy/Admin'}}) "
             "   WHERE NOT (admin:Pattern OR admin:Admin) "
@@ -892,15 +898,15 @@ class Attacks:
         # be reachable. This amounts to determining whether any nodes of that type can
         # be reached (transitively, or through performing one or more attacks).
         # Consequently, it must incorporate a weight that is computed once all required
-        # commands have been consilidated. Dependencies need to be determined first in
-        # order to avoid erroneous exclusion when we perfrom deduplication later.
+        # commands have been consilidated. Dependencies need to be determined first to
+        # avoid erroneous exclusion when deduplication is performed.
 
         if "Depends" in attack:
 
-            VARs["option_type"] = attack["Depends"]
+            strings["option_type"] = attack["Depends"]
 
-            CYPHER += (
-                "MATCH path=(source)-[:TRANSITIVE|ATTACK*0..{depth}]->()-[:CREATE*0..1]->(option:`{option_type}`) "
+            cypher += (
+                "MATCH path=(source)-[:TRANSITIVE|ATTACK*0..{depth}]->()-[:CREATE*0..1{{Transitive: True}}]->(option:`{option_type}`) "
                 "   WHERE NOT source IN admin AND NOT option IN NODES(path)[1..-1] "
                 "   AND (source:Resource OR source:External) AND (option:Resource OR option:Generic) "
 
@@ -931,7 +937,7 @@ class Attacks:
 
         else:
 
-            CYPHER += (
+            cypher += (
                 "MATCH (source) "
                 "WHERE NOT source IN admin AND (source:Resource OR source:External) "
 
@@ -944,7 +950,7 @@ class Attacks:
 
         if "Grants" in attack:
 
-            CYPHER += ''.join((
+            cypher += ''.join((
 
                 "OPTIONAL MATCH (grant:`{grants}`) ",
                 "   WHERE NOT grant:Generic ",
@@ -974,26 +980,26 @@ class Attacks:
 
         # Assert: WITH options, grants, admin
 
-        if VARs["size"] == 1 and "Depends" not in attack and "Cypher" not in attack:
+        if (strings["size"] == 1 and "Depends" not in attack and "Cypher" not in attack):
 
             # If only one relationship is required, and there are no dependencies,
             # only direct relationships need to be identified, weight computation
             # and pruning requirements can be safely ommitted.
 
-            CYPHER += ' '.join((
+            cypher += ' '.join((
                 "MATCH path=(source)-[edge:ACTION{{Name:'{requires[0]}', Effect: 'Allow'}}]"
                 "->(target:`{affects}`) ",
 
                 "WHERE NOT source:Pattern ",
                 "   AND ALL(_ IN REVERSE(TAIL(REVERSE(NODES(path)))) WHERE NOT _ IN admin) ",
-                "   AND edge.Condition = '[]' " if self.ignore_actions_with_conditions else "",
+                "   AND edge.Condition = '[]' " if self.conditional else "",
 
                 # target types that are dependant on being reachable transitively.
 
                 '   AND target IN [_ IN options|_[0]] ' if ("Depends" in attack
                                                             and attack["Depends"] == attack["Affects"]) else "",
 
-                process_cypher() if "Cypher" in attack else "",
+                cypher_inject() if "Cypher" in attack else "",
 
                 "WITH  source, target, [] AS commands, options, grants, admin ",
             ))
@@ -1002,16 +1008,16 @@ class Attacks:
             # Otherwise, the attack may incorporate indirect relationships (a dependency or
             # or a combination of one or more relationships.
 
-            CYPHER += ' '.join((
+            cypher += ' '.join((
 
                 "MATCH path=(source)-[:TRANSITIVE|ATTACK*0..{depth}]->()-[edge:ACTION]->(target:`{affects}`)",
                 "   WHERE NOT source:Pattern",
                 "   AND ALL(_ IN REVERSE(TAIL(REVERSE(NODES(path)))) WHERE NOT _ IN admin)",
                 "   AND edge.Name IN {requires} AND edge.Effect = 'Allow' ",
-                "   AND edge.Condition = '[]' " if self.ignore_actions_with_conditions else "",
+                "   AND edge.Condition = '[]' " if self.conditional else "",
                 '   AND target IN [_ IN options|_[0]] ' if "Depends" in attack and attack["Depends"] == attack["Affects"] else "",
 
-                process_cypher() if "Cypher" in attack else "",
+                cypher_inject() if "Cypher" in attack else "",
 
                 "WITH COLLECT([source, edge.Name, target, path, options, grants]) AS results, admin",
                 "UNWIND results AS result",
@@ -1089,14 +1095,14 @@ class Attacks:
                 "result[2] AS options, result[5] AS grants, admin ",
             ))
 
-        # Assert: CYPHER includes source, targets, options, grants, admin; where options, targets
+        # Assert: cypher includes source, targets, options, grants, admin; where options, targets
         #         and grants comprise of (destination, commands) tuples.
 
-        if OPTs["CreateAction"]:
+        if options["CreateAction"]:
 
             # Reduce result set to Generics only when a CreateAction has been specified.
 
-            VARs["affects"] += "`:`Generic"
+            strings["affects"] += "`:`Generic"
 
         else:
 
@@ -1104,7 +1110,7 @@ class Attacks:
             # the source must be able to create it. This additional set of actions must
             # be reflected so that it can be incorporated into computed weights
 
-            CYPHER += ' '.join((
+            cypher += ' '.join((
 
                 "OPTIONAL MATCH (source)-[:TRANSITIVE|ATTACK*0..{depth}]->()-->(:Pattern)-[edge:CREATE]->(target:Generic)",
 
@@ -1123,7 +1129,7 @@ class Attacks:
 
         # Create (source)-[:ATTACK]->(pattern:Pattern)
 
-        CYPHER += ' '.join((
+        cypher += ' '.join((
 
             "WITH DISTINCT source, target, options, grants,",
             "COALESCE(commands, []) AS commands, admin",
@@ -1175,19 +1181,22 @@ class Attacks:
             "   ) AS history",
 
             "WITH source, pattern, options, grant, option, ",
-            "%s" % cypher_resolve_commands(True),
+
+            cypher_resolve_commands(history=True),
 
             "WITH DISTINCT pattern, options, grant, option, commands ",
             "MATCH (grant) "
-            "MERGE (pattern)-[edge:%s{{Name:'{name}'}}]->(grant)" % str("CREATE" if (OPTs["CreateAction"] and VARs["grants"] == "")
+            "MERGE (pattern)-[edge:%s{{Name:'{name}'}}]->(grant)" % str("CREATE"
+                                                                        if (options["CreateAction"] and strings["grants"] == "")
                                                                         else "ATTACK"),
             "ON CREATE SET edge.Description = {description},",
             "   edge.Created = True,",
             "   edge.Commands = commands,",
             "   edge.Weight = SIZE(commands),",
             "   edge.Option = ID(option)",
-            ",  edge.Admin = True " if OPTs["Admin"] else ""
-            ",  patten.Created = True " if OPTs["Admin"] else ""
+            f",  edge.Transitive = {options['Transitive']} " if options["CreateAction"] else "",
+            ",  edge.Admin = True " if options["Admin"] else ""
+            ",  patten.Created = True " if options["Admin"] else ""
 
             # Create pattern options
             "WITH pattern, options "
@@ -1204,15 +1213,12 @@ class Attacks:
             "MATCH (source)-->(pattern)-[edge:ATTACK|CREATE]->(grant) WHERE edge.Created",
             "OPTIONAL MATCH (pattern)-[:OPTION]->(option)",
             "REMOVE edge.Created",
-            "RETURN COALESCE(source.Arn, source.Name) AS source, "
-            "   grant.Arn AS grant, "
-            "   TYPE(edge) AS edge, "
-            "   COLLECT(COALESCE(option.Arn, option.Name)) AS options"
+            "RETURN source, edge, grant, COLLECT(DISTINCT option) AS options "
         ))
 
-        CYPHER = CYPHER.format(**VARs)
+        cypher = cypher.format(**strings)
 
-        return CYPHER
+        return cypher
 
     def compute(self, max_iterations=5):
 
@@ -1274,7 +1280,10 @@ class Attacks:
             self.console.info(f"Searching for attack ({i:02}/{len(self.definitions):02}): "
                               f"{pattern} (iteration: {iteration} of max: {max_iterations})")
 
-            results = db.run(self.cypher[pattern])
+            results = db.run(self.queries[pattern])
+
+            for r in results:
+                self.console.debug(f"Added: ({r['source']['Arn']})-->({r['grant']['Arn']})")
 
             self.stats.append({
                 "pattern": pattern,
@@ -1285,6 +1294,14 @@ class Attacks:
 
             # Remove Admin from the generic policy and mark redundant paths at the end of each iteration
             if (i == len(self.definitions)):
+
+                # Move attacks affecting generic policy to Admin
+                db.run("MATCH (p:Pattern)-[attack:ATTACK]->(generic:Generic:Admin), "
+                       "   (admin:Admin{Arn:'arn:aws:iam::{Account}:policy/Admin'}) "
+                       "MERGE (p)-[a:ATTACK]->(admin) "
+                       "    ON CREATE set a = attack "
+                       "DELETE attack"
+                       )
 
                 self.console.info("Removing Admin label from Generic Policy")
                 db.run("MATCH (admin:`AWS::Iam::Policy`:Generic) "
