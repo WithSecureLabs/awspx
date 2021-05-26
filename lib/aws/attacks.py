@@ -1382,7 +1382,10 @@ class Attacks:
                     pruned += db.run(
                         "MATCH (:Pattern)-[attack:ATTACK|CREATE]->(:Generic) "
                         "DELETE attack "
-                        "RETURN COUNT(attack) AS pruned"
+                        "WITH COUNT(attack) AS pruned "
+                        "OPTIONAL MATCH (p:Pattern) WHERE NOT EXISTS((p)-[:ATTACK|CREATE]->()) "
+                        "DETACH DELETE p "
+                        "RETURN pruned"
                     )[0]["pruned"]
 
         db.close()
