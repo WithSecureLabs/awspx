@@ -1078,7 +1078,7 @@ class EC2(Ingestor):
             iterables=self.client.get_paginator(
                 "describe_nat_gateways").paginate(),
             wait="Awaiting response to ec2:DescribeNatGateways",
-            done="Added "
+            done="Added NatGateways"
         ) for ng in r["NatGateways"]]:
 
             nat_gateway["Name"] = nat_gateway["NatGatewayId"]
