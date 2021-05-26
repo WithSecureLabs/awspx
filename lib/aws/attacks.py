@@ -673,11 +673,12 @@ class Attacks:
         self.console = console
         self.ignore_actions_with_conditions = skip_conditional_actions
 
-        self.definitions = {
-            k: v for k, v in self.definitions.items()
-            if (k not in skip_attacks
-                and (only_attacks == [] or k in only_attacks))
-        }
+        self.definitions = {k: self.definitions[k]
+                            for k in list(self.definitions.keys()
+                                          if only_attacks == []
+                                          else only_attacks)
+                            if k not in skip_attacks
+                            }
 
         self.cypher = {
             k: self._pattern_cypher(k, v, max_search_depth)
