@@ -276,15 +276,21 @@ export default {
                   ? r.data.properties.Arn
                   : r.data.name;
 
-              const tags = (typeof r.data.properties.Tags === "undefined"
-                ? []
-                : JSON.parse(r.data.properties.Tags)
-              ).reduce((O, o) => {
-                let k = o.Key;
-                let v = o.Value;
-                O[k] = v;
-                return O;
-              }, {});
+              const tags = ["Tags", "TagList"]
+                .reduce((O, k) => {
+                  return [
+                    ...O,
+                    ...(typeof r.data.properties[k] === "undefined"
+                      ? []
+                      : JSON.parse(r.data.properties[k])),
+                  ];
+                }, [])
+                .reduce((O, o) => {
+                  let k = o.Key;
+                  let v = o.Value;
+                  O[k] = v;
+                  return O;
+                }, {});
 
               return {
                 name: r.data.name,
