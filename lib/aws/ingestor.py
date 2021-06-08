@@ -9,6 +9,7 @@ import zlib
 from base64 import b64decode
 from datetime import datetime
 from itertools import combinations
+from functools import reduce
 
 import boto3
 from botocore.exceptions import (ClientError, PartialCredentialsError,
@@ -491,10 +492,10 @@ class Ingestor(Elements):
                           if t.startswith(f"AWS::{self.__class__.__name__}::")]
 
         # There must be nothing specified for this service
-        if len(self.types) == 0:
+        if not load_resources and len(self.types) == 0:
+
             self.console.critical(f"No AWS::{self.__class__.__name__} resources were found in 'lib.aws.resources.py'. "
                                   "You'll need to add them before this ingestor will work.")
-            return
 
         # Ensure ingested resources conform to RESOURCES casing
         self.types = [r for r in map(lambda r: next(
@@ -507,7 +508,7 @@ class Ingestor(Elements):
 
         self.load_generics()
 
-        if load_resources and len(self.types) > 0:
+        if load_resources:
             self.load_resources()
             self.load_associatives()
 
@@ -527,80 +528,153 @@ class Ingestor(Elements):
 
         def get_resource_type_model(collection):
 
-            service = self.__class__.__name__.capitalize()
-            resource_model = collection.meta.resource_model._resource_defs
-            remap = {k: f"AWS::{service}::{v}"
-                     for k, v in {k: resource_model[k]["shape"]
-                                  if "shape" in resource_model[k]
-                                  and not resource_model[k]["shape"].startswith("Get")
-                                  else k for k in resource_model.keys()
-                                  }.items()}
+            service = self.__class__.__name__.lower()
 
-            # Map model types to RESOURCE definitions
-            for k, v in list(remap.items()):
-
-                if "load" in resource_model[k]:
-
-                    operation = resource_model[k]["load"]["request"]["operation"]
-
-                    # Find other resource types produced by the same operation.
-                    options = sorted([rt for rt, o in {
-                        rt: resource_model[key]["load"]["request"]["operation"]
-                        for key, rt in remap.items() if "load" in resource_model[key]}.items()
-                        if o == operation], key=lambda x: x in RESOURCES, reverse=True)
-
-                    if options[0] in RESOURCES:
-                        remap[k] = options[0]
-                        continue
-
-                # Find other resource types that have the same identifiers.
-                for alias in [rt for rt, i in {key: json.dumps(
-                    resource_model[key]["identifiers"], sort_keys=True)
-                        for key in resource_model.keys()}.items()
-                        if i == json.dumps(resource_model[k]["identifiers"], sort_keys=True)]:
-
-                    if f"AWS::{service}::{alias}" in RESOURCES:
-                        remap[k] = f"AWS::{service}::{alias}"
-                        break
-
-            model = {k: {remap[getattr(collection, k)._model.resource.type]: {}}
-                     for k in [attr for attr in dir(collection)
-                               if boto3.resources.collection.CollectionManager
-                               in getattr(collection, attr).__class__.__bases__]
+            model = {k: {K: [] if "actions" in K.lower() else V for K, V in v.items()}
+                     for k, v in {**collection.meta.resource_model._resource_defs,
+                                  **{service: collection.meta.resource_model._definition}
+                                  }.items()
                      }
 
-            # Update model to include reflect resources which themselves
-            # are CollectionManager(s).
-            for rt in resource_model.keys():
+            attrs = {
+                **{k: [] for k in model if k != service},
+                **reduce(
+                    lambda y, x: {
+                        **y,
+                        x[0]: list(
+                            set([x[1], *list(y[x[0]] if x[0] in y else [])]))
+                    }, [(y["resource"]["type"], x)
+                        for k, v in model.items()
+                        if "has" in v for
+                        x, y in v["has"].items()],
+                    {})
+            }
 
-                for rm in boto3.resources.factory.ResourceModel(
-                        rt, resource_model[rt],
-                        resource_model).collections:
+            shapes = {k: model[k]["shape"]
+                      if "shape" in model[k] else None
+                      for k in model
+                      }
 
-                    # Explicitly skip Version objects
-                    if rm._definition["resource"]["type"].endswith("Version"):
+            loads = {k: model[k]["load"]["request"]["operation"]
+                     if "load" in model[k] else None
+                     for k in model}
+
+            operations = {
+                **{k: None for k in model},
+                **{x["resource"]["type"]: x['request']['operation']
+                    for k in model.keys()
+                    for r, t in model[k].items()
+                    if r == "hasMany"
+                    for x in t.values()
+                   }}
+
+            actions = reduce(
+                lambda o, x: {
+                    **o,
+                    **{k: list(set([*v, *list(o[k] if k in o else [])]))
+                       for k, v in x.items()}
+                }, [{
+                    v: [k for k in operations if v == operations[k]]
+                    for v in operations.values()
+                    if v is not None
+                },
+                    {
+                        v: [k for k in loads if v == loads[k]]
+                        for v in loads.values()
+                        if v is not None
+                }], {})
+
+            def get_collections(key=service, collections=set()):
+
+                for (h, t) in [(h, model[key]["hasMany"][h]["resource"]["type"]) for h in list(
+                    model[key]["hasMany"].keys() if "hasMany" in model[key]
+                    else []
+                )]:
+
+                    if any([r in collections
+                            for r in actions[operations[t]]]
+                           ):
                         continue
 
-                    # Remap model key (only once)
-                    if rt in remap:
-                        rt = remap[rt]
+                    collections.update([t])
+                    get_collections(t, collections)
 
-                    resource_type = remap[rm._definition["resource"]["type"]]
-                    operation = rm.name
+                if key == service:
+                    collections = set([c for c in collections
+                                       if not any([any([f"{v}{a}" == c for a in attrs[c]])
+                                                   for v in collections])
+                                       and not "Version" in c
+                                       ])
 
-                    # Skip this operation if another method producing this resource
-                    # type is available from the root collection
-                    if resource_type in [list(i.keys())[0]
-                                         for i in model.values()]:
-                        continue
+                return collections
 
-                    for k, v in model.items():
+            collections = get_collections()
 
-                        if rt in v.keys():
-                            v[rt][operation] = {resource_type: {}}
-                            break
+            remap = {k: next(filter(lambda x: any([f"AWS::{service}::{y}".lower() == x.lower()
+                                                   for y in set([k, shapes[k], *attrs[k]])]
+                                                  ),
+                                    RESOURCES),
+                             None) for k in collections}
 
-            return model
+            properties = [p for p in model
+                          # just a property (i.e. no associated load action)
+                          if p != service and loads[p] is not None
+                          # not a collection subset
+                          and not any([r in collections for r in actions[loads[p]]])
+                          # is associated with a valid collection
+                          and p in [model[c][h][k]["resource"]["type"] for c in collections
+                                    for h in ["has", "hasMany"] if h in model[c]
+                                    for k in model[c][h].keys()]
+                          # doesn't produce a known resource
+                          and p not in [v.split(':')[-1] for v in remap.values()
+                                        if v is not None]
+                          # explicitly skip versioning options
+                          and not "Version" in p
+                          ]
+
+            if None in remap.values():
+
+                undefined = [k for k, v in remap.items() if v is None]
+                collections = set([c for c in collections
+                                   if c not in undefined])
+
+                properties += undefined
+
+                self.console.debug(f"No resource definitons were found for the following collection(s): "
+                                   + ', '.join(undefined) + " - they will be treated as properties")
+
+            meta = {k: {
+                "label": remap[k],
+                # (collection, method)
+                "method": [(x if x != service else None, r.name)
+                           for x in [service, *[m for m in remap if remap[m] is not None]]
+                           for r in boto3.resources.factory.ResourceModel(x, model[x], model).collections
+                           if r._definition["resource"]["type"] == k][0],
+                "loads": loads[k],
+                "props": [t for t, v in model[k]["has"].items()
+                          if v["resource"]["type"] in properties
+                          ] if "has" in model[k] else []
+            }
+                for k in remap if remap[k] is not None
+            }
+
+            model = {
+                m["method"][1]: {
+                    m["label"]: {
+                        y["method"][1]: {meta[x]["label"]: {}}
+                        for x, y in meta.items()
+                        if y["method"][0] is not None
+                        and meta[y["method"][0]]["label"] == m["label"]
+                    }
+                }
+                for m in meta.values()
+                if m["method"][0] is None
+            }
+
+            meta = {v["label"]: {x: y for x, y in v.items()
+                                 if x not in ["method", "label"]
+                                 } for v in meta.values()}
+            return (model, meta)
 
         def run_ingestor(collections, model):
 
@@ -626,57 +700,100 @@ class Ingestor(Elements):
 
                     continue
 
-                rt = ''.join(''.join([f" {c}" if c.isupper() else c for c in getattr(
-                    collections[0], attr)._model.request.operation]).split()[1:])
+                rt = ''.join(''.join([
+                    f" {c}" if c.isupper() else c
+                    for c in getattr(collections[0], attr)._model.request.operation]).split()[1:]
+                )
 
                 for operation, collection in self.console.tasklist(
                     f"Adding {rt}",
-                    iterables=map(lambda c: (
-                        getattr(c, attr).all, c), collections),
-                    wait=f"Awaiting response to {self.__class__.__name__.lower()}:"
-                    f"{getattr(collections[0], attr)._model.request.operation}",
+                    map(lambda c: (getattr(c, attr).all, c), collections),
+                    wait=str(f"Awaiting response to {self.__class__.__name__.lower()}:"
+                             f"{getattr(collections[0], attr)._model.request.operation}"),
                     done=f"Added {rt}"
                 ):
 
                     for cm in SessionClientWrapper(operation(), console=self.console):
 
-                        if 'meta' not in dir(cm) or cm.meta.data is None:
+                        if not ('meta' in dir(cm) and 'identifiers' in dir(cm.meta)):
 
                             self.console.warn(f"Skipping ServiceResource {cm}: "
-                                              "it has no properties")
+                                              "it doesn't conform to expected standards")
                             continue
 
-                        cm.meta.data["Name"] = [getattr(cm, i)
-                                                for i in cm.meta.identifiers
-                                                ][-1] if "Name" not in cm.meta.data.keys() \
-                            else cm.meta.data["Name"]
+                        properties = dict(cm.meta.data
+                                          if cm.meta.data is not None
+                                          else {})
 
-                        properties = {
-                            **cm.meta.data,
-                            **dict(collection.meta.data
-                                   if collection is not None
-                                   and not collection.__class__.__name__.endswith("ServiceResource")
-                                   and collection.meta.data is not None
-                                   else {}),
-                        }
+                        if not all([k in properties for k in ["Arn",
+                                                              "Name"
+                                                              ]]):
+                            identifiers = {
+                                i.capitalize(): getattr(cm, i)
+                                for i in cm.meta.identifiers
+                            }
 
-                        try:
-                            cm.meta.data["Arn"] = RESOURCES.definition(label).format(
-                                Region=self.session.region_name,
-                                Account=self.account,
-                                **properties)
+                            if "Arn" not in properties:
 
-                        except KeyError as p:
+                                try:
+                                    properties["Arn"] = str(
+                                        identifiers["Arn"] if "Arn" in identifiers
+                                        else RESOURCES.definition(label).format(
+                                            Region=self.session.region_name,
+                                            Account=self.account,
+                                            **properties,
+                                            # Parent properties possibly required for ARN construction (i.e S3 objects)
+                                            **dict(collection.meta.data
+                                                   if (collection is not None
+                                                       and not collection.__class__.__name__.endswith("ServiceResource")
+                                                       and collection.meta.data is not None)
+                                                   else {})
+                                        ))
 
-                            self.console.warn(f"Failed to construct resource ARN: defintion for type '{label}' is malformed - "
-                                              f"boto collection '{cm.__class__.__name__}' does not have property {p}, "
-                                              f"maybe you meant one of the following ({', '.join(properties.keys())}) instead?")
-                            continue
+                                except KeyError as p:
+
+                                    self.console.warn(f"Failed to construct resource ARN: defintion for type '{label}' is malformed - "
+                                                      f"boto collection '{cm.__class__.__name__}' does not have property {p}, "
+                                                      f"maybe you meant one of the following ({', '.join(properties.keys())}) instead?")
+                                    continue
+
+                            if "Name" not in properties:
+
+                                names = [v for k, v in identifiers.items()
+                                         if "_" not in k]
+
+                                # Construct Name from ARN
+                                if len(names) == 0:
+
+                                    match = re.compile(RESOURCES[label]).match(
+                                        properties['Arn'])
+
+                                    if match is None:
+
+                                        self.console.warn("Failed to construct resource Name from Arn: "
+                                                          f"regular expression for {label} did not match {properties['Arn']}")
+
+                                        continue
+
+                                    else:
+
+                                        names = [v for k, v in match.groupdict().items()
+                                                 if k.lower().endswith("id") or k == "Name"
+                                                 ]
+
+                                if len(names) > 0:
+                                    properties["Name"] = names[-1]
+
+                                else:
+                                    self.console.warn("Failed to construct resource Name: "
+                                                      f"ServiceResource {cm} will be skipped")
+                                    continue
 
                         # Add Resource
                         resource = Resource(labels=[label],
-                                            properties=cm.meta.data)
+                                            properties=properties)
                         self.add(resource)
+
                         collection_managers.append(cm)
 
                 for _, attrs in v.items():
@@ -684,7 +801,7 @@ class Ingestor(Elements):
 
         service = self.__class__.__name__.lower()
         collection = self.session.resource(service)
-        model = get_resource_type_model(collection)
+        (model, _) = get_resource_type_model(collection)
 
         run_ingestor([collection], model)
 
@@ -801,9 +918,10 @@ class Ingestor(Elements):
                                    f"type ({element.label()}) does not match user specifications")
                 return
 
-            if "Resource" in element.labels() and \
-                ((len(self._only_arns) > 0 and element.id() not in self._only_arns)
-                 or (len(self._skip_arns) > 0 and element.id() in self._skip_arns)):
+            if ("Resource" in element.labels()
+                and ((len(self._only_arns) > 0 and element.id() not in self._only_arns)
+                     or (len(self._skip_arns) > 0 and element.id() in self._skip_arns))):
+
                 self.console.debug(f"Skipping {element}: "
                                    "ARN does not match user specifications")
                 return
