@@ -1231,6 +1231,7 @@ class EC2(Ingestor):
             except ClientError:
                 self.console.error(f"Couldn't get user data for {name} "
                                    "- it may no longer exist.")
+                continue
 
             if 'UserData' in response.keys() and 'Value' in response['UserData'].keys():
                 userdata = b64decode(response['UserData']['Value'])
