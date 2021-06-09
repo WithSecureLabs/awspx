@@ -126,12 +126,12 @@ export default {
       form: {
         enabled: true,
         values: {
-          uri: `bolt://${new URL(location.href).host}:7687`,
+          uri: `bolt://${new URL(location.href).host.split(':')[0]}:7687`,
           username: this.neo4j.auth.username,
           password: this.neo4j.auth.password,
           status: "Disconnected",
         },
-        uri_placeholder: `bolt://${new URL(location.href).host}:7687`,
+        uri_placeholder: `bolt://${new URL(location.href).host.split(':')[0]}:7687`,
         password_masked: true,
         loading: false,
       },
