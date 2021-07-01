@@ -798,7 +798,7 @@ class Attacks:
                 return "grant"
 
             else:
-                r = re.compile("(AWS\:\:[A-Za-z0-9:]+)"
+                r = re.compile(r"(AWS::[A-Za-z0-9:]+)"
                                ).match(placeholder)
 
                 if r.group(1) is not None:
