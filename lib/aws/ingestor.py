@@ -1167,6 +1167,7 @@ class EC2(Ingestor):
         ("AWS::Ec2::NatGateway", "AWS::Ec2::NetworkInterface"),
         ("AWS::Ec2::NetworkInterface", "AWS::Ec2::SecurityGroup"),
         ("AWS::Ec2::NetworkInterface", "AWS::Ec2::Subnet"),
+        ("AWS::Ec2::Subnet", "AWS::Ec2::RouteTable"),
         ("AWS::Ec2::Vpc", "AWS::Ec2::VpcPeeringConnection"),
         ("AWS::Ec2::Vpc", "AWS::Ec2::InternetGateway"),
         ("AWS::Ec2::Vpc", "AWS::Ec2::DhcpOptions"),
@@ -1181,6 +1182,19 @@ class EC2(Ingestor):
 
         if not self.quick:
             self.get_instance_user_data()
+
+    def load_associatives(self):
+
+        super().load_associatives()
+
+        # Delete redundant Association(s) between RoutingTable (Where Main: False) and Vpc
+        self.difference_update(set(filter(lambda a: isinstance(a, Associative)
+                                          and (a.source().type("AWS::Ec2::RouteTable") and a.target().type("AWS::Ec2::Vpc"))
+                                          and any(["Main" in r and not r["Main"]
+                                                   for r in list(a.source().properties()["Associations"]
+                                                                 if "Associations" in a.source().properties()
+                                                                 else [])]),
+                                          self)))
 
     def load_resources(self):
         self.get_nat_gateways()
