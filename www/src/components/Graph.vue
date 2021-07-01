@@ -726,7 +726,7 @@ export default {
       if (value)
         config.graph.style.map(s => {
           if (
-            s.selector.includes("node") &&
+            new String(s.selector).includes("node") &&
             Object.keys(s.style).includes("label")
           ) {
             style.push({
