@@ -347,6 +347,7 @@ definitions = {
 
             "Affects": "AWS::Iam::Policy",
 
+            "Grants": "Admin"
         },
     },
 
@@ -393,7 +394,7 @@ definitions = {
 
             "Affects": "AWS::Iam::Role",
 
-        },
+        }
 
     },
 
@@ -553,9 +554,7 @@ definitions = {
             "      \"Effect\": \"Allow\",\n"
             "      \"Action\": \"sts:AssumeRole\",\n"
             "      \"Principal\": {\n"
-            "        \"AWS\": [\n"
-            "          \"${.Arn}\"\n"
-            "        ]\n"
+            "        \"AWS\": \"*\"\n"
             "      }\n"
             "    }\n"
             "  ]\n"
@@ -903,8 +902,9 @@ class Attacks:
             strings["option_type"] = attack["Depends"]
 
             cypher += (
-                "MATCH path=(source)-[:TRANSITIVE|ATTACK*0..{depth}]->()-[:CREATE*0..1{{Transitive: True}}]->(option:`{option_type}`) "
-                "   WHERE NOT source IN admin AND NOT option IN NODES(path)[1..-1] "
+                "MATCH path=(source)-[:TRANSITIVE|ATTACK|CREATE*0..{depth}]->(option:`{option_type}`) "
+                "   WHERE ALL(_ IN RELS(path) WHERE TYPE(_) <> 'CREATE' OR _.Transitive) "
+                "   AND NOT (source IN admin OR option IN NODES(path)[1..-1]) "
                 "   AND (source:Resource OR source:External) AND (option:Resource OR option:Generic) "
 
                 "WITH DISTINCT source, option, admin, "
@@ -952,8 +952,11 @@ class Attacks:
                 "OPTIONAL MATCH (grant:`{grants}`) ",
                 "   WHERE NOT grant:Generic ",
                 "   AND grant:Resource " if attack["Grants"] != "Admin" else "",
-                "OPTIONAL MATCH creation=shortestPath((source)-[:TRANSITIVE|ATTACK|CREATE*..{depth}]->(generic:Generic:`{grants}`)) ",
-                "   WHERE source <> generic ",
+
+                "OPTIONAL MATCH creation=shortestPath((source)-[:TRANSITIVE|ATTACK|CREATE*..{depth}]->(pattern:Pattern)), "
+                "   (pattern)-[create:ATTACK]->(generic) "
+                "   WHERE source <> pattern AND TYPE(REVERSE(RELS(creation))[0]) = 'CREATE' "
+                "       AND EXISTS((pattern)-[:OPTION|ATTACK]->(:`{grants}`)) ",
 
                 "WITH DISTINCT source, options, admin, ",
                 "grant, generic, REDUCE(commands=[], _ IN EXTRACT(",
@@ -961,7 +964,7 @@ class Attacks:
                 "       WHERE STARTNODE(_):Pattern)|_.Commands)|",
                 "   CASE WHEN _ IN commands THEN commands ",
                 "   ELSE commands + _ END",
-                "   ) AS commands ",
+                "   ) + create.Commands AS commands ",
 
                 "WITH source, options, admin, ",
                 "COLLECT([grant, []]) + COLLECT([generic, commands]) AS grants ",
@@ -1164,9 +1167,14 @@ class Attacks:
 
             "WITH DISTINCT source, options, COLLECT([grant, commands]) AS grants ",
 
-            "MERGE (source)-[:ATTACK{{Name:'{name}'}}]->(pattern:Pattern:{name}{{Name:'{name}'}})",
-            "ON CREATE SET pattern.Requires = {requires},",
-            "   pattern.Depends = \"{depends}\"",
+            "MERGE (source)-[edge:%s]->(pattern:Pattern:{name})" % str("CREATE" if options["CreateAction"]
+                                                                       else "ATTACK"),
+            "ON CREATE SET "
+            "   edge.Name = \"{name}\", ",
+            f"  edge.Transitive = {options['Transitive']}, " if options["CreateAction"] else "",
+            "   pattern.Name = \"{name}\","
+            "   pattern.Depends = \"{depends}\", ",
+            "   pattern.Requires = {requires}",
 
             "WITH DISTINCT source, pattern, options, grants",
             "UNWIND grants AS grant",
@@ -1183,17 +1191,12 @@ class Attacks:
 
             "WITH DISTINCT pattern, options, grant, option, commands ",
             "MATCH (grant) "
-            "MERGE (pattern)-[edge:%s{{Name:'{name}'}}]->(grant)" % str("CREATE"
-                                                                        if (options["CreateAction"] and strings["grants"] == "")
-                                                                        else "ATTACK"),
+            "MERGE (pattern)-[edge:ATTACK{{Name:'{name}'}}]->(grant)",
             "ON CREATE SET edge.Description = {description},",
             "   edge.Created = True,",
             "   edge.Commands = commands,",
             "   edge.Weight = SIZE(commands),",
             "   edge.Option = ID(option)",
-            f",  edge.Transitive = {options['Transitive']} " if options["CreateAction"] else "",
-            ",  edge.Admin = True " if options["Admin"] else ""
-            ",  patten.Created = True " if options["Admin"] else ""
 
             # Create pattern options
             "WITH pattern, options "
@@ -1207,7 +1210,7 @@ class Attacks:
 
             # Used for stats
             "WITH pattern",
-            "MATCH (source)-->(pattern)-[edge:ATTACK|CREATE]->(grant) WHERE edge.Created",
+            "MATCH (source)-->(pattern)-[edge:ATTACK]->(grant) WHERE edge.Created",
             "OPTIONAL MATCH (pattern)-[:OPTION]->(option)",
             "REMOVE edge.Created",
             "RETURN source, edge, grant, COLLECT(DISTINCT option) AS options "
@@ -1265,13 +1268,6 @@ class Attacks:
             if converged != 0:
                 continue
 
-            # Temporarily set the generic policy to Admin at the beginning of each iteration
-            if (i == 1):
-
-                self.console.info(
-                    "Temporarily adding Admin label to Generic Policy")
-                db.run("MATCH (gp:`AWS::Iam::Policy`:Generic) SET gp:Admin")
-
             timestamp = time.time()
 
             self.console.info(f"Searching for attack ({i:02}/{len(self.definitions):02}): "
@@ -1280,7 +1276,8 @@ class Attacks:
             results = db.run(self.queries[pattern])
 
             for r in results:
-                self.console.debug(f"Added: ({r['source']['Arn']})-->({r['grant']['Arn']})")
+                self.console.debug(f"Added: ({r['source']['Arn']})-->"
+                                   f"({r['grant']['Arn']})")
 
             self.stats.append({
                 "pattern": pattern,
@@ -1289,23 +1286,11 @@ class Attacks:
                 "results": results
             })
 
-            # Remove Admin from the generic policy and mark redundant paths at the end of each iteration
+            # End of iteration i
             if (i == len(self.definitions)):
 
-                # Move attacks affecting generic policy to Admin
-                db.run("MATCH (p:Pattern)-[attack:ATTACK]->(generic:Generic:Admin), "
-                       "   (admin:Admin{Arn:'arn:aws:iam::{Account}:policy/Admin'}) "
-                       "MERGE (p)-[a:ATTACK]->(admin) "
-                       "    ON CREATE set a = attack "
-                       "DELETE attack"
-                       )
-
-                self.console.info("Removing Admin label from Generic Policy")
-                db.run("MATCH (admin:`AWS::Iam::Policy`:Generic) "
-                       "REMOVE admin:Admin")
-
                 # Only retain 'cheapest' paths to Admin, favouring transitive relationships over attacks.
-                # Unfavourable paths are marked as redundant.
+                # Discarded paths are marked as redundant.
 
                 self.console.info("Pruning attack paths")
                 db.run("MATCH shortestPath((admin)-[:ATTACK|TRANSITIVE*1..]->(:Admin)) "
@@ -1325,6 +1310,7 @@ class Attacks:
                        "    ON CREATE SET redundant = attack "
                        "DELETE attack "
                        )
+
                 db.run("MATCH (admin)-[:ATTACK*..2]->(:Admin) "
                        "WITH COLLECT(DISTINCT admin) AS admins "
                        "WITH admins UNWIND admins AS admin "
@@ -1388,14 +1374,14 @@ class Attacks:
 
                     # Remove redundant attack paths
                     pruned += db.run(
-                        "MATCH ()-[:REDUNDANT]->(pattern:Pattern)-[redundant:ATTACK|CREATE]->() "
+                        "MATCH ()-[:REDUNDANT]->(pattern:Pattern)-[redundant:ATTACK]->() "
                         "DETACH DELETE pattern "
                         "RETURN COUNT(DISTINCT redundant) AS pruned"
                     )[0]["pruned"]
 
                     # Remove attacks affecting generic resources
                     pruned += db.run(
-                        "MATCH (:Pattern)-[attack:ATTACK|CREATE]->(:Generic) "
+                        "MATCH (:Pattern)-[attack:ATTACK]->(:Generic) "
                         "DELETE attack "
                         "WITH COUNT(attack) AS pruned "
                         "OPTIONAL MATCH (p:Pattern) WHERE NOT EXISTS((p)-[:ATTACK|CREATE]->()) "
