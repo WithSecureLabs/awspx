@@ -395,7 +395,6 @@ definitions = {
 
         },
 
-        "Grants": "AssumeRole"
     },
 
     "CreateUser": {
