@@ -250,8 +250,6 @@ definitions = {
 
         "Attack": {
 
-            "Depends": "AWS::Iam::User",
-
             "Requires": [
                 "iam:CreateGroup"
             ],
