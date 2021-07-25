@@ -247,7 +247,13 @@ export default {
                             }
                         }));
                 }
-                else { /* unhandled */ }
+                // Default: add the unknown node or edge
+                else {
+                    if (element.group === "edges")
+                        edges.push(element)
+                    else
+                        nodes.push(element)
+                }
             }
 
             return Promise.resolve({
