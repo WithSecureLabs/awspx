@@ -903,12 +903,12 @@ class Attacks:
 
             cypher += (
                 "MATCH path=(source)-[:TRANSITIVE|ATTACK|CREATE*0..{depth}]->(option:`{option_type}`) "
-                "   WHERE ALL(_ IN RELS(path) WHERE TYPE(_) <> 'CREATE' OR _.Transitive) "
+                "   WHERE ALL(_ IN RELATIONSHIPS(path) WHERE TYPE(_) <> 'CREATE' OR _.Transitive) "
                 "   AND NOT (source IN admin OR option IN NODES(path)[1..-1]) "
                 "   AND (source:Resource OR source:External) AND (option:Resource OR option:Generic) "
 
                 "WITH DISTINCT source, option, admin, "
-                "   FILTER(_ IN RELS(path) WHERE STARTNODE(_):Pattern) AS dependencies "
+                "   [_ IN RELATIONSHIPS(path) WHERE STARTNODE(_):Pattern] AS dependencies "
 
                 "WITH admin, COLLECT([source, option, REDUCE("
                 "   commands=[], _ IN dependencies|"
@@ -955,13 +955,13 @@ class Attacks:
 
                 "OPTIONAL MATCH creation=shortestPath((source)-[:TRANSITIVE|ATTACK|CREATE*..{depth}]->(pattern:Pattern)), "
                 "   (pattern)-[create:ATTACK]->(generic) "
-                "   WHERE source <> pattern AND TYPE(REVERSE(RELS(creation))[0]) = 'CREATE' "
+                "   WHERE source <> pattern AND TYPE(REVERSE(RELATIONSHIPS(creation))[0]) = 'CREATE' "
                 "       AND EXISTS((pattern)-[:OPTION|ATTACK]->(:`{grants}`)) ",
 
                 "WITH DISTINCT source, options, admin, ",
-                "grant, generic, REDUCE(commands=[], _ IN EXTRACT(",
-                "   _ IN FILTER(_ IN RELS(creation) ",
-                "       WHERE STARTNODE(_):Pattern)|_.Commands)|",
+                "grant, generic, REDUCE(commands=[], _ IN [",
+                "   _ IN [_ IN RELATIONSHIPS(creation) ",
+                "       WHERE STARTNODE(_):Pattern]|_.Commands]|",
                 "   CASE WHEN _ IN commands THEN commands ",
                 "   ELSE commands + _ END",
                 "   ) + create.Commands AS commands ",
@@ -1064,8 +1064,8 @@ class Attacks:
                 # the associated weight - or the number of steps required - will be zero.
 
                 "WITH source, target, options, grants,",
-                "   FILTER(_ IN RELS(path) WHERE STARTNODE(_):Pattern) AS dependencies,",
-                "   LAST(EXTRACT(_ IN RELS(path)|_.Name)) AS outcome, admin",
+                "   [_ IN RELATIONSHIPS(path) WHERE STARTNODE(_):Pattern] AS dependencies,",
+                "   LAST([_ IN RELATIONSHIPS(path)|_.Name]) AS outcome, admin",
 
                 # [source, target, options, outcome, commands, grants, admin]
 
@@ -1162,7 +1162,7 @@ class Attacks:
 
             "UNWIND grants AS grant ",
             "WITH source, options, grant[0] AS grant, grant[1] AS commands, ",
-            "   ANY(_ IN EXTRACT(_ IN grants| _[0] IN admin) WHERE _) AS isadmin ",
+            "   ANY(_ IN [_ IN grants| _[0] IN admin] WHERE _) AS isadmin ",
             "WHERE NOT isadmin OR grant IN admin ",
 
             "WITH DISTINCT source, options, COLLECT([grant, commands]) AS grants ",
@@ -1286,42 +1286,30 @@ class Attacks:
                 "results": results
             })
 
-            # End of iteration i
-            if (i == len(self.definitions)):
+            if (i == len(self.definitions)):  # End of iteration i
 
-                # Only retain 'cheapest' paths to Admin, favouring transitive relationships over attacks.
-                # Discarded paths are marked as redundant.
+                # Only retain 'cheapest' paths to Admin, using weight comprised of command length
 
                 self.console.info("Pruning attack paths")
-                db.run("MATCH shortestPath((admin)-[:ATTACK|TRANSITIVE*1..]->(:Admin)) "
-                       "    WHERE NOT (admin:Pattern OR admin:Admin) "
-                       "WITH admin MATCH path=(admin)-[:ATTACK|:TRANSITIVE*..]->(:Admin) "
-                       "WITH DISTINCT admin, path, "
-                       "    REDUCE(sum=0, _ IN EXTRACT(_ IN RELS(path)|"
-                       "        COALESCE(_.Weight, 0))|sum + _"
-                       "    ) AS weight "
-                       "ORDER BY admin, weight "
-                       "WITH admin, COLLECT([weight, path]) AS paths "
-                       "WITH admin, FILTER(attack IN NODES(paths[0][1]) WHERE attack:Pattern) AS cheapest "
-                       "MATCH path=(admin)-[:ATTACK]->(pattern:Pattern) "
-                       "    WHERE NOT pattern IN cheapest "
-                       "WITH pattern MATCH (source)-[attack:ATTACK]->(pattern) "
-                       "MERGE (source)-[redundant:REDUNDANT]->(pattern) "
-                       "    ON CREATE SET redundant = attack "
-                       "DELETE attack "
-                       )
-
-                db.run("MATCH (admin)-[:ATTACK*..2]->(:Admin) "
-                       "WITH COLLECT(DISTINCT admin) AS admins "
-                       "WITH admins UNWIND admins AS admin "
-                       "MATCH (source)-[:TRANSITIVE*1..]->(target) "
-                       "    WHERE target IN admins "
-                       "WITH DISTINCT source "
-                       "MATCH (source)-[attack:ATTACK]->(pattern:Pattern) "
-                       "MERGE (source)-[redundant:REDUNDANT]->(pattern) "
-                       "    ON CREATE SET redundant = attack "
-                       "DELETE attack "
-                       )
+                pruned += db.run("MATCH shortestPath((admin)-[:ATTACK|TRANSITIVE*1..]->(:Admin)) "
+                                 "    WHERE NOT (admin:Pattern OR admin:Admin) "
+                                 "WITH admin MATCH path=(admin)-[:ATTACK|TRANSITIVE*..]->(:Admin) "
+                                 "WITH DISTINCT admin, path, "
+                                 "    REDUCE(sum=0, _ IN [_ IN RELATIONSHIPS(path)|"
+                                 "        COALESCE(_.Weight, 0)]|sum + _"
+                                 "    ) AS weight "
+                                 "ORDER BY admin, weight "
+                                 "WITH admin, COLLECT([weight, path]) AS paths "
+                                 "WITH admin, [attack IN NODES(paths[0][1]) WHERE attack:Pattern] AS cheapest "
+                                 "MATCH path=(admin)-[:ATTACK]->(pattern:Pattern) "
+                                 "    WHERE NOT pattern IN cheapest "
+                                 "WITH pattern MATCH (source)-[attack:ATTACK]->(pattern) "
+                                 "MERGE (source)-[redundant:REDUNDANT]->(pattern) "
+                                 "    ON CREATE SET redundant = attack "
+                                 "DELETE attack "
+                                 "WITH pattern MATCH pruned=()-[:REDUNDANT]->(pattern)-[:ATTACK]->() "
+                                 "RETURN COUNT(pruned) AS pruned"
+                                 )[0]["pruned"]
 
                 # Achieved convergence: no new attacks were discovered during the iteration
                 if (sum([len(s["results"]) for s in self.stats[-(len(self.definitions)):]]) == 0):
@@ -1340,17 +1328,17 @@ class Attacks:
 
                     # Update attack descriptions
                     db.run("MATCH (:Pattern)-[attack:ATTACK|OPTION|CREATE]->() "
-                           "WHERE LENGTH(attack.Commands) > 0 "
+                           "WHERE SIZE(attack.Commands) > 0 "
                            "WITH COLLECT(DISTINCT attack) AS attacks "
                            "UNWIND attacks AS attack "
 
                            # Construct a lookup table comprising of command, description pairs.
                            "WITH attacks, attack, "
-                           "   LENGTH(attack.Commands) - LENGTH(attack.Description) AS offset "
+                           "   SIZE(attack.Commands) - SIZE(attack.Description) AS offset "
                            "WITH attacks, offset, attack, "
-                           "   EXTRACT(i IN RANGE(0, LENGTH(attack.Commands) -1)|[attack.Commands[i], "
+                           "   [i IN RANGE(0, SIZE(attack.Commands) -1)|[attack.Commands[i], "
                            "       CASE WHEN i - offset < 0 THEN NULL "
-                           "       ELSE attack.Description[i - offset] END]) "
+                           "       ELSE attack.Description[i - offset] END]] "
                            "   AS lookups "
 
                            # Remove NULL value command, description pairs
@@ -1363,8 +1351,8 @@ class Attacks:
 
                            # Map attack commands to descriptions
                            "WITH attack, lookups, ["
-                           "   description IN EXTRACT(command IN attack.Commands|"
-                           "       [lookup in lookups WHERE lookup[0] = command][0][1]) "
+                           "   description IN [command IN attack.Commands|"
+                           "       [lookup in lookups WHERE lookup[0] = command][0][1]] "
                            "   WHERE description IS NOT NULL"
                            "] AS descriptions "
 
@@ -1373,11 +1361,10 @@ class Attacks:
                            )
 
                     # Remove redundant attack paths
-                    pruned += db.run(
-                        "MATCH ()-[:REDUNDANT]->(pattern:Pattern)-[redundant:ATTACK]->() "
-                        "DETACH DELETE pattern "
-                        "RETURN COUNT(DISTINCT redundant) AS pruned"
-                    )[0]["pruned"]
+                    db.run("MATCH ()-[:REDUNDANT]->(pattern:Pattern)-[redundant:ATTACK]->() "
+                           "DETACH DELETE pattern "
+                           "RETURN COUNT(DISTINCT redundant) AS pruned"
+                           )
 
                     # Remove attacks affecting generic resources
                     pruned += db.run(
