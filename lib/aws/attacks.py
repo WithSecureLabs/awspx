@@ -1113,7 +1113,8 @@ class Attacks:
 
             cypher += ' '.join((
 
-                "OPTIONAL MATCH (source)-[:TRANSITIVE|ATTACK*0..{depth}]->()-->(:Pattern)-[edge:CREATE]->(target:Generic)",
+                "OPTIONAL MATCH (source)-[:TRANSITIVE|ATTACK*0..{depth}]->"
+                "   ()-[edge:CREATE]->(:Pattern)-->(target:Generic)",
 
                 # Previous patterns may have already satisfied Dependency requirements. In order
                 # to avoid duplicate steps, weights must be recomputed.
