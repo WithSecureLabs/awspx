@@ -706,15 +706,16 @@ class Attacks:
         }
 
         options = {
+            "AffectsGeneric": False,
             "CreateAction": False,
             "Transitive": True,
-            ** dict(definition["Options"]
-                    if "Options" in definition
-                    else {}),
             "Admin": bool(True
                           if "Grants" in attack
                           and attack["Grants"] == "Admin"
                           else False),
+            ** dict(definition["Options"]
+                    if "Options" in definition
+                    else {}),
         }
 
         def cypher_resolve_commands(history=False):
@@ -1099,7 +1100,7 @@ class Attacks:
         # Assert: cypher includes source, targets, options, grants, admin; where options, targets
         #         and grants comprise of (destination, commands) tuples.
 
-        if options["CreateAction"]:
+        if options["AffectsGeneric"] or options["CreateAction"]:
 
             # Reduce result set to Generics only when a CreateAction has been specified.
 
