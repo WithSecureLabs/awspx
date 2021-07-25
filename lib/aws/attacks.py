@@ -761,7 +761,7 @@ class Attacks:
 
                 resolved = f"REPLACE({resolved}, \"${{{placeholder}}}\", {substitute})"
 
-            resolved = ("EXTRACT(_ IN %s|%s)" % (strings["commands"], resolved)
+            resolved = ("[_ IN %s|%s]" % (strings["commands"], resolved)
                         ).replace('{', '{{').replace('}', '}}')
 
             if history:
@@ -842,6 +842,7 @@ class Attacks:
                     f"[:{x.groupdict()['type']}{{",
                     ', '.join([
                         f"{k}: '{v}'" for k, v in {"Effect": 'Allow',  # Default to allow
+                                                   **dict({"Condition": []} if self.conditional else {}),
                                                    **{k: v for (k, v) in [
                                                        re.sub(r"[^\S]*(?P<k>[^:.]*):'(?P<v>[^'.]*)'",
                                                               lambda x: f"{x.groupdict()['k']},{x.groupdict()['v']}",
