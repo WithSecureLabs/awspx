@@ -640,8 +640,8 @@ class Ingestor(Elements):
 
                 properties += undefined
 
-                self.console.debug(f"No resource definitons were found for the following collection(s): "
-                                   + ', '.join(undefined) + " - they will be treated as properties")
+                # self.console.debug(f"No resource definitons were found for the following collection(s): "
+                #                    + ', '.join(undefined) + " - they will be treated as properties")
 
             meta = {k: {
                 "label": remap[k],
@@ -651,12 +651,11 @@ class Ingestor(Elements):
                            for r in boto3.resources.factory.ResourceModel(x, model[x], model).collections
                            if r._definition["resource"]["type"] == k][0],
                 "loads": loads[k],
-                "props": [t for t, v in model[k]["has"].items()
+                "props": {t: loads[v["resource"]["type"]]
+                          for t, v in model[k]["has"].items()
                           if v["resource"]["type"] in properties
-                          ] if "has" in model[k] else []
-            }
-                for k in remap if remap[k] is not None
-            }
+                          } if "has" in model[k] else {}
+            } for k in remap if remap[k] is not None}
 
             model = {
                 m["method"][1]: {
@@ -674,6 +673,7 @@ class Ingestor(Elements):
             meta = {v["label"]: {x: y for x, y in v.items()
                                  if x not in ["method", "label"]
                                  } for v in meta.values()}
+
             return (model, meta)
 
         def run_ingestor(collections, model):
@@ -683,8 +683,8 @@ class Ingestor(Elements):
 
             for attr, v in model.items():
 
-                label = list(v.keys())[0]
                 collection_managers = []
+                label = list(v.keys())[0]
 
                 if len(self.types) > 0 and label not in self.types:
 
@@ -751,7 +751,6 @@ class Ingestor(Elements):
                                         ))
 
                                 except KeyError as p:
-
                                     self.console.warn(f"Failed to construct resource ARN: defintion for type '{label}' is malformed - "
                                                       f"boto collection '{cm.__class__.__name__}' does not have property {p}, "
                                                       f"maybe you meant one of the following ({', '.join(properties.keys())}) instead?")
@@ -794,7 +793,8 @@ class Ingestor(Elements):
                                             properties=properties)
                         self.add(resource)
 
-                        collection_managers.append(cm)
+                        if resource in self:
+                            collection_managers.append(cm)
 
                 for _, attrs in v.items():
                     run_ingestor(collection_managers, attrs)
