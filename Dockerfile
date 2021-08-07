@@ -1,4 +1,4 @@
-FROM neo4j:3.5.13
+FROM neo4j:4.3.2-community
 
 COPY . /opt/awspx
 WORKDIR /opt/awspx
@@ -25,6 +25,9 @@ RUN apt -y update && apt install -y \
     && npm install -g npm@latest 
 
 RUN cd /opt/awspx/www && npm install 
+RUN gosu neo4j wget -q --timeout 300 --tries 30 --output-document=/var/lib/neo4j/plugins/apoc.jar \
+        https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/4.3.0.0/apoc-4.3.0.0-all.jar \
+        && chmod 644 /var/lib/neo4j/plugins/apoc.jar
 
 VOLUME /opt/awspx/data
 EXPOSE 7373 7474 7687 80 

@@ -1,17 +1,20 @@
+import datetime
 import os
 import re
 import shutil
-import sys
 import subprocess
+import sys
 import time
+import warnings
 
-from neo4j import GraphDatabase, exceptions
-import datetime
+from neo4j import ExperimentalWarning, GraphDatabase, exceptions
 
+warnings.filterwarnings("ignore", category=ExperimentalWarning)
 
 NEO4J_DB_DIR = "/data/databases"
 NEO4J_ZIP_DIR = "/opt/awspx/data"
 NEO4J_CONF_DIR = "/var/lib/neo4j/conf"
+NEO4J_TRANS_DIR = "/data/transactions"
 
 
 class Neo4j(object):
@@ -22,8 +25,7 @@ class Neo4j(object):
             if z.endswith(".zip")]
 
     databases = [db for db in os.listdir(f"{NEO4J_DB_DIR}/")
-                 if os.path.isdir(f"{NEO4J_DB_DIR}/{db}")
-                 and db.endswith(".db")]
+                 if os.path.isdir(f"{NEO4J_DB_DIR}/{db}")]
 
     def __init__(self,
                  host="localhost",
@@ -49,7 +51,9 @@ class Neo4j(object):
         while retries < max_retries and not self.available():
 
             if retries == 0:
-                subprocess.Popen(["nohup", "/docker-entrypoint.sh", "neo4j", "console", "&"],
+
+                subprocess.Popen(["nohup", "/docker-entrypoint.sh",
+                                  "neo4j", "console", "&"],
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT)
             time.sleep(1)
@@ -58,6 +62,7 @@ class Neo4j(object):
         if not self.available():
             self.console.critical("Neo4j failed to start")
             return False
+
         elif retries == 0:
             self.console.info("Neo4j has already been started")
         else:
@@ -78,7 +83,13 @@ class Neo4j(object):
         if self.running():
             self.console.critical("Neo4j failed to stop")
             return False
-        elif retries == 0:
+
+        subprocess.Popen(["rm", "-f", f"{NEO4J_DB_DIR}/store_lock",
+                          f"{NEO4J_DB_DIR}/system/database_lock"],
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT)
+
+        if retries == 0:
             self.console.info("Neo4j has already been stopped")
         else:
             self.console.info("Neo4j has successfully been stopped")
@@ -87,7 +98,8 @@ class Neo4j(object):
 
     def _delete(self, db):
 
-        subprocess.Popen(["rm", "-rf", f"{NEO4J_DB_DIR}/{db}"])
+        subprocess.Popen(["rm", "-rf", f"{NEO4J_DB_DIR}/{db}",
+                          f"{NEO4J_TRANS_DIR}/{db}"])
 
     def _run(self, tx, cypher):
         results = tx.run(cypher)
@@ -95,12 +107,11 @@ class Neo4j(object):
 
     def _switch_database(self, db):
 
-        subprocess.Popen([
-            "sed", "-i",
-            '/^\(#\)\{0,1\}dbms.active_database=/s/.*/dbms.active_database=%s/' % db,
-            f"{NEO4J_CONF_DIR}/neo4j.conf"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT).communicate()
+        subprocess.Popen(["sed", "-i",
+                          '/^\(#\)\{0,1\}dbms.default_database=/s/.*/dbms.default_database=%s/' % db,
+                          f"{NEO4J_CONF_DIR}/neo4j.conf"
+                          ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                         ).communicate()
 
     def _load(self, archives, db):
 
@@ -162,38 +173,30 @@ class Neo4j(object):
                         with open(f'{v["DIR"]}/{c}', 'w') as f:
                             f.write('\n'.join(rows))
 
-        directory = ARCHIVES[list(ARCHIVES.keys())[0]]["DIR"]
-
-        csvs = [f"{a['DIR']}/{csv}"
-                for a in ARCHIVES.values()
+        csvs = [f"{a['DIR']}/{csv}" for a in ARCHIVES.values()
                 for csv in a["CSV"]]
 
         edges = [e for e in csvs
                  if re.compile("(.*/)?([A-Z]+)\.csv").match(e)]
+
         nodes = [n for n in csvs
                  if n not in edges]
 
         self._delete(db)
 
-        with open(f"{directory}/config.txt", "w") as config:
-
-            conf = ' '.join([
-                "--report-file /dev/null",
-                "--ignore-missing-nodes=true",
-                "--ignore-duplicate-nodes=true",
-                "--multiline-fields=true",
-                f"--database {db}",
-                ' '.join([f"--nodes={n}" for n in nodes]),
-                ' '.join([f"--relationships={e}" for e in edges]),
-            ])
-
-            config.write(conf)
-
-        stdout, _ = subprocess.Popen(["/docker-entrypoint.sh", "neo4j-admin", "import", "--f", f"{directory}/config.txt"],
+        stdout, _ = subprocess.Popen(["/docker-entrypoint.sh", "neo4j-admin", "import",
+                                      "--report-file", "/dev/null",
+                                      "--skip-duplicate-nodes", "true",
+                                      "--skip-bad-relationships", "true",
+                                      "--multiline-fields=true",
+                                      f"--database={db}",
+                                      *[f"--nodes={n}" for n in nodes],
+                                      *[f"--relationships={e}" for e in edges]],
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT).communicate()
 
         subprocess.Popen(["rm", "-rf", *[a["DIR"] for a in ARCHIVES.values()]])
+
         stats = re.compile("([0-9a-zA-Z]+)."
                            "Imported:([0-9]+)nodes"
                            "([0-9]+)relationships"
@@ -231,10 +234,12 @@ class Neo4j(object):
     def close(self):
         if self.driver is not None:
             self.driver.close()
+            self.driver = None
 
     def available(self):
         try:
             self.open()
+            self.driver.verify_connectivity()
         except Exception:
             return False
         return True
@@ -251,7 +256,7 @@ class Neo4j(object):
         self.console.task("Starting Neo4j",
                           self._start, done="Started Neo4j")
 
-    def load_zips(self, archives=[], db='default.db'):
+    def load_zips(self, archives=[], db='neo4j'):
 
         archives = [f"{NEO4J_ZIP_DIR}/{a}"
                     if not a.startswith(f"{NEO4J_ZIP_DIR}/") else a
@@ -285,7 +290,7 @@ class Neo4j(object):
 
     def run(self, cypher):
 
-        results = [] 
+        results = []
 
         if not self.available():
             self._start()
@@ -296,5 +301,5 @@ class Neo4j(object):
 
         except exceptions.CypherSyntaxError as e:
             self.console.error(str(e))
-        
+
         return results

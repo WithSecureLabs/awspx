@@ -28,7 +28,7 @@ class IngestionManager(Elements):
     zip = None
 
     def __init__(self, session, console=None,
-                 services=[], db="default.db",
+                 services=[], db="default",
                  quick=False, skip_actions=False,
                  only_types=[], skip_types=[],
                  only_arns=[], skip_arns=[]):
@@ -268,14 +268,11 @@ class IngestionManager(Elements):
                 self.update(acl.principals())
                 self.update(acl.actions())
 
-    def save(self, db="default.db", path="/opt/awspx/data"):
+    def save(self, db="default", path="/opt/awspx/data"):
 
         archive = None
         edge_files = []
         node_files = []
-
-        if not db.endswith(".db"):
-            db = "%s.db" % db
 
         directory = f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{db.split('.')[0]}"
         labels = sorted(list(set([

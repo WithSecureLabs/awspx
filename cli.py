@@ -181,7 +181,7 @@ def handle_db(args, console=console):
     if args.load_zips:
 
         db.load_zips(archives=args.load_zips,
-                     db=args.database if 'database' in args else 'default.db')
+                     db=args.database if 'database' in args else 'default')
 
     elif args.list_dbs:
         db.list()
@@ -198,8 +198,8 @@ def main():
         return p
 
     def database(p):
-        if re.compile("[A-Za-z0-9-_]+.db").match(p) is None:
-            suggestion = re.sub(r'[^A-Za-z0-9-_]+(\.db)?', '', p) + ".db"
+        if re.compile("[A-Za-z0-9-_]+").match(p) is None:
+            suggestion = re.sub(r'[^A-Za-z0-9-_]+', '', p)
             raise argparse.ArgumentTypeError(
                 f"'{p}' is invalid, perhaps you meant '{suggestion}' instead?")
         return p
@@ -302,7 +302,7 @@ def main():
     pnr.add_argument('--region', dest='region', default="eu-west-1", choices=Profile.regions,
                      help="Region to ingest (defaults to profile region, or `eu-west-1` if not set).")
     pnr.add_argument('--database', dest='database', default=None, type=database,
-                     help="Database to store results (defaults to <profile>.db).")
+                     help="Database to store results (defaults to <profile>).")
 
     # Services & resources args
     snr = ingest_parser.add_argument_group("Services and resources")
@@ -384,9 +384,9 @@ def main():
 
     args = parser.parse_args()
 
-    # Unless a database has been defined for ingest, default to <profile>.db
+    # Unless a database has been defined for ingest, default to <profile>
     if 'database' in args and args.database is None:
-        args.database = f"{args.profile}.db"
+        args.database = f"{args.profile}"
 
     if 'verbose' in args and args.verbose:
         console.verbose()
