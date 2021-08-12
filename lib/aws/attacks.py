@@ -885,7 +885,7 @@ class Attacks:
         # would be redundant.
 
         cypher += (
-            "OPTIONAL MATCH (admin)-[:ATTACK|TRANSITIVE*0..]->(:Admin), "
+            "OPTIONAL MATCH (admin)-[r:ATTACK|TRANSITIVE*0..]->(:Admin), "
             "   (default:Admin{{Arn:'arn:aws:iam::{{Account}}:policy/Admin'}}) "
             "   WHERE NOT (admin:Pattern OR admin:Admin) "
             "WITH COLLECT(DISTINCT COALESCE(admin, default)) AS admin, "
@@ -997,7 +997,6 @@ class Attacks:
                 "   AND edge.Condition = '[]' " if self.conditional else "",
 
                 # target types that are dependant on being reachable transitively.
-
                 '   AND target IN [_ IN options|_[0]] ' if ("Depends" in attack
                                                             and attack["Depends"] == attack["Affects"]) else "",
 
@@ -1017,7 +1016,8 @@ class Attacks:
                 "   AND ALL(_ IN REVERSE(TAIL(REVERSE(NODES(path)))) WHERE NOT _ IN admin)",
                 "   AND edge.Name IN {requires} AND edge.Effect = 'Allow' ",
                 "   AND edge.Condition = '[]' " if self.conditional else "",
-                '   AND target IN [_ IN options|_[0]] ' if "Depends" in attack and attack["Depends"] == attack["Affects"] else "",
+                '   AND target IN [_ IN options|_[0]] ' if ("Depends" in attack
+                                                            and attack["Depends"] == attack["Affects"]) else "",
 
                 cypher_inject() if "Cypher" in attack else "",
 
@@ -1142,12 +1142,11 @@ class Attacks:
             # has been specified.
 
             "UNWIND options AS option "
-            "WITH source, target, grants, "
-            "option[0] AS option,"
-            "REDUCE(commands=[], _ IN commands + option[1]|"
-            "CASE WHEN _ IN commands THEN commands "
-            "ELSE commands + _ END"
-            ") AS commands, admin "
+            "WITH source, target, grants, option[0] AS option,"
+            "   REDUCE(commands=[], _ IN commands + option[1]|"
+            "       CASE WHEN _ IN commands THEN commands "
+            "       ELSE commands + _ END"
+            "   ) AS commands, admin "
 
             "WITH source, target, commands, grants, [[NULL, []]] AS options, admin "
             "WHERE target = option "
@@ -1165,7 +1164,7 @@ class Attacks:
 
             "UNWIND grants AS grant ",
             "WITH source, options, grant[0] AS grant, grant[1] AS commands, ",
-            "   ANY(_ IN [_ IN grants| _[0] IN admin] WHERE _) AS isadmin ",
+            "   ANY(_ IN grants WHERE _[0] IN admin) AS isadmin ",
             "WHERE NOT isadmin OR grant IN admin ",
 
             "WITH DISTINCT source, options, COLLECT([grant, commands]) AS grants ",
@@ -1291,43 +1290,47 @@ class Attacks:
 
             if (i == len(self.definitions)):  # End of iteration i
 
-                # Only retain 'cheapest' paths to Admin, using weight comprised of command length
-
-                self.console.info("Pruning attack paths")
-                pruned += db.run("MATCH shortestPath((admin)-[:ATTACK|TRANSITIVE*1..]->(:Admin)) "
-                                 "    WHERE NOT (admin:Pattern OR admin:Admin) "
-                                 "WITH admin MATCH path=(admin)-[:ATTACK|TRANSITIVE*..]->(:Admin) "
-                                 "WITH DISTINCT admin, path, "
-                                 "    REDUCE(sum=0, _ IN [_ IN RELATIONSHIPS(path)|"
-                                 "        COALESCE(_.Weight, 0)]|sum + _"
-                                 "    ) AS weight "
-                                 "ORDER BY admin, weight "
-                                 "WITH admin, COLLECT([weight, path]) AS paths "
-                                 "WITH admin, [attack IN NODES(paths[0][1]) WHERE attack:Pattern] AS cheapest "
-                                 "MATCH path=(admin)-[:ATTACK]->(pattern:Pattern) "
-                                 "    WHERE NOT pattern IN cheapest "
-                                 "WITH pattern MATCH (source)-[attack:ATTACK]->(pattern) "
-                                 "MERGE (source)-[redundant:REDUNDANT]->(pattern) "
-                                 "    ON CREATE SET redundant = attack "
-                                 "DELETE attack "
-                                 "WITH pattern MATCH pruned=()-[:REDUNDANT]->(pattern)-[:ATTACK]->() "
-                                 "RETURN COUNT(pruned) AS pruned"
-                                 )[0]["pruned"]
-
-                # Achieved convergence: no new attacks were discovered during the iteration
+                # Check for convergence
                 if (sum([len(s["results"]) for s in self.stats[-(len(self.definitions)):]]) == 0):
-
-                    self.console.info("Search converged on iteration: "
-                                      f"{iteration} of max: {max_iterations} - Tidying up")
                     converged = iteration
 
-                # Tidy up
+                # Only retain 'cheapest' paths to Admin, using weight comprised of command length
+
+                redundant = db.run("MATCH shortestPath((admin)-[r:ATTACK|TRANSITIVE*1..]->(:Admin)) "
+                                   "    WHERE NOT (admin:Pattern OR admin:Admin) "
+                                   "WITH admin MATCH path=(admin)-[r:ATTACK|TRANSITIVE*..]->(:Admin) "
+                                   "WITH DISTINCT admin, path, "
+                                   "    REDUCE(sum=0, _ IN [_ IN RELATIONSHIPS(path)|"
+                                   "        COALESCE(_.Weight, 0)]|sum + _"
+                                   "    ) AS weight "
+                                   "ORDER BY admin, weight "
+                                   "WITH admin, COLLECT([weight, path]) AS paths "
+                                   "WITH admin, [attack IN NODES(paths[0][1]) WHERE attack:Pattern] AS cheapest "
+                                   "MATCH path=(admin)-[:ATTACK]->(pattern:Pattern) "
+                                   "    WHERE NOT pattern IN cheapest "
+                                   "WITH pattern MATCH (source)-[attack:ATTACK]->(pattern) "
+                                   "MERGE (source)-[redundant:REDUNDANT]->(pattern) "
+                                   "    ON CREATE SET redundant = attack "
+                                   "DELETE attack "
+                                   "WITH pattern MATCH pruned=()-[:REDUNDANT]->(pattern)-[:ATTACK]->() "
+                                   "RETURN COUNT(pruned) AS pruned"
+                                   )[0]["pruned"]
+
+                if redundant > 0:
+                    self.console.debug(f"{redundant} redundant admin paths "
+                                       "have been marked for deletion")
+                pruned += redundant
+
+                # Achieved convergence: no new attacks were discovered during the iteration
                 if converged != 0 or iteration == max_iterations:
 
                     if converged == 0:
 
-                        self.console.info("Reached maximum number of iterations "
-                                          f"({max_iterations}) - Tidying up")
+                        self.console.debug("Reached maximum number of iterations "
+                                           f"({max_iterations}) - Tidying up")
+                    else:
+                        self.console.debug("Search converged on iteration: "
+                                           f"{iteration} of max: {max_iterations} - Tidying up")
 
                     # Update attack descriptions
                     db.run("MATCH (:Pattern)-[attack:ATTACK|OPTION|CREATE]->() "
