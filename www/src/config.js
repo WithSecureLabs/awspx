@@ -133,6 +133,16 @@ export default {
             }
         },
         {
+            selector: function (e) {
+                return (e.classes().includes("TRANSITIVE") &&
+                    Object.keys(e.source().data("properties")
+                    ).includes("PermissionsBoundary"))
+            },
+            style: {
+                'line-style': 'dashed'
+            }
+        },
+        {
             selector: 'edge.TRANSITIVE',
             style: {
                 'width': '2',
