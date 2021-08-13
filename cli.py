@@ -95,7 +95,9 @@ def handle_ingest(args):
     # Specified profile doesn't exist, offer to create it
     if not session:
 
-        profile = console.item("Create profile")
+        profile = console.item("Create profile"
+                               ) if not args.verbose else console
+                               
         profile.notice(f"The profile '{args.profile}' doesn't exist. "
                        "Please enter your AWS credentials.\n"
                        "(this information will be saved automatically)")
