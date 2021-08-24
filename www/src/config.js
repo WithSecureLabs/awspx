@@ -217,6 +217,18 @@ export default {
             }
         },
         {
+            selector: 'edge.ADMIN',
+            style: {
+                'opacity': '0.4',
+                'overlay-color': 'white',
+                'overlay-padding': '1px',
+                'overlay-opacity': '1px',
+                'target-arrow-shape': 'chevron',
+                'target-arrow-fill': 'filled',
+                'color': 'black',
+            }
+        },
+        {
             selector: 'node.selected',
             style: {
                 'border-color': "black",

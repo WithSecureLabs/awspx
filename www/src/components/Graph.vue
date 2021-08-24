@@ -261,7 +261,8 @@ export default {
           "WITH source, target " +
           "CALL apoc.algo.dijkstraWithDefaultWeight(source, target, 'TRANSITIVE>|ATTACK>', '', 0) " + 
           "YIELD path " +
-          "RETURN path"
+          "OPTIONAL MATCH admin=(:Admin)-->(target)" +
+          "RETURN path, admin"
       );
 
     },
@@ -276,7 +277,8 @@ export default {
           "OPTIONAL MATCH path=shortestPath((source)-[:TRANSITIVE|ATTACK*0..]->(target)) " +
           "WHERE (target:Resource OR target:Admin) " +
           "AND source <> target " +
-          "RETURN source, path"
+          "OPTIONAL MATCH admin=(source:Admin)-->()" +
+          "RETURN source, path, admin"
       );
     },
 
@@ -290,7 +292,8 @@ export default {
         `MATCH (target) WHERE ID(target) = ${id} ` +
           "OPTIONAL MATCH actions=(_)-[:ACTION]->(target) " +
           "WHERE (_:Resource OR _:External) " +
-          "RETURN target, actions"
+          "OPTIONAL MATCH admin=(:Admin)-->(target)" +
+          "RETURN target, admin, actions"
       );
     },
 
@@ -304,7 +307,8 @@ export default {
         `MATCH (source) WHERE ID(source) = ${id} ` +
           "OPTIONAL MATCH actions=(source)-[:ACTION]->(target) " +
           "WHERE target:Resource OR target:CatchAll " +
-          "RETURN source, actions"
+          "OPTIONAL MATCH admin=(source:Admin)-->()" +
+          "RETURN source, actions, admin"
       );
     },
 

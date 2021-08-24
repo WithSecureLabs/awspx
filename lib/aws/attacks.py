@@ -1231,7 +1231,7 @@ class Attacks:
         self.console.task("Removing all existing attacks",
                           db.run, args=["MATCH (p) WHERE p:Pattern "
                                         "   OR p.Arn = 'arn:aws:iam::{Account}:policy/Admin' "
-                                        "OPTIONAL MATCH (p)-[a:ATTACK]->() "
+                                        "OPTIONAL MATCH (p)-[a:ATTACK|ADMIN]->() "
                                         "DETACH DELETE p "
                                         "RETURN COUNT(a) AS deleted"
                                         ],
@@ -1248,6 +1248,11 @@ class Attacks:
                               '"Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"'
                               '}]}}]\''
                               '}) '
+                              "WITH admin MATCH (r:Resource) "
+                              " MERGE (admin)-[access:ADMIN]->(r) "
+                              " ON CREATE SET "
+                              "     access.Name = 'Admin Access', "
+                              "     access.Description = 'Implies all related actions and attacks' "
                           ],
                           done="Created pseudo Admin")
 
