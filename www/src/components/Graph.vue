@@ -259,9 +259,11 @@ export default {
         "MATCH (source)-[:TRANSITIVE|ATTACK]->(), (target) " +
           `WHERE ID(target) = ${id} AND (source:External OR source:Resource)  ` +
           "WITH source, target " +
-          "MATCH paths=shortestPath((source)-[:TRANSITIVE|ATTACK*0..]->(target)) " +
-          "RETURN paths"
+          "CALL apoc.algo.dijkstraWithDefaultWeight(source, target, 'TRANSITIVE>|ATTACK>', '', 0) " + 
+          "YIELD path " +
+          "RETURN path"
       );
+
     },
 
     find_paths_from(element) {
@@ -785,24 +787,9 @@ export default {
 
       window.addEventListener("keyup", event => {
         switch (event.key) {
-          // TODO: Breaks clipboard, when copying foreground objects (eg policy documents)
-          // case "c":
-          //   if (event.ctrlKey) {
-          //     const clipboard = JSON.stringify(
-          //       cy.elements("node.selected").map(e => {
-          //         return e.data("properties");
-          //       })
-          //     );
-          //     navigator.clipboard.writeText(clipboard);
-          //   }
-          //   break;
           case "Delete":
             this.remove(cy.elements(".selected"));
             break;
-          // case "Escape":
-          //   this.properties.value = null;
-          //   this.search.visible = false;
-          //   break;
           case "Enter":
             if (event.altKey) {
               this.run_layout();
