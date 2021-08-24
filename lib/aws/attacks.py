@@ -673,14 +673,13 @@ class Attacks:
                                           else only_attacks)
                             if k not in skip_attacks
                             }
-        self.queries = {k: self._pattern_cypher(k, v, max_search_depth)
+        self.queries = {k: self.translate(k, max_search_depth)
                         for k, v in self.definitions.items()
                         }
 
-    def _pattern_cypher(self, name, definition,
-                        max_search_depth=""
-                        ):
+    def translate(self, name, max_search_depth=""):
 
+        definition = self.definitions[name]
         attack = definition["Attack"]
         cypher = str()
 
