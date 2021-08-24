@@ -2,14 +2,23 @@ import icons from './icons.js'
 import colors from 'vuetify/lib/util/colors'
 
 export const access = {
-
     "Allow": colors.green.base,
     "Deny": colors.red.base,
     "List": colors.yellow.base,
-    "Read": colors.pink.darken1,
-    "Write": colors.indigo.darken2,
-    "Tagging": colors.teal.darken1,
     "Permissions Management": colors.deepPurple.darken1,
+    "Read": colors.pink.darken1,
+    "Tagging": colors.teal.darken1,
+    "Write": colors.indigo.darken2,
+}
+
+export const size = {
+    "ACTION": 1,
+    "ACTIONS": 1,
+    "ADMIN": 3,
+    "ATTACK": 1,
+    "TRANSITIVE": 2,
+    "TRUSTS": 1,
+    'ASSOCIATIVE': 1,
 }
 
 const cache = {}
@@ -60,48 +69,44 @@ export default {
         style: [{
             selector: 'node',
             style: {
-                'font-family': 'Roboto Mono, monospace',
-                'font-size': '12px',
-                'height': 75,
-                'width': 75,
-                'label': 'data (name)',
-
                 'background-color': 'white',
                 'border-color': 'black',
                 'border-width': 0.2,
-
-                'text-halign': 'center',
-                'text-valign': 'bottom',
-                'color': 'White',
-                'text-background-color': 'Black',
-                'text-background-shape': 'roundrectangle',
-                'text-background-padding': '2px',
+                'color': 'white',
+                'font-family': 'Roboto Mono, monospace',
+                'font-size': '12px',
+                'height': 75,
+                'label': 'data (name)',
+                'text-background-color': 'black',
                 'text-background-opacity': '1',
-                'text-wrap': 'ellipsis',
+                'text-background-padding': '2px',
+                'text-background-shape': 'roundrectangle',
+                'text-halign': 'center',
                 'text-max-width': '160px',
+                'text-valign': 'bottom',
+                'text-wrap': 'ellipsis',
+                'width': 75
             }
         },
-
         {
             selector: 'edge',
             style: {
-
-                'font-family': 'Roboto Mono, monospace',
-                'font-size': '6px',
-
                 'curve-style': 'bezier',
-                'target-arrow-shape': 'triangle',
-                'width': '1px',
+                'font-family': 'Roboto Mono, monospace',
+                'font-size': '10x',
+                'font-size': 0,
                 'line-color': "#999999",
-                'color': 'White',
-                'text-rotation': 'autorotate',
-                'text-background-color': 'Black',
-                'text-background-shape': 'roundrectangle',
-                'text-background-padding': '6px',
-                'text-background-opacity': '1',
-                'text-wrap': 'ellipsis',
+                'target-arrow-color': "#999999",
+                'target-arrow-shape': 'triangle',
                 'text-max-width': '50px',
-                'z-index': '3',
+                'text-rotation': 0,
+                'text-wrap': 'ellipsis',
+                'width': function (e) {
+                    return e.classes().filter(c =>
+                        Object.keys(size).includes(c)
+                    ).map(c => size[c]).concat(1)[0]
+                },
+                'z-index': '3'
             }
         },
         {
@@ -143,78 +148,72 @@ export default {
             }
         },
         {
-            selector: 'edge.TRANSITIVE',
-            style: {
-                'width': '2',
-            }
-        },
-        {
             selector: 'edge.ASSOCIATIVE',
             style: {
-                'target-arrow-shape': 'none',
-                'line-style': 'dotted'
+                'line-style': 'dotted',
+                'target-arrow-shape': 'none'
             }
         },
         {
             selector: 'edge.ATTACK',
             style: {
+                'line-color': 'maroon',
                 'line-style': 'dashed',
-                'line-color': 'Maroon'
             }
         },
         {
             selector: 'edge.TRUSTS',
             style: {
-                'width': '1px',
-                'label': 'Trusts',
-                'color': 'Black',
+                'color': 'black',
                 'font-size': '10px',
-                'line-color': 'Gold',
-                'text-rotation': 'autorotate',
-                'text-background-color': 'White',
+                'line-color': 'gold',
+                'text-background-color': 'white',
                 'text-background-opacity': '1',
                 'text-max-width': '1000px',
+                'text-rotation': 'autorotate'
             }
         },
         {
             selector: 'edge.ACTION',
             style: {
                 "line-fill": "linear-gradient",
-                'target-arrow-color': (e) => `${access[e.data("properties").Access]}`,
-                'line-gradient-stop-colors': (e) => `${access[e.data("properties").Effect]} ${access[e.data("properties").Access]}`,
+                'color': 'black',
                 'control-point-step-size': '50',
-                'width': '1px',
-                'label': 'data (name)',
-                'color': 'Black',
                 'font-size': '10px',
-                'text-background-padding': '0px',
-                'text-rotation': 'autorotate',
-                'text-background-color': 'White',
+                'label': 'data (name)',
+                'line-gradient-stop-colors': function (e) {
+                    return `${access[e.data("properties").Effect]}`
+                        .concat(" ")
+                        .concat(`${access[e.data("properties").Access]}`);
+                },
+                'target-arrow-color': (e) => `${access[e.data("properties").Access]}`,
+                'text-background-color': 'white',
                 'text-background-opacity': '1',
+                'text-background-padding': '0px',
                 'text-max-width': '1000px',
+                'text-rotation': 'autorotate',
             }
         },
         {
             selector: 'edge.ACTION.Conditional',
             style: {
-                'line-style': 'dashed',
+                'line-style': 'dashed'
             }
         },
         {
             selector: 'edge.ACTIONS',
             style: {
                 "line-fill": "linear-gradient",
-                'line-gradient-stop-colors': (e) => e.classes().filter(s => s in access).map(s => access[s]),
-                'width': '1px',
-                'label': 'data (name)',
-                'font-weight': 'bold',
-                'color': 'Black',
+                'color': 'black',
                 'font-size': '10px',
-                'text-background-padding': '0px',
-                'text-rotation': 'autorotate',
+                'font-weight': 'bold',
+                'label': 'data (name)',
+                'line-gradient-stop-colors': (e) => e.classes().filter(s => s in access).map(s => access[s]),
                 'text-background-color': 'White',
                 'text-background-opacity': '1',
+                'text-background-padding': '0px',
                 'text-max-width': '1000px',
+                'text-rotation': 'autorotate'
             }
         },
         {
@@ -222,55 +221,69 @@ export default {
             style: {
                 'border-color': "black",
                 'border-width': 1,
-                'z-index': 4,
+                'z-index': 4
             }
         },
         {
             selector: 'edge.selected',
             style: {
+                'opacity': '1',
+                'width': function (e) {
+                    const scale = 1.5;
+                    return e.classes().filter(c =>
+                        Object.keys(size).includes(c)
+                    ).map(c => size[c] * scale).concat(scale)[0]
+                },
                 'z-index': 4,
-                'width': '1.5px',
             }
         },
-
         {
             selector: '.unselected',
             style: {
-                label: '',
-                opacity: 0.1,
-                zIndex: 0,
+                'font-size': '0',
+                'opacity': 0.1,
+                'z-index': 0
             }
         },
         {
             selector: 'edge.hover',
             style: {
-                label: 'data (name)',
-                textRotation: 0,
-                textWrap: 'none',
-                opacity: 1,
-                zIndex: 10,
+                'font-size': '10px',
+                'font-weight': 'bold',
+                'opacity': 1,
+                'text-background-color': 'white',
+                'text-background-opacity': '1',
+                'text-max-width': '1000px',
+                'text-rotation': 'autorotate',
+                'text-rotation': 0,
+                'text-wrap': 'none',
+                'width': function (e) {
+                    const scale = 1.75;
+                    return e.classes().filter(c =>
+                        Object.keys(size).includes(c)
+                    ).map(c => size[c] * scale).concat(scale)[0]
+                },
+                'z-index': 10
             }
         },
-
         {
             selector: 'node.hover',
             style: {
-                label: 'data (name)',
-                textWrap: 'none',
-                height: 100,
-                width: 100,
-                opacity: 1,
-                zIndex: 10,
+                'font-size': '12px',
+                'height': 100,
+                'opacity': 1,
+                'text-wrap': 'none',
+                'width': 100,
+                'z-index': 10
             }
         },
-
         {
             selector: 'node.Generic',
             style: {
-                label: '',
-                borderStyle: "dashed",
-                borderColor: "green",
-                opacity: 0.7,
+                'border-color': "green",
+                'border-style': "dashed",
+                'label': '',
+                'opacity': 0.7
             }
         },
         {
@@ -282,8 +295,8 @@ export default {
         {
             selector: 'node.unexpandible',
             style: {
-                borderColor: "silver",
-                borderWidth: 2,
+                'border-color': "silver",
+                'border-width': 2
             }
         },
         {
@@ -295,32 +308,30 @@ export default {
         {
             selector: 'node.context-menu',
             style: {
-                label: "",
+                'label': ""
             }
-        },
-        ],
-
+        }],
         layout: {
-            name: 'dagre',
-            nodeSep: undefined,
-            edgeSep: undefined,
-            rankSep: undefined,
-            rankDir: 'BT',
-            ranker: undefined,
-            minLen: function (edge) { return 1; },
-            edgeWeight: function (edge) { return 1; },
-            fit: true,
-            padding: 40,
-            spacingFactor: 1.5,
-            nodeDimensionsIncludeLabels: true,
             animate: true,
             animateFilter: function (node, i) { return true; },
             animationDuration: 250,
             animationEasing: undefined,
             boundingBox: undefined,
-            transform: function (node, pos) { return pos; },
+            edgeSep: undefined,
+            edgeWeight: function (edge) { return 1; },
+            fit: true,
+            minLen: function (edge) { return 1; },
+            name: 'dagre',
+            nodeDimensionsIncludeLabels: true,
+            nodeSep: undefined,
+            padding: 40,
+            rankDir: 'BT',
+            rankSep: undefined,
+            ranker: 'longest-path',
             ready: function () { },
-            stop: function () { }
+            spacingFactor: 1.5,
+            stop: function () { },
+            transform: function (node, pos) { return pos; }
         },
-    },
+    }
 }
