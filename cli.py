@@ -1,20 +1,19 @@
 #!/usr/bin/python3
 
 import argparse
-import boto3
-
-import git
 import os
 import sys
 
+import boto3
+import git
 from botocore.credentials import InstanceMetadataProvider
 from botocore.exceptions import ClientError
 from botocore.utils import InstanceMetadataFetcher
 
 from lib.aws.attacks import Attacks
 from lib.aws.ingestor import *
-from lib.aws.resources import RESOURCES
 from lib.aws.profile import Profile
+from lib.aws.resources import RESOURCES
 from lib.graph.db import Neo4j
 from lib.util.console import console
 
@@ -96,7 +95,7 @@ def handle_ingest(args):
     if not session:
 
         profile = console.item("Create profile"
-                               ) if not args.verbose else console
+                               ) if args.pretty else console
                                
         profile.notice(f"The profile '{args.profile}' doesn't exist. "
                        "Please enter your AWS credentials.\n"
@@ -375,10 +374,10 @@ def main():
     db_group.add_argument('--load-zip', dest='load_zips', choices=sorted(Neo4j.zips), action='append',
                           help="Create/overwrite database using ZIP file content.")
 
-    # Add --verbose to ingest, attacks, db
+    # Add --pretty to ingest, attacks, db
     for p in [ingest_parser, attacks_parser, db_parser]:
-        p.add_argument('--verbose', dest='verbose', action='store_true', default=False,
-                       help="Enable verbose output.")
+        p.add_argument('--pretty', dest='pretty', action='store_true', default=False,
+                       help="Enable pretty output (slower).")
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
@@ -390,7 +389,7 @@ def main():
     if 'database' in args and args.database is None:
         args.database = f"{args.profile}"
 
-    if 'verbose' in args and args.verbose:
+    if 'pretty' in args and not args.pretty:
         console.verbose()
     else:
         console.start()
