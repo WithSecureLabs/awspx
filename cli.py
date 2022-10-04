@@ -17,6 +17,8 @@ from lib.aws.resources import RESOURCES
 from lib.graph.db import Neo4j
 from lib.util.console import console
 
+from configparser import NoOptionError, NoSectionError
+
 SERVICES = list(Ingestor.__subclasses__())
 
 
@@ -75,7 +77,13 @@ def handle_ingest(args):
 
     # Use existing profile
     elif args.profile in Profile().credentials.sections():
-        session = boto3.session.Session(profile_name=args.profile,
+        try:
+            session = boto3.session.Session(profile_name=args.profile,
+                                        region_name=Profile().config.get(section=f"profile {args.profile}",option="region")
+                                            if not args.profile == 'default'
+                                            else Profile().config.get(section=f"{args.profile}",option="region"))
+        except (NoSectionError, NoOptionError):
+            session = boto3.session.Session(profile_name=args.profile,
                                         region_name=args.region)
     # Use instance profile
     elif args.profile == "default":
@@ -83,8 +91,13 @@ def handle_ingest(args):
             provider = InstanceMetadataProvider(
                 iam_role_fetcher=InstanceMetadataFetcher())
             creds = provider.load()
-
-            session = boto3.session.Session(region_name=args.region,
+            try:
+                session = boto3.session.Session(region_name=Profile().config.get(section=f"{args.profile}",option="region"),
+                                            aws_access_key_id=creds.access_key,
+                                            aws_secret_access_key=creds.secret_key,
+                                            aws_session_token=creds.token)
+            except (NoSectionError, NoOptionError):
+                session = boto3.session.Session(region_name=args.region,
                                             aws_access_key_id=creds.access_key,
                                             aws_secret_access_key=creds.secret_key,
                                             aws_session_token=creds.token)
